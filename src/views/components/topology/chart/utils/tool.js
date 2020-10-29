@@ -40,12 +40,12 @@ const Hexagon = (side, r, cx, cy) => {
   return path;
 };
 
-export default (graph, data) => {
+export default (graph, data, shapeOption) => {
   const tool = graph.append('g').attr('class', 'topo-tool');
-  const side = 6;
+  const side = shapeOption.side;
   for (let i = 0; i < data.length; i += 1) {
-    let x = Math.cos((2 / side) * i * Math.PI) * 34;
-    let y = -Math.sin((2 / side) * i * Math.PI) * 34;
+    let x = Math.cos((2 / side) * i * Math.PI + shapeOption.fixAngle) * shapeOption.centerRadius;
+    let y = -Math.sin((2 / side) * i * Math.PI + shapeOption.fixAngle) * shapeOption.centerRadius;
     const tool_g = tool
       .append('g')
       .attr('class', 'topo-tool-i')
@@ -53,13 +53,13 @@ export default (graph, data) => {
     tool_g
       .append('path')
       .attr('class', 'tool-hexagon')
-      .attr('d', Hexagon(6, 17, x, y));
+      .attr('d', Hexagon(6, shapeOption.hexagonRadius, x, y));
     tool_g
       .append('svg:image')
-      .attr('width', 14)
-      .attr('height', 14)
-      .attr('x', x - 7)
-      .attr('y', y - 7)
+      .attr('width', shapeOption.iconSize)
+      .attr('height', shapeOption.iconSize)
+      .attr('x', x - shapeOption.iconSize / 2)
+      .attr('y', y - shapeOption.iconSize / 2)
       .attr('style', 'opacity: 0.8')
       .attr('xlink:href', icons[data[i].icon]);
   }

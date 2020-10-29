@@ -1,10 +1,13 @@
 <template>
   <div class="topo-view-chart">
-    <div class="tvc-c">
+    <div id="tvccId" class="tvc-c">
       <div class="tvc-l">
-        <!-- <TopoDetail v-if="currentNode 
-          && currentNode.id !== undefined && currentNode.id !== '' && currentNode.id !== null" /> -->
-        <TopoDetail />
+        <TopoDetail
+          v-if="currentNode && currentNode.id !== undefined && currentNode.id !== '' && currentNode.id !== null"
+        />
+        <div class="tvcl-close">
+          <span class="tvclc-icon" @click="closeTopoDetail"></span>
+        </div>
       </div>
       <div class="tvc-r">
         <RkEcharts height="100%" :option="responseConfig" ref="topo" />
@@ -179,6 +182,11 @@
         };
       },
     },
+    methods: {
+      closeTopoDetail() {
+        this.$store.commit('rocketTopo/SET_NODE', {});
+      }
+    },
     mounted() {
       const currentCompIns = this;
       const myChart = this.$refs.topo.myChart;
@@ -227,19 +235,35 @@
       justify-content: flex-start;
 
       .tvc-l {
-        -webkit-transition: .1s width;
-        transition: .1s width;
+        -webkit-transition: 0.1s width;
+        transition: 0.1s width;
         height: 100%;
+        position: relative;
+
+        .tvcl-close {
+          position: absolute;
+          top: 10px;
+          right: 15px;
+
+          .tvclc-icon {
+            cursor: pointer;
+            width: 0;
+            height: 0;
+            border-style: solid;
+            border-width: 16px 12px 16px 0;
+            border-color: transparent #ccc transparent transparent;
+            display: block;
+            z-index: 2;
+          }
+        }
       }
 
       .tvc-r {
         flex-grow: 1;
-        -webkit-transition: .1s width;
-        transition: .1s width;
+        -webkit-transition: 0.1s width;
+        transition: 0.1s width;
         height: 100%;
       }
-
-
     }
   }
 </style>
