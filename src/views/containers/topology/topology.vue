@@ -2,7 +2,9 @@
   <div class="rk-topo">
     <TopoView :topoData="{ nodes: filteredStateTopo.nodes, calls: filteredStateTopo.calls }" />
     <TopoSideNavigation />
-    <div style="display:none">{{filterNodeType}}</div>
+    <TopoToolSet />
+
+    <div style="display:none">{{ filterNodeType }}</div>
 
     <!-- 中间拓扑图 -->
     <!-- <Topo
@@ -18,7 +20,6 @@
 
     <!-- 左下角创建分组 -->
     <!-- <TopoGroup /> -->
-
   </div>
 </template>
 <script lang="ts">
@@ -39,6 +40,7 @@
   import TopoView from '../../components/topology/topo-view.vue';
   import LOCAL_STATE_TOPO from './data.js';
   import TopoSideNavigation from '../../components/topology/topo-side-navigation.vue';
+  import TopoToolSet from '../../components/topology/topo-tool-set.vue';
 
   @Component({
     components: {
@@ -51,7 +53,8 @@
       WindowAlarm,
       WindowEndpointDependency,
       TopoView,
-      TopoSideNavigation
+      TopoSideNavigation,
+      TopoToolSet,
     },
   })
   export default class Topology extends Vue {
@@ -71,7 +74,7 @@
     private filteredStateTopo: any = {};
 
     private created() {
-      this.filterTopoOnType('All'); // computed或watch改造？
+      this.filterTopoOnType('All');
     }
 
     private get filterNodeType() {
@@ -84,16 +87,18 @@
         this.filteredStateTopo = LOCAL_STATE_TOPO;
         return;
       }
-      let nodesTmp = LOCAL_STATE_TOPO.nodes.filter(node => node.type === nodeType);
-      let callsTmp = LOCAL_STATE_TOPO.calls.filter(call => {
-        return nodesTmp
-          && nodesTmp.some(node => node.id === call.source.id)
-          && nodesTmp.some(node => node.id === call.target.id);
+      let nodesTmp = LOCAL_STATE_TOPO.nodes.filter((node) => node.type === nodeType);
+      let callsTmp = LOCAL_STATE_TOPO.calls.filter((call) => {
+        return (
+          nodesTmp &&
+          nodesTmp.some((node) => node.id === call.source.id) &&
+          nodesTmp.some((node) => node.id === call.target.id)
+        );
       });
       this.filteredStateTopo = {
         nodes: nodesTmp,
-        calls: callsTmp
-      }
+        calls: callsTmp,
+      };
     }
 
     private queryTemplates() {
@@ -108,16 +113,20 @@
           }>,
         ) => {
           // 提取TOPOLOGY_INSTANCE类型的模板，并将其configuration更新到state、localStorage
-          const template = allTemplates.filter((item: any) => {
+          const template =
+            allTemplates.filter((item: any) => {
               return item.type === TopologyType.TOPOLOGY_INSTANCE && item.activated;
-          })[0] || {};
+            })[0] || {};
+          // @ts-ignore
           const instanceComps = JSON.parse(template.configuration) || [];
           this.SET_TOPO_INSTANCE(instanceComps);
 
           // 提取TOPOLOGY_ENDPOINT类型的模板，并将其configuration更新到state、localStorage
-          const endpointTemplate = allTemplates.filter((item: any) => {
-            return item.type === TopologyType.TOPOLOGY_ENDPOINT && item.activated;
-          })[0] || {};
+          const endpointTemplate =
+            allTemplates.filter((item: any) => {
+              return item.type === TopologyType.TOPOLOGY_ENDPOINT && item.activated;
+            })[0] || {};
+          // @ts-ignore
           const endpointComps = JSON.parse(endpointTemplate.configuration) || [];
           this.SET_TOPO_ENDPOINT(endpointComps);
         },

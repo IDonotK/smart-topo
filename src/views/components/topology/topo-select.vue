@@ -13,17 +13,8 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License. -->
 <template>
-  <div
-    class="rk-topo-bar-select cp flex-h"
-    v-clickout="
-      () => {
-        visible = false;
-        search = '';
-      }
-    "
-    :class="{ active: visible }"
-  >
-    <div class="rk-topo-bar-i flex-h" @click="visible = !visible">
+  <div class="rk-topo-bar-select cp flex-h" v-clickout="handleClickOut" :class="{ active: visible }" ref="rtbsEle">
+    <div class="rk-topo-bar-i flex-h" @click="handleToggleVisible">
       <div class="mr-15 rk-topo-bar-i-text">
         <div class="sm grey">{{ title }}</div>
         <div class="ell" v-tooltip:right.ellipsis="current.label || ''">
@@ -34,8 +25,12 @@ limitations under the License. -->
         <use xlink:href="#arrow-down"></use>
       </svg>
     </div>
-    <div class="rk-topo-sel" v-if="visible">
-      <div>
+    <div
+      class="rk-topo-sel"
+      :class="{ 'rk-topo-sel-up': selectBarUp, 'rk-topo-sel-down': !selectBarUp }"
+      v-if="visible"
+    >
+      <div v-if="hasSearch">
         <input type="text" class="rk-topo-sel-search" v-model="search" />
         <svg class="icon sm close" @click="search = ''" v-if="search">
           <use xlink:href="#clear"></use>
@@ -48,6 +43,7 @@ limitations under the License. -->
           :class="{ active: i.key === current.key }"
           v-for="i in filterData"
           :key="i.key"
+          :title="i.label"
         >
           {{ i.label }}
         </div>
@@ -58,23 +54,60 @@ limitations under the License. -->
 
 <script lang="ts">
   import { Vue, Component, Prop } from 'vue-property-decorator';
+  import $ from 'jquery';
+
   @Component
   export default class TopoSelect extends Vue {
     @Prop() public data!: any;
     @Prop() public current!: any;
     @Prop() public title!: string;
     @Prop() public icon!: string;
+    @Prop() public hasSearch!: boolean;
+    @Prop() public wrapper!: string;
+
     public search: string = '';
     public visible: boolean = false;
+    public selectBarUp: boolean = false;
+
     get filterData() {
       return this.data.filter((i: any) => i.label.toUpperCase().indexOf(this.search.toUpperCase()) !== -1);
     }
+
+    private mounted() {
+      window.addEventListener('resize', this.resize);
+    }
+
+    public resize() {
+      this.fixSelectBarDirection();
+    }
+
+    public fixSelectBarDirection() {
+      let visibleHeight = document.documentElement.clientHeight;
+      let rtbsEle = $(this.$refs.rtbsEle);
+      // @ts-ignore
+      let rtbsOffsetBottom = visibleHeight - rtbsEle.offset().top - rtbsEle.height();
+      this.selectBarUp = rtbsOffsetBottom < 235;
+    }
+
     public handleOpen() {
       this.visible = true;
     }
+
     public handleSelect(i: any) {
       this.$emit('onChoose', i);
       this.visible = false;
+    }
+
+    public handleToggleVisible() {
+      this.visible = !this.visible;
+      $('#' + this.wrapper).css('z-index', this.visible ? 9999 : 9998);
+      this.fixSelectBarDirection();
+    }
+
+    public handleClickOut() {
+      this.visible = false;
+      this.search = '';
+      $('#' + this.wrapper).css('z-index', this.visible ? 9999 : 9998);
     }
   }
 </script>
@@ -83,6 +116,7 @@ limitations under the License. -->
   .rk-topo-bar-select {
     position: relative;
     z-index: 1;
+    width: 100%;
     height: 40px;
     justify-content: space-between;
     .sm {
@@ -90,6 +124,8 @@ limitations under the License. -->
     }
     .icon {
       flex-shrink: 0;
+      position: absolute;
+      right: 0;
     }
   }
   .rk-topo-bar-i-text {
@@ -98,7 +134,7 @@ limitations under the License. -->
   .rk-topo-bar-i {
     height: 100%;
     width: 100%;
-    padding: 5px 15px;
+    padding: 5px 18px 5px 5px;
     &.active,
     &:hover {
       background-color: #40454e;
@@ -106,7 +142,6 @@ limitations under the License. -->
   }
   .rk-topo-sel {
     position: absolute;
-    top: 40px;
     box-shadow: 0 1px 6px rgba(99, 99, 99, 0.2);
     background-color: #252a2f;
     width: 100%;
@@ -119,6 +154,14 @@ limitations under the License. -->
       &:hover {
         opacity: 1;
       }
+    }
+
+    &.rk-topo-sel-up {
+      bottom: 42px;
+    }
+
+    &.rk-topo-sel-down {
+      top: 42px;
     }
   }
   .rk-topo-opt {

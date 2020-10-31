@@ -39,6 +39,14 @@ import VModal from 'vue-js-modal';
 import { queryOAPTimeInfo } from './utils/localtime';
 import './assets';
 
+// import ElementUI from 'element-ui';
+// import 'element-ui/lib/theme-chalk/index.css';
+// import './assets/themedark/index.css';
+// Vue.use(ElementUI);
+
+// import $ from 'jquery';
+// Vue.prototype.$jq = $;
+
 Vue.use(eventBus);
 Vue.use(VueI18n);
 Vue.use(components);
@@ -46,11 +54,7 @@ Vue.use(VModal, { dialog: true });
 Vue.directive('clickout', clickout);
 Vue.directive('tooltip', tooltip);
 
-Vue.filter(
-  'dateformat',
-  (dataStr: any, pattern: string = 'YYYY-MM-DD HH:mm:ss') =>
-    moment(dataStr).format(pattern),
-);
+Vue.filter('dateformat', (dataStr: any, pattern: string = 'YYYY-MM-DD HH:mm:ss') => moment(dataStr).format(pattern));
 
 const savedLanguage = window.localStorage.getItem('lang');
 let language = navigator.language.split('-')[0];
@@ -74,8 +78,8 @@ if (!window.Promise) {
 Vue.config.productionTip = false;
 
 new Vue({
-    i18n,
-    router,
-    store,
-    render: (h) => h(App),
+  i18n,
+  router,
+  store,
+  render: (h) => h(App),
 }).$mount('#app');
