@@ -35,25 +35,47 @@
     <!-- 工具集合 -->
     <div class="more-tool-wrapper" v-if="moreToolState">
       <!-- 隐藏节点类型 -->
-      <div id="hideSomeType" class="fw-item hide-some-type">
+      <div id="hideType" class="fw-item hide-type">
         <TopoSelect
-          :wrapper="'hideSomeType'"
+          :wrapper="'hideType'"
           :hasSearch="false"
-          :current="selectNodeType"
-          :data="nodeTypes"
-          :title="nodeTypeFilterName"
-          @onChoose="handleChangeNodeType"
+          :current="hideTypeOption.select"
+          :data="hideTypeOption.data"
+          :title="hideTypeOption.title"
+          @onChoose="handleChangeHideType"
+        />
+      </div>
+      <!-- 节点状态类型 -->
+      <div id="stateType" class="fw-item state-type">
+        <TopoSelect
+          :wrapper="'stateType'"
+          :hasSearch="false"
+          :current="stateTypeOption.select"
+          :data="stateTypeOption.data"
+          :title="stateTypeOption.title"
+          @onChoose="handleChangeStateType"
         />
       </div>
       <!-- 关联节点类型 -->
-      <div id="showSomeAssociated" class="fw-item show-some-associated">
+      <div id="relativeType" class="fw-item relative-type">
         <TopoSelect
-          :wrapper="'showSomeAssociated'"
+          :wrapper="'relativeType'"
           :hasSearch="false"
-          :current="selectAssociatedType"
-          :data="associatedTypes"
-          :title="associatedTypeFilterName"
-          @onChoose="handleChangeAssociatedType"
+          :current="relativeTypeOption.select"
+          :data="relativeTypeOption.data"
+          :title="relativeTypeOption.title"
+          @onChoose="handleChangeRelativeType"
+        />
+      </div>
+      <!-- 边类型 -->
+      <div id="edgeType" class="fw-item edge-type">
+        <TopoSelect
+          :wrapper="'edgeType'"
+          :hasSearch="false"
+          :current="edgeTypeOption.select"
+          :data="edgeTypeOption.data"
+          :title="edgeTypeOption.title"
+          @onChoose="handleChangeEdgeType"
         />
       </div>
     </div>
@@ -69,34 +91,45 @@
       return {
         inputId: '',
         moreToolState: false,
-        selectNodeType: {key: 0, label: 'None'},
-        nodeTypes: [
-          {key: 0, label: 'None'},
-          {key: 1, label: 'Application'},
-          {key: 2, label: 'Process'},
-          {key: 3, label: 'Pod'},
-          {key: 4, label: 'Node'}
-        ],
-        nodeTypeFilterName: '隐藏节点类型',
-        selectAssociatedType: {key: 0, label: 'Single Hop'},
-        associatedTypes: [
-          {key: 0, label: 'Single Hop'},
-          {key: 1, label: 'Up All'},
-          {key: 2, label: 'Up Event'},
-          {key: 3, label: 'Down All '},
-          {key: 4, label: 'Down Event'},
-          {key: 5, label: 'Up Down All'},
-          {key: 6, label: 'Up Down Event'},
-        ],
-        associatedTypeFilterName: '关联节点类型',
-        options: [{
-          value: '选项1',
-          label: '黄金糕'
-        }, {
-          value: '选项2',
-          label: '双皮奶'
-        }],
-        value: ''
+        hideTypeOption: {
+          title: '隐藏节点类型',
+          data: [
+            {key: 0, label: 'None'},
+            {key: 1, label: 'Application'},
+            {key: 2, label: 'Process'},
+            {key: 3, label: 'Pod'},
+            {key: 4, label: 'Node'}
+          ],
+          select: {key: 0, label: 'None'},
+        },
+        stateTypeOption: {
+          title: '节点状态类型',
+          data: [
+            {key: 0, label: 'All'},
+            {key: 1, label: 'Normal'},
+            {key: 2, label: 'Event'}
+          ],
+          select: {key: 0, label: 'All'}
+        },
+        relativeTypeOption: {
+          title: '关联节点类型',
+          data: [
+            {key: 0, label: 'Single Hop'},
+            {key: 1, label: 'All'},
+            {key: 2, label: 'Up Stream'},
+            {key: 3, label: 'Down Stream'},
+          ],
+          select: {key: 0, label: 'Single Hop'}
+        },
+        edgeTypeOption: {
+          title: '边类型',
+          data: [
+            {key: 0, label: 'All'},
+            {key: 1, label: 'Traceing To'},
+            {key: 2, label: 'Created On'},
+          ],
+          select: {key: 0, label: 'All'}
+        }
       }
     },
 
@@ -133,13 +166,21 @@
         this.moreToolState = !this.moreToolState;
       },
 
-      handleChangeNodeType(selectNodeType) {
-        this.selectNodeType = selectNodeType;
+      handleChangeHideType(select) {
+        this.hideTypeOption.select = select;
       },
 
-      handleChangeAssociatedType(selectAssociatedType) {
-        this.selectAssociatedType = selectAssociatedType;
+      handleChangeStateType(select) {
+        this.stateTypeOption.select = select;
       },
+
+      handleChangeRelativeType(select) {
+        this.relativeTypeOption.select = select;
+      },
+
+      handleChangeEdgeType(select) {
+        this.edgeTypeOption.select = select;
+      }
     }
   }
 </script>
