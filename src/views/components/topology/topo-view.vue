@@ -72,7 +72,7 @@
       data.lastLinkId = 0;
       data.settings = {
         maxLinks: 1,
-        maxNodes: 36
+        maxNodes: 100
       };
       data.nodeSym = null;
 

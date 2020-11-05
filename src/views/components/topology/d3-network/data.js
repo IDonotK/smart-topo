@@ -8,8 +8,8 @@ export default {
   options: {
     canvas: false,
     size: {
-      w: 500,
-      h: 500,
+      w: 600,
+      h: 600,
     },
     force: 350,
     offset: {
@@ -18,8 +18,8 @@ export default {
     },
     nodeSize: 20,
     linkWidth: 1,
-    nodeLabels: false,
-    linkLabels: false,
+    nodeLabels: true,
+    linkLabels: true,
     strLinks: true,
   },
 };
