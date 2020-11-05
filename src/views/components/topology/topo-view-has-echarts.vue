@@ -11,32 +11,18 @@
       </div>
       <div class="tvc-r">
         <!-- <RkEcharts height="100%" :option="responseConfig" ref="topo" /> -->
-        <!-- <Topo
+        <Topo
           :current="current"
           @setDialog="(type) => (dialog = type)"
           @setCurrent="setCurrent"
-          :nodesx="stateTopo.nodes"
-          :linksx="stateTopo.calls"
-        /> -->
-        <d3-network
-          ref="net"
-          :net-nodes="nodes"
-          :net-links="links"
-          :selection="{ nodes: selected, links: linksSelected }"
-          :options="options"
-          :linkCb="linkCb"
-          :node-sym="nodeSym"
-          @node-click="nodeClick"
-          @link-click="linkClick"
-          @screen-shot="screenShotDone"
+          :nodes="stateTopo.nodes"
+          :links="stateTopo.calls"
         />
       </div>
     </div>
   </div>
 </template>
 <script lang="js">
-  import D3Network from './d3-network/vue-d3-network.common.js';
-
   import * as d3 from 'd3';
   import d3tip from 'd3-tip';
 
@@ -47,11 +33,11 @@
   import podIcon from './assets/types/pod.png';
   import nodeIcon from './assets/types/node.png';
 
-  import Topo from './chart/topo.vue';
-  // import LOCAL_STATE_TOPO from './data.js';
+  import STATE_TOPO_2D from './data2d.js'
+  import TopoGraph2d from './topo-graph2d';
 
-  import defaultData from './d3-network/data.js';
-  import * as utils from './d3-network/utils.js'
+  import Topo from './chart/topo.vue';
+  import LOCAL_STATE_TOPO from './data.js';
 
   export default {
     props: {
@@ -67,27 +53,25 @@
     },
 
     data() {
-      let data = Object.assign({}, defaultData);
-      data.lastNodeId = 0;
-      data.lastLinkId = 0;
-      data.settings = {
-        maxLinks: 1,
-        maxNodes: 36
-      };
-      data.nodeSym = null;
-
-      data.current = {};
-      data.stateTopo = {
-        nodes: [],
-        calls: []
-      };
-      return data;
+      return {
+        options2d: {
+          nodes: STATE_TOPO_2D.nodes,
+          links: STATE_TOPO_2D.links,
+          showSettingCard: false,
+          nodeSize: 14,
+          linkWidth: 2,
+          linkDistance: 50,
+          bodyStrength: -150
+        },
+        current: {},
+        stateTopo: {}
+      }
     },
 
     components: {
       TopoDetail,
-      Topo,
-      D3Network
+      TopoGraph2d,
+      Topo
     },
 
     computed: {
@@ -233,20 +217,6 @@
     },
 
     methods: {
-      linkCb (link) {
-        link.name = 'Link ' + link.id
-        return link
-      },
-      nodeClick() {
-
-      },
-      linkClick() {
-
-      },
-      screenShotDone() {
-
-      },
-
       closeTopoDetail() {
         this.$store.commit('rocketTopo/SET_NODE', {});
       },
@@ -254,67 +224,11 @@
       setCurrent(d) {
         this.current = d;
         this.$store.commit('SET_CURRENT_SERVICE', d);
-      },
-
-      reset() {
-        this.selected = {};
-        this.linksSelected = {};
-        this.nodes = utils.makeRandomNodes(this.settings.maxNodes);
-        this.lastNodeId = this.nodes.length + 1;
-        this.links = utils.makeRandomLinks(this.nodes, this.settings.maxLinks);
-        this.lastLinkId = this.links.length + 1;
       }
     },
 
-    created() {
-      this.reset();
-    },
-
     mounted() {
-      // this.stateTopo.nodes = LOCAL_STATE_TOPO.nodes;
-      // this.stateTopo.calls = LOCAL_STATE_TOPO.calls;
-      // this.$store.dispatch('rocketTopo/GET_TOPO', {
-      //   serviceId: 0,
-      // });
-      // this.stateTopo = this.$store.state.rocketTopo;
-      // console.log(this.stateTopo);
-
-      // let calls = [
-      //   {
-      //     cpm: 202,
-      //     id: "cHJvamVjdEMuYnVzaW5lc3Mtem9uZQ==.1",
-      //     isGroupActive: true,
-      //     isReal: true,
-      //     latency: 0,
-      //     name: "projectD.business-zone",
-      //     sla: 100,
-      //     type: "kafka-consumer"
-      //   }
-      // ];
-      // let nodes = [
-      //   {
-      //     cpm: 215,
-      //     detectPoints: ["CLIENT"],
-      //     id: "cHJvamVjdEMuYnVzaW5lc3Mtem9uZQ==.1-d3d3LmJhaWR1LmNvbTo4MA==.0",
-      //     isGroupActive: true,
-      //     latency: 32,
-      //     source: "cHJvamVjdEMuYnVzaW5lc3Mtem9uZQ==.1",
-      //     target: "d3d3LmJhaWR1LmNvbTo4MA==.0"
-      //   },
-      //   {
-      //     cpm: 0,
-      //     id: "d3d3LmJhaWR1LmNvbTo4MA==.0",
-      //     isGroupActive: true,
-      //     isReal: false,
-      //     latency: 0,
-      //     name: "www.baidu.com:80",
-      //     sla: -1,
-      //     type: "HttpClient"
-      //   }
-      // ];
-      // this.stateTopo.nodes = nodes;
-      // this.stateTopo.calls = calls;
-
+      this.stateTopo = LOCAL_STATE_TOPO;
       // const currentCompIns = this;
       // const myChart = this.$refs.topo.myChart;
 
@@ -341,8 +255,6 @@
   };
 </script>
 <style lang="scss">
-  @import './d3-network/vue-d3-network.css';
-
   .topo-view-chart {
     position: absolute;
     top: 2px;

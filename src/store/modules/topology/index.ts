@@ -329,27 +329,34 @@ const actions: ActionTree<State, any> = {
     // luke
     return Promise.resolve().then(() => {
       var res = {
-        "data": {
-          "services": [{
-            "key": "bG9hZCBiYWxhbmNlcjEuc3lzdGVt.1",
-            "label": "load balancer1.system"
-          }, {
-            "key": "bG9hZCBiYWxhbmNlcjIuc3lzdGVt.1",
-            "label": "load balancer2.system"
-          }, {
-            "key": "cHJvamVjdEMuYnVzaW5lc3Mtem9uZQ==.1",
-            "label": "projectC.business-zone"
-          }, {
-            "key": "cHJvamVjdEEuYnVzaW5lc3Mtem9uZQ==.1",
-            "label": "projectA.business-zone"
-          }, {
-            "key": "cHJvamVjdEIuYnVzaW5lc3Mtem9uZQ==.1",
-            "label": "projectB.business-zone"
-          }, {
-            "key": "cHJvamVjdEQuYnVzaW5lc3Mtem9uZQ==.1",
-            "label": "projectD.business-zone"
-          }]
-        }
+        data: {
+          services: [
+            {
+              key: 'bG9hZCBiYWxhbmNlcjEuc3lzdGVt.1',
+              label: 'load balancer1.system',
+            },
+            {
+              key: 'bG9hZCBiYWxhbmNlcjIuc3lzdGVt.1',
+              label: 'load balancer2.system',
+            },
+            {
+              key: 'cHJvamVjdEMuYnVzaW5lc3Mtem9uZQ==.1',
+              label: 'projectC.business-zone',
+            },
+            {
+              key: 'cHJvamVjdEEuYnVzaW5lc3Mtem9uZQ==.1',
+              label: 'projectA.business-zone',
+            },
+            {
+              key: 'cHJvamVjdEIuYnVzaW5lc3Mtem9uZQ==.1',
+              label: 'projectB.business-zone',
+            },
+            {
+              key: 'cHJvamVjdEQuYnVzaW5lc3Mtem9uZQ==.1',
+              label: 'projectD.business-zone',
+            },
+          ],
+        },
       };
       return res.data.services || [];
     });
@@ -510,151 +517,180 @@ const actions: ActionTree<State, any> = {
     //       });
     //   });
 
-    // luke 
+    // luke
     return Promise.resolve().then(() => {
       // queryTopo
       var res = {
-        "data": {
-          "topo": {
-            "nodes": [{
-              "id": "d3d3LmJhaWR1LmNvbTo4MA==.0",
-              "name": "www.baidu.com:80",
-              "type": "HttpClient",
-              "isReal": false
-            }, {
-              "id": "bG9hZCBiYWxhbmNlcjEuc3lzdGVt.1",
-              "name": "load balancer1.system",
-              "type": "Nginx",
-              "isReal": true
-            }, {
-              "id": "VXNlcg==.0",
-              "name": "User",
-              "type": "USER",
-              "isReal": false
-            }, {
-              "id": "cHJvamVjdEMuYnVzaW5lc3Mtem9uZQ==.1",
-              "name": "projectC.business-zone",
-              "type": "SpringMVC",
-              "isReal": true
-            }, {
-              "id": "MTkyLjE2OC4yNTIuMTI6ODc2MQ==.0",
-              "name": "192.168.252.12:8761",
-              "type": "HttpClient",
-              "isReal": false
-            }, {
-              "id": "cHJvamVjdEEuYnVzaW5lc3Mtem9uZQ==.1",
-              "name": "projectA.business-zone",
-              "type": "SpringMVC",
-              "isReal": true
-            }, {
-              "id": "cHJvamVjdEIuYnVzaW5lc3Mtem9uZQ==.1",
-              "name": "projectB.business-zone",
-              "type": "SpringMVC",
-              "isReal": true
-            }, {
-              "id": "bG9jYWxob3N0Ojg3NjE=.0",
-              "name": "localhost:8761",
-              "type": "HttpClient",
-              "isReal": false
-            }, {
-              "id": "MTI3LjAuMC4xOjkwOTI=.0",
-              "name": "127.0.0.1:9092",
-              "type": "Kafka",
-              "isReal": false
-            }, {
-              "id": "bG9hZCBiYWxhbmNlcjIuc3lzdGVt.1",
-              "name": "load balancer2.system",
-              "type": "Nginx",
-              "isReal": true
-            }, {
-              "id": "bG9jYWxob3N0Oi0x.0",
-              "name": "localhost:-1",
-              "type": "H2",
-              "isReal": false
-            }, {
-              "id": "cHJvamVjdEQuYnVzaW5lc3Mtem9uZQ==.1",
-              "name": "projectD.business-zone",
-              "type": "kafka-consumer",
-              "isReal": true
-            }],
-            "calls": [{
-              "id": "cHJvamVjdEMuYnVzaW5lc3Mtem9uZQ==.1-d3d3LmJhaWR1LmNvbTo4MA==.0",
-              "source": "cHJvamVjdEMuYnVzaW5lc3Mtem9uZQ==.1",
-              "detectPoints": ["CLIENT"],
-              "target": "d3d3LmJhaWR1LmNvbTo4MA==.0"
-            }, {
-              "id": "cHJvamVjdEEuYnVzaW5lc3Mtem9uZQ==.1-MTkyLjE2OC4yNTIuMTI6ODc2MQ==.0",
-              "source": "cHJvamVjdEEuYnVzaW5lc3Mtem9uZQ==.1",
-              "detectPoints": ["CLIENT"],
-              "target": "MTkyLjE2OC4yNTIuMTI6ODc2MQ==.0"
-            }, {
-              "id": "cHJvamVjdEEuYnVzaW5lc3Mtem9uZQ==.1-bG9jYWxob3N0Ojg3NjE=.0",
-              "source": "cHJvamVjdEEuYnVzaW5lc3Mtem9uZQ==.1",
-              "detectPoints": ["CLIENT"],
-              "target": "bG9jYWxob3N0Ojg3NjE=.0"
-            }, {
-              "id": "cHJvamVjdEIuYnVzaW5lc3Mtem9uZQ==.1-MTkyLjE2OC4yNTIuMTI6ODc2MQ==.0",
-              "source": "cHJvamVjdEIuYnVzaW5lc3Mtem9uZQ==.1",
-              "detectPoints": ["CLIENT"],
-              "target": "MTkyLjE2OC4yNTIuMTI6ODc2MQ==.0"
-            }, {
-              "id": "cHJvamVjdEIuYnVzaW5lc3Mtem9uZQ==.1-bG9jYWxob3N0Ojg3NjE=.0",
-              "source": "cHJvamVjdEIuYnVzaW5lc3Mtem9uZQ==.1",
-              "detectPoints": ["CLIENT"],
-              "target": "bG9jYWxob3N0Ojg3NjE=.0"
-            }, {
-              "id": "cHJvamVjdEMuYnVzaW5lc3Mtem9uZQ==.1-MTI3LjAuMC4xOjkwOTI=.0",
-              "source": "cHJvamVjdEMuYnVzaW5lc3Mtem9uZQ==.1",
-              "detectPoints": ["CLIENT"],
-              "target": "MTI3LjAuMC4xOjkwOTI=.0"
-            }, {
-              "id": "cHJvamVjdEMuYnVzaW5lc3Mtem9uZQ==.1-MTkyLjE2OC4yNTIuMTI6ODc2MQ==.0",
-              "source": "cHJvamVjdEMuYnVzaW5lc3Mtem9uZQ==.1",
-              "detectPoints": ["CLIENT"],
-              "target": "MTkyLjE2OC4yNTIuMTI6ODc2MQ==.0"
-            }, {
-              "id": "cHJvamVjdEEuYnVzaW5lc3Mtem9uZQ==.1-cHJvamVjdEMuYnVzaW5lc3Mtem9uZQ==.1",
-              "source": "cHJvamVjdEEuYnVzaW5lc3Mtem9uZQ==.1",
-              "detectPoints": ["CLIENT", "SERVER"],
-              "target": "cHJvamVjdEMuYnVzaW5lc3Mtem9uZQ==.1"
-            }, {
-              "id": "bG9hZCBiYWxhbmNlcjEuc3lzdGVt.1-bG9hZCBiYWxhbmNlcjIuc3lzdGVt.1",
-              "source": "bG9hZCBiYWxhbmNlcjEuc3lzdGVt.1",
-              "detectPoints": ["CLIENT", "SERVER"],
-              "target": "bG9hZCBiYWxhbmNlcjIuc3lzdGVt.1"
-            }, {
-              "id": "bG9hZCBiYWxhbmNlcjIuc3lzdGVt.1-cHJvamVjdEEuYnVzaW5lc3Mtem9uZQ==.1",
-              "source": "bG9hZCBiYWxhbmNlcjIuc3lzdGVt.1",
-              "detectPoints": ["CLIENT", "SERVER"],
-              "target": "cHJvamVjdEEuYnVzaW5lc3Mtem9uZQ==.1"
-            }, {
-              "id": "cHJvamVjdEEuYnVzaW5lc3Mtem9uZQ==.1-cHJvamVjdEIuYnVzaW5lc3Mtem9uZQ==.1",
-              "source": "cHJvamVjdEEuYnVzaW5lc3Mtem9uZQ==.1",
-              "detectPoints": ["CLIENT", "SERVER"],
-              "target": "cHJvamVjdEIuYnVzaW5lc3Mtem9uZQ==.1"
-            }, {
-              "id": "cHJvamVjdEIuYnVzaW5lc3Mtem9uZQ==.1-bG9jYWxob3N0Oi0x.0",
-              "source": "cHJvamVjdEIuYnVzaW5lc3Mtem9uZQ==.1",
-              "detectPoints": ["CLIENT"],
-              "target": "bG9jYWxob3N0Oi0x.0"
-            }, {
-              "id": "cHJvamVjdEMuYnVzaW5lc3Mtem9uZQ==.1-bG9jYWxob3N0Ojg3NjE=.0",
-              "source": "cHJvamVjdEMuYnVzaW5lc3Mtem9uZQ==.1",
-              "detectPoints": ["CLIENT"],
-              "target": "bG9jYWxob3N0Ojg3NjE=.0"
-            }, {
-              "id": "MTI3LjAuMC4xOjkwOTI=.0-cHJvamVjdEQuYnVzaW5lc3Mtem9uZQ==.1",
-              "source": "MTI3LjAuMC4xOjkwOTI=.0",
-              "detectPoints": ["SERVER"],
-              "target": "cHJvamVjdEQuYnVzaW5lc3Mtem9uZQ==.1"
-            }, {
-              "id": "VXNlcg==.0-bG9hZCBiYWxhbmNlcjEuc3lzdGVt.1",
-              "source": "VXNlcg==.0",
-              "detectPoints": ["SERVER"],
-              "target": "bG9hZCBiYWxhbmNlcjEuc3lzdGVt.1"
-            }]
-          }
-        }
+        data: {
+          topo: {
+            nodes: [
+              {
+                id: 'd3d3LmJhaWR1LmNvbTo4MA==.0',
+                name: 'www.baidu.com:80',
+                type: 'HttpClient',
+                isReal: false,
+              },
+              {
+                id: 'bG9hZCBiYWxhbmNlcjEuc3lzdGVt.1',
+                name: 'load balancer1.system',
+                type: 'Nginx',
+                isReal: true,
+              },
+              {
+                id: 'VXNlcg==.0',
+                name: 'User',
+                type: 'USER',
+                isReal: false,
+              },
+              {
+                id: 'cHJvamVjdEMuYnVzaW5lc3Mtem9uZQ==.1',
+                name: 'projectC.business-zone',
+                type: 'SpringMVC',
+                isReal: true,
+              },
+              {
+                id: 'MTkyLjE2OC4yNTIuMTI6ODc2MQ==.0',
+                name: '192.168.252.12:8761',
+                type: 'HttpClient',
+                isReal: false,
+              },
+              {
+                id: 'cHJvamVjdEEuYnVzaW5lc3Mtem9uZQ==.1',
+                name: 'projectA.business-zone',
+                type: 'SpringMVC',
+                isReal: true,
+              },
+              {
+                id: 'cHJvamVjdEIuYnVzaW5lc3Mtem9uZQ==.1',
+                name: 'projectB.business-zone',
+                type: 'SpringMVC',
+                isReal: true,
+              },
+              {
+                id: 'bG9jYWxob3N0Ojg3NjE=.0',
+                name: 'localhost:8761',
+                type: 'HttpClient',
+                isReal: false,
+              },
+              {
+                id: 'MTI3LjAuMC4xOjkwOTI=.0',
+                name: '127.0.0.1:9092',
+                type: 'Kafka',
+                isReal: false,
+              },
+              {
+                id: 'bG9hZCBiYWxhbmNlcjIuc3lzdGVt.1',
+                name: 'load balancer2.system',
+                type: 'Nginx',
+                isReal: true,
+              },
+              {
+                id: 'bG9jYWxob3N0Oi0x.0',
+                name: 'localhost:-1',
+                type: 'H2',
+                isReal: false,
+              },
+              {
+                id: 'cHJvamVjdEQuYnVzaW5lc3Mtem9uZQ==.1',
+                name: 'projectD.business-zone',
+                type: 'kafka-consumer',
+                isReal: true,
+              },
+            ],
+            calls: [
+              {
+                id: 'cHJvamVjdEMuYnVzaW5lc3Mtem9uZQ==.1-d3d3LmJhaWR1LmNvbTo4MA==.0',
+                source: 'cHJvamVjdEMuYnVzaW5lc3Mtem9uZQ==.1',
+                detectPoints: ['CLIENT'],
+                target: 'd3d3LmJhaWR1LmNvbTo4MA==.0',
+              },
+              {
+                id: 'cHJvamVjdEEuYnVzaW5lc3Mtem9uZQ==.1-MTkyLjE2OC4yNTIuMTI6ODc2MQ==.0',
+                source: 'cHJvamVjdEEuYnVzaW5lc3Mtem9uZQ==.1',
+                detectPoints: ['CLIENT'],
+                target: 'MTkyLjE2OC4yNTIuMTI6ODc2MQ==.0',
+              },
+              {
+                id: 'cHJvamVjdEEuYnVzaW5lc3Mtem9uZQ==.1-bG9jYWxob3N0Ojg3NjE=.0',
+                source: 'cHJvamVjdEEuYnVzaW5lc3Mtem9uZQ==.1',
+                detectPoints: ['CLIENT'],
+                target: 'bG9jYWxob3N0Ojg3NjE=.0',
+              },
+              {
+                id: 'cHJvamVjdEIuYnVzaW5lc3Mtem9uZQ==.1-MTkyLjE2OC4yNTIuMTI6ODc2MQ==.0',
+                source: 'cHJvamVjdEIuYnVzaW5lc3Mtem9uZQ==.1',
+                detectPoints: ['CLIENT'],
+                target: 'MTkyLjE2OC4yNTIuMTI6ODc2MQ==.0',
+              },
+              {
+                id: 'cHJvamVjdEIuYnVzaW5lc3Mtem9uZQ==.1-bG9jYWxob3N0Ojg3NjE=.0',
+                source: 'cHJvamVjdEIuYnVzaW5lc3Mtem9uZQ==.1',
+                detectPoints: ['CLIENT'],
+                target: 'bG9jYWxob3N0Ojg3NjE=.0',
+              },
+              {
+                id: 'cHJvamVjdEMuYnVzaW5lc3Mtem9uZQ==.1-MTI3LjAuMC4xOjkwOTI=.0',
+                source: 'cHJvamVjdEMuYnVzaW5lc3Mtem9uZQ==.1',
+                detectPoints: ['CLIENT'],
+                target: 'MTI3LjAuMC4xOjkwOTI=.0',
+              },
+              {
+                id: 'cHJvamVjdEMuYnVzaW5lc3Mtem9uZQ==.1-MTkyLjE2OC4yNTIuMTI6ODc2MQ==.0',
+                source: 'cHJvamVjdEMuYnVzaW5lc3Mtem9uZQ==.1',
+                detectPoints: ['CLIENT'],
+                target: 'MTkyLjE2OC4yNTIuMTI6ODc2MQ==.0',
+              },
+              {
+                id: 'cHJvamVjdEEuYnVzaW5lc3Mtem9uZQ==.1-cHJvamVjdEMuYnVzaW5lc3Mtem9uZQ==.1',
+                source: 'cHJvamVjdEEuYnVzaW5lc3Mtem9uZQ==.1',
+                detectPoints: ['CLIENT', 'SERVER'],
+                target: 'cHJvamVjdEMuYnVzaW5lc3Mtem9uZQ==.1',
+              },
+              {
+                id: 'bG9hZCBiYWxhbmNlcjEuc3lzdGVt.1-bG9hZCBiYWxhbmNlcjIuc3lzdGVt.1',
+                source: 'bG9hZCBiYWxhbmNlcjEuc3lzdGVt.1',
+                detectPoints: ['CLIENT', 'SERVER'],
+                target: 'bG9hZCBiYWxhbmNlcjIuc3lzdGVt.1',
+              },
+              {
+                id: 'bG9hZCBiYWxhbmNlcjIuc3lzdGVt.1-cHJvamVjdEEuYnVzaW5lc3Mtem9uZQ==.1',
+                source: 'bG9hZCBiYWxhbmNlcjIuc3lzdGVt.1',
+                detectPoints: ['CLIENT', 'SERVER'],
+                target: 'cHJvamVjdEEuYnVzaW5lc3Mtem9uZQ==.1',
+              },
+              {
+                id: 'cHJvamVjdEEuYnVzaW5lc3Mtem9uZQ==.1-cHJvamVjdEIuYnVzaW5lc3Mtem9uZQ==.1',
+                source: 'cHJvamVjdEEuYnVzaW5lc3Mtem9uZQ==.1',
+                detectPoints: ['CLIENT', 'SERVER'],
+                target: 'cHJvamVjdEIuYnVzaW5lc3Mtem9uZQ==.1',
+              },
+              {
+                id: 'cHJvamVjdEIuYnVzaW5lc3Mtem9uZQ==.1-bG9jYWxob3N0Oi0x.0',
+                source: 'cHJvamVjdEIuYnVzaW5lc3Mtem9uZQ==.1',
+                detectPoints: ['CLIENT'],
+                target: 'bG9jYWxob3N0Oi0x.0',
+              },
+              {
+                id: 'cHJvamVjdEMuYnVzaW5lc3Mtem9uZQ==.1-bG9jYWxob3N0Ojg3NjE=.0',
+                source: 'cHJvamVjdEMuYnVzaW5lc3Mtem9uZQ==.1',
+                detectPoints: ['CLIENT'],
+                target: 'bG9jYWxob3N0Ojg3NjE=.0',
+              },
+              {
+                id: 'MTI3LjAuMC4xOjkwOTI=.0-cHJvamVjdEQuYnVzaW5lc3Mtem9uZQ==.1',
+                source: 'MTI3LjAuMC4xOjkwOTI=.0',
+                detectPoints: ['SERVER'],
+                target: 'cHJvamVjdEQuYnVzaW5lc3Mtem9uZQ==.1',
+              },
+              {
+                id: 'VXNlcg==.0-bG9hZCBiYWxhbmNlcjEuc3lzdGVt.1',
+                source: 'VXNlcg==.0',
+                detectPoints: ['SERVER'],
+                target: 'bG9hZCBiYWxhbmNlcjEuc3lzdGVt.1',
+              },
+            ],
+          },
+        },
       };
       const calls = res.data.topo.calls;
       const nodes = res.data.topo.nodes;
@@ -665,227 +701,300 @@ const actions: ActionTree<State, any> = {
 
       // queryTopoInfo
       var info = {
-        "data": {
-          "sla": {
-            "values": [{
-              "id": "d3d3LmJhaWR1LmNvbTo4MA==.0",
-              "value": 0
-            }, {
-              "id": "bG9hZCBiYWxhbmNlcjEuc3lzdGVt.1",
-              "value": 10000
-            }, {
-              "id": "VXNlcg==.0",
-              "value": 0
-            }, {
-              "id": "cHJvamVjdEMuYnVzaW5lc3Mtem9uZQ==.1",
-              "value": 10000
-            }, {
-              "id": "MTkyLjE2OC4yNTIuMTI6ODc2MQ==.0",
-              "value": 0
-            }, {
-              "id": "cHJvamVjdEEuYnVzaW5lc3Mtem9uZQ==.1",
-              "value": 10000
-            }, {
-              "id": "cHJvamVjdEIuYnVzaW5lc3Mtem9uZQ==.1",
-              "value": 10000
-            }, {
-              "id": "bG9jYWxob3N0Ojg3NjE=.0",
-              "value": 0
-            }, {
-              "id": "MTI3LjAuMC4xOjkwOTI=.0",
-              "value": 0
-            }, {
-              "id": "bG9hZCBiYWxhbmNlcjIuc3lzdGVt.1",
-              "value": 10000
-            }, {
-              "id": "bG9jYWxob3N0Oi0x.0",
-              "value": 0
-            }, {
-              "id": "cHJvamVjdEQuYnVzaW5lc3Mtem9uZQ==.1",
-              "value": 10000
-            }]
+        data: {
+          sla: {
+            values: [
+              {
+                id: 'd3d3LmJhaWR1LmNvbTo4MA==.0',
+                value: 0,
+              },
+              {
+                id: 'bG9hZCBiYWxhbmNlcjEuc3lzdGVt.1',
+                value: 10000,
+              },
+              {
+                id: 'VXNlcg==.0',
+                value: 0,
+              },
+              {
+                id: 'cHJvamVjdEMuYnVzaW5lc3Mtem9uZQ==.1',
+                value: 10000,
+              },
+              {
+                id: 'MTkyLjE2OC4yNTIuMTI6ODc2MQ==.0',
+                value: 0,
+              },
+              {
+                id: 'cHJvamVjdEEuYnVzaW5lc3Mtem9uZQ==.1',
+                value: 10000,
+              },
+              {
+                id: 'cHJvamVjdEIuYnVzaW5lc3Mtem9uZQ==.1',
+                value: 10000,
+              },
+              {
+                id: 'bG9jYWxob3N0Ojg3NjE=.0',
+                value: 0,
+              },
+              {
+                id: 'MTI3LjAuMC4xOjkwOTI=.0',
+                value: 0,
+              },
+              {
+                id: 'bG9hZCBiYWxhbmNlcjIuc3lzdGVt.1',
+                value: 10000,
+              },
+              {
+                id: 'bG9jYWxob3N0Oi0x.0',
+                value: 0,
+              },
+              {
+                id: 'cHJvamVjdEQuYnVzaW5lc3Mtem9uZQ==.1',
+                value: 10000,
+              },
+            ],
           },
-          "nodeCpm": {
-            "values": [{
-              "id": "d3d3LmJhaWR1LmNvbTo4MA==.0",
-              "value": 0
-            }, {
-              "id": "bG9hZCBiYWxhbmNlcjEuc3lzdGVt.1",
-              "value": 202
-            }, {
-              "id": "VXNlcg==.0",
-              "value": 0
-            }, {
-              "id": "cHJvamVjdEMuYnVzaW5lc3Mtem9uZQ==.1",
-              "value": 213
-            }, {
-              "id": "MTkyLjE2OC4yNTIuMTI6ODc2MQ==.0",
-              "value": 0
-            }, {
-              "id": "cHJvamVjdEEuYnVzaW5lc3Mtem9uZQ==.1",
-              "value": 200
-            }, {
-              "id": "cHJvamVjdEIuYnVzaW5lc3Mtem9uZQ==.1",
-              "value": 201
-            }, {
-              "id": "bG9jYWxob3N0Ojg3NjE=.0",
-              "value": 0
-            }, {
-              "id": "MTI3LjAuMC4xOjkwOTI=.0",
-              "value": 0
-            }, {
-              "id": "bG9hZCBiYWxhbmNlcjIuc3lzdGVt.1",
-              "value": 202
-            }, {
-              "id": "bG9jYWxob3N0Oi0x.0",
-              "value": 0
-            }, {
-              "id": "cHJvamVjdEQuYnVzaW5lc3Mtem9uZQ==.1",
-              "value": 202
-            }]
+          nodeCpm: {
+            values: [
+              {
+                id: 'd3d3LmJhaWR1LmNvbTo4MA==.0',
+                value: 0,
+              },
+              {
+                id: 'bG9hZCBiYWxhbmNlcjEuc3lzdGVt.1',
+                value: 202,
+              },
+              {
+                id: 'VXNlcg==.0',
+                value: 0,
+              },
+              {
+                id: 'cHJvamVjdEMuYnVzaW5lc3Mtem9uZQ==.1',
+                value: 213,
+              },
+              {
+                id: 'MTkyLjE2OC4yNTIuMTI6ODc2MQ==.0',
+                value: 0,
+              },
+              {
+                id: 'cHJvamVjdEEuYnVzaW5lc3Mtem9uZQ==.1',
+                value: 200,
+              },
+              {
+                id: 'cHJvamVjdEIuYnVzaW5lc3Mtem9uZQ==.1',
+                value: 201,
+              },
+              {
+                id: 'bG9jYWxob3N0Ojg3NjE=.0',
+                value: 0,
+              },
+              {
+                id: 'MTI3LjAuMC4xOjkwOTI=.0',
+                value: 0,
+              },
+              {
+                id: 'bG9hZCBiYWxhbmNlcjIuc3lzdGVt.1',
+                value: 202,
+              },
+              {
+                id: 'bG9jYWxob3N0Oi0x.0',
+                value: 0,
+              },
+              {
+                id: 'cHJvamVjdEQuYnVzaW5lc3Mtem9uZQ==.1',
+                value: 202,
+              },
+            ],
           },
-          "nodeLatency": {
-            "values": [{
-              "id": "d3d3LmJhaWR1LmNvbTo4MA==.0",
-              "value": 0
-            }, {
-              "id": "bG9hZCBiYWxhbmNlcjEuc3lzdGVt.1",
-              "value": 1892
-            }, {
-              "id": "VXNlcg==.0",
-              "value": 0
-            }, {
-              "id": "cHJvamVjdEMuYnVzaW5lc3Mtem9uZQ==.1",
-              "value": 4423
-            }, {
-              "id": "MTkyLjE2OC4yNTIuMTI6ODc2MQ==.0",
-              "value": 0
-            }, {
-              "id": "cHJvamVjdEEuYnVzaW5lc3Mtem9uZQ==.1",
-              "value": 1895
-            }, {
-              "id": "cHJvamVjdEIuYnVzaW5lc3Mtem9uZQ==.1",
-              "value": 510
-            }, {
-              "id": "bG9jYWxob3N0Ojg3NjE=.0",
-              "value": 0
-            }, {
-              "id": "MTI3LjAuMC4xOjkwOTI=.0",
-              "value": 0
-            }, {
-              "id": "bG9hZCBiYWxhbmNlcjIuc3lzdGVt.1",
-              "value": 1891
-            }, {
-              "id": "bG9jYWxob3N0Oi0x.0",
-              "value": 0
-            }, {
-              "id": "cHJvamVjdEQuYnVzaW5lc3Mtem9uZQ==.1",
-              "value": 0
-            }]
+          nodeLatency: {
+            values: [
+              {
+                id: 'd3d3LmJhaWR1LmNvbTo4MA==.0',
+                value: 0,
+              },
+              {
+                id: 'bG9hZCBiYWxhbmNlcjEuc3lzdGVt.1',
+                value: 1892,
+              },
+              {
+                id: 'VXNlcg==.0',
+                value: 0,
+              },
+              {
+                id: 'cHJvamVjdEMuYnVzaW5lc3Mtem9uZQ==.1',
+                value: 4423,
+              },
+              {
+                id: 'MTkyLjE2OC4yNTIuMTI6ODc2MQ==.0',
+                value: 0,
+              },
+              {
+                id: 'cHJvamVjdEEuYnVzaW5lc3Mtem9uZQ==.1',
+                value: 1895,
+              },
+              {
+                id: 'cHJvamVjdEIuYnVzaW5lc3Mtem9uZQ==.1',
+                value: 510,
+              },
+              {
+                id: 'bG9jYWxob3N0Ojg3NjE=.0',
+                value: 0,
+              },
+              {
+                id: 'MTI3LjAuMC4xOjkwOTI=.0',
+                value: 0,
+              },
+              {
+                id: 'bG9hZCBiYWxhbmNlcjIuc3lzdGVt.1',
+                value: 1891,
+              },
+              {
+                id: 'bG9jYWxob3N0Oi0x.0',
+                value: 0,
+              },
+              {
+                id: 'cHJvamVjdEQuYnVzaW5lc3Mtem9uZQ==.1',
+                value: 0,
+              },
+            ],
           },
-          "cpmS": {
-            "values": [{
-              "id": "MTI3LjAuMC4xOjkwOTI=.0-cHJvamVjdEQuYnVzaW5lc3Mtem9uZQ==.1",
-              "value": 202
-            }, {
-              "id": "VXNlcg==.0-bG9hZCBiYWxhbmNlcjEuc3lzdGVt.1",
-              "value": 200
-            }]
+          cpmS: {
+            values: [
+              {
+                id: 'MTI3LjAuMC4xOjkwOTI=.0-cHJvamVjdEQuYnVzaW5lc3Mtem9uZQ==.1',
+                value: 202,
+              },
+              {
+                id: 'VXNlcg==.0-bG9hZCBiYWxhbmNlcjEuc3lzdGVt.1',
+                value: 200,
+              },
+            ],
           },
-          "latencyS": {
-            "values": [{
-              "id": "MTI3LjAuMC4xOjkwOTI=.0-cHJvamVjdEQuYnVzaW5lc3Mtem9uZQ==.1",
-              "value": 0
-            }, {
-              "id": "VXNlcg==.0-bG9hZCBiYWxhbmNlcjEuc3lzdGVt.1",
-              "value": 0
-            }]
+          latencyS: {
+            values: [
+              {
+                id: 'MTI3LjAuMC4xOjkwOTI=.0-cHJvamVjdEQuYnVzaW5lc3Mtem9uZQ==.1',
+                value: 0,
+              },
+              {
+                id: 'VXNlcg==.0-bG9hZCBiYWxhbmNlcjEuc3lzdGVt.1',
+                value: 0,
+              },
+            ],
           },
-          "cpmC": {
-            "values": [{
-              "id": "cHJvamVjdEMuYnVzaW5lc3Mtem9uZQ==.1-d3d3LmJhaWR1LmNvbTo4MA==.0",
-              "value": 215
-            }, {
-              "id": "cHJvamVjdEEuYnVzaW5lc3Mtem9uZQ==.1-MTkyLjE2OC4yNTIuMTI6ODc2MQ==.0",
-              "value": 3
-            }, {
-              "id": "cHJvamVjdEEuYnVzaW5lc3Mtem9uZQ==.1-bG9jYWxob3N0Ojg3NjE=.0",
-              "value": 3
-            }, {
-              "id": "cHJvamVjdEIuYnVzaW5lc3Mtem9uZQ==.1-MTkyLjE2OC4yNTIuMTI6ODc2MQ==.0",
-              "value": 3
-            }, {
-              "id": "cHJvamVjdEIuYnVzaW5lc3Mtem9uZQ==.1-bG9jYWxob3N0Ojg3NjE=.0",
-              "value": 3
-            }, {
-              "id": "cHJvamVjdEMuYnVzaW5lc3Mtem9uZQ==.1-MTI3LjAuMC4xOjkwOTI=.0",
-              "value": 213
-            }, {
-              "id": "cHJvamVjdEMuYnVzaW5lc3Mtem9uZQ==.1-MTkyLjE2OC4yNTIuMTI6ODc2MQ==.0",
-              "value": 3
-            }, {
-              "id": "cHJvamVjdEEuYnVzaW5lc3Mtem9uZQ==.1-cHJvamVjdEMuYnVzaW5lc3Mtem9uZQ==.1",
-              "value": 214
-            }, {
-              "id": "bG9hZCBiYWxhbmNlcjEuc3lzdGVt.1-bG9hZCBiYWxhbmNlcjIuc3lzdGVt.1",
-              "value": 200
-            }, {
-              "id": "bG9hZCBiYWxhbmNlcjIuc3lzdGVt.1-cHJvamVjdEEuYnVzaW5lc3Mtem9uZQ==.1",
-              "value": 202
-            }, {
-              "id": "cHJvamVjdEEuYnVzaW5lc3Mtem9uZQ==.1-cHJvamVjdEIuYnVzaW5lc3Mtem9uZQ==.1",
-              "value": 200
-            }, {
-              "id": "cHJvamVjdEIuYnVzaW5lc3Mtem9uZQ==.1-bG9jYWxob3N0Oi0x.0",
-              "value": 412
-            }, {
-              "id": "cHJvamVjdEMuYnVzaW5lc3Mtem9uZQ==.1-bG9jYWxob3N0Ojg3NjE=.0",
-              "value": 3
-            }]
+          cpmC: {
+            values: [
+              {
+                id: 'cHJvamVjdEMuYnVzaW5lc3Mtem9uZQ==.1-d3d3LmJhaWR1LmNvbTo4MA==.0',
+                value: 215,
+              },
+              {
+                id: 'cHJvamVjdEEuYnVzaW5lc3Mtem9uZQ==.1-MTkyLjE2OC4yNTIuMTI6ODc2MQ==.0',
+                value: 3,
+              },
+              {
+                id: 'cHJvamVjdEEuYnVzaW5lc3Mtem9uZQ==.1-bG9jYWxob3N0Ojg3NjE=.0',
+                value: 3,
+              },
+              {
+                id: 'cHJvamVjdEIuYnVzaW5lc3Mtem9uZQ==.1-MTkyLjE2OC4yNTIuMTI6ODc2MQ==.0',
+                value: 3,
+              },
+              {
+                id: 'cHJvamVjdEIuYnVzaW5lc3Mtem9uZQ==.1-bG9jYWxob3N0Ojg3NjE=.0',
+                value: 3,
+              },
+              {
+                id: 'cHJvamVjdEMuYnVzaW5lc3Mtem9uZQ==.1-MTI3LjAuMC4xOjkwOTI=.0',
+                value: 213,
+              },
+              {
+                id: 'cHJvamVjdEMuYnVzaW5lc3Mtem9uZQ==.1-MTkyLjE2OC4yNTIuMTI6ODc2MQ==.0',
+                value: 3,
+              },
+              {
+                id: 'cHJvamVjdEEuYnVzaW5lc3Mtem9uZQ==.1-cHJvamVjdEMuYnVzaW5lc3Mtem9uZQ==.1',
+                value: 214,
+              },
+              {
+                id: 'bG9hZCBiYWxhbmNlcjEuc3lzdGVt.1-bG9hZCBiYWxhbmNlcjIuc3lzdGVt.1',
+                value: 200,
+              },
+              {
+                id: 'bG9hZCBiYWxhbmNlcjIuc3lzdGVt.1-cHJvamVjdEEuYnVzaW5lc3Mtem9uZQ==.1',
+                value: 202,
+              },
+              {
+                id: 'cHJvamVjdEEuYnVzaW5lc3Mtem9uZQ==.1-cHJvamVjdEIuYnVzaW5lc3Mtem9uZQ==.1',
+                value: 200,
+              },
+              {
+                id: 'cHJvamVjdEIuYnVzaW5lc3Mtem9uZQ==.1-bG9jYWxob3N0Oi0x.0',
+                value: 412,
+              },
+              {
+                id: 'cHJvamVjdEMuYnVzaW5lc3Mtem9uZQ==.1-bG9jYWxob3N0Ojg3NjE=.0',
+                value: 3,
+              },
+            ],
           },
-          "latencyC": {
-            "values": [{
-              "id": "cHJvamVjdEMuYnVzaW5lc3Mtem9uZQ==.1-d3d3LmJhaWR1LmNvbTo4MA==.0",
-              "value": 32
-            }, {
-              "id": "cHJvamVjdEEuYnVzaW5lc3Mtem9uZQ==.1-MTkyLjE2OC4yNTIuMTI6ODc2MQ==.0",
-              "value": 1
-            }, {
-              "id": "cHJvamVjdEEuYnVzaW5lc3Mtem9uZQ==.1-bG9jYWxob3N0Ojg3NjE=.0",
-              "value": 1
-            }, {
-              "id": "cHJvamVjdEIuYnVzaW5lc3Mtem9uZQ==.1-MTkyLjE2OC4yNTIuMTI6ODc2MQ==.0",
-              "value": 1
-            }, {
-              "id": "cHJvamVjdEIuYnVzaW5lc3Mtem9uZQ==.1-bG9jYWxob3N0Ojg3NjE=.0",
-              "value": 1
-            }, {
-              "id": "cHJvamVjdEMuYnVzaW5lc3Mtem9uZQ==.1-MTI3LjAuMC4xOjkwOTI=.0",
-              "value": 3403
-            }, {
-              "id": "cHJvamVjdEMuYnVzaW5lc3Mtem9uZQ==.1-MTkyLjE2OC4yNTIuMTI6ODc2MQ==.0",
-              "value": 1
-            }, {
-              "id": "cHJvamVjdEEuYnVzaW5lc3Mtem9uZQ==.1-cHJvamVjdEMuYnVzaW5lc3Mtem9uZQ==.1",
-              "value": 1293
-            }, {
-              "id": "bG9hZCBiYWxhbmNlcjEuc3lzdGVt.1-bG9hZCBiYWxhbmNlcjIuc3lzdGVt.1",
-              "value": 1896
-            }, {
-              "id": "bG9hZCBiYWxhbmNlcjIuc3lzdGVt.1-cHJvamVjdEEuYnVzaW5lc3Mtem9uZQ==.1",
-              "value": 1891
-            }, {
-              "id": "cHJvamVjdEEuYnVzaW5lc3Mtem9uZQ==.1-cHJvamVjdEIuYnVzaW5lc3Mtem9uZQ==.1",
-              "value": 511
-            }, {
-              "id": "cHJvamVjdEIuYnVzaW5lc3Mtem9uZQ==.1-bG9jYWxob3N0Oi0x.0",
-              "value": 4
-            }, {
-              "id": "cHJvamVjdEMuYnVzaW5lc3Mtem9uZQ==.1-bG9jYWxob3N0Ojg3NjE=.0",
-              "value": 1
-            }]
-          }
-        }
+          latencyC: {
+            values: [
+              {
+                id: 'cHJvamVjdEMuYnVzaW5lc3Mtem9uZQ==.1-d3d3LmJhaWR1LmNvbTo4MA==.0',
+                value: 32,
+              },
+              {
+                id: 'cHJvamVjdEEuYnVzaW5lc3Mtem9uZQ==.1-MTkyLjE2OC4yNTIuMTI6ODc2MQ==.0',
+                value: 1,
+              },
+              {
+                id: 'cHJvamVjdEEuYnVzaW5lc3Mtem9uZQ==.1-bG9jYWxob3N0Ojg3NjE=.0',
+                value: 1,
+              },
+              {
+                id: 'cHJvamVjdEIuYnVzaW5lc3Mtem9uZQ==.1-MTkyLjE2OC4yNTIuMTI6ODc2MQ==.0',
+                value: 1,
+              },
+              {
+                id: 'cHJvamVjdEIuYnVzaW5lc3Mtem9uZQ==.1-bG9jYWxob3N0Ojg3NjE=.0',
+                value: 1,
+              },
+              {
+                id: 'cHJvamVjdEMuYnVzaW5lc3Mtem9uZQ==.1-MTI3LjAuMC4xOjkwOTI=.0',
+                value: 3403,
+              },
+              {
+                id: 'cHJvamVjdEMuYnVzaW5lc3Mtem9uZQ==.1-MTkyLjE2OC4yNTIuMTI6ODc2MQ==.0',
+                value: 1,
+              },
+              {
+                id: 'cHJvamVjdEEuYnVzaW5lc3Mtem9uZQ==.1-cHJvamVjdEMuYnVzaW5lc3Mtem9uZQ==.1',
+                value: 1293,
+              },
+              {
+                id: 'bG9hZCBiYWxhbmNlcjEuc3lzdGVt.1-bG9hZCBiYWxhbmNlcjIuc3lzdGVt.1',
+                value: 1896,
+              },
+              {
+                id: 'bG9hZCBiYWxhbmNlcjIuc3lzdGVt.1-cHJvamVjdEEuYnVzaW5lc3Mtem9uZQ==.1',
+                value: 1891,
+              },
+              {
+                id: 'cHJvamVjdEEuYnVzaW5lc3Mtem9uZQ==.1-cHJvamVjdEIuYnVzaW5lc3Mtem9uZQ==.1',
+                value: 511,
+              },
+              {
+                id: 'cHJvamVjdEIuYnVzaW5lc3Mtem9uZQ==.1-bG9jYWxob3N0Oi0x.0',
+                value: 4,
+              },
+              {
+                id: 'cHJvamVjdEMuYnVzaW5lc3Mtem9uZQ==.1-bG9jYWxob3N0Ojg3NjE=.0',
+                value: 1,
+              },
+            ],
+          },
+        },
       };
       const resInfo = info.data;
       if (!resInfo.sla) {
@@ -939,6 +1048,8 @@ const actions: ActionTree<State, any> = {
           }
         }
       }
+      // console.log(calls);
+      // console.log(nodes);
       context.commit(types.SET_TOPO, { calls, nodes });
     });
   },

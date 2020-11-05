@@ -1,17 +1,3 @@
-<!-- Licensed to the Apache Software Foundation (ASF) under one or more
-contributor license agreements.  See the NOTICE file distributed with
-this work for additional information regarding copyright ownership.
-The ASF licenses this file to You under the Apache License, Version 2.0
-(the "License"); you may not use this file except in compliance with
-the License.  You may obtain a copy of the License at
-
-  http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License. -->
 <template>
   <div class="micro-topo-chart"></div>
 </template>
@@ -20,20 +6,22 @@ limitations under the License. -->
   import d3tip from 'd3-tip';
   import zoom from './utils/zoom';
   import { simulationInit, simulationSkip } from './utils/simulation';
-  import nodeElement from './utils/nodeElement';
-  import { linkElement, anchorElement } from './utils/linkElement';
+  import { nodeElement, linkElement, anchorElement } from './utils/initElement';
   import tool from './utils/tool';
+
+  import LOCAL_STATE_TOPO from './data.js';
+
   export default {
     props: {
       current: {
         type: Object,
         default: () => ({}),
       },
-      nodes: {
+      nodesx: {
         type: Array,
         default: () => [],
       },
-      links: {
+      linksx: {
         type: Array,
         default: () => [],
       },
@@ -42,6 +30,8 @@ limitations under the License. -->
       return {
         height: 600,
         simulation: '',
+        nodes: [],
+        links: []
       };
     },
     beforeDestroy() {
@@ -49,70 +39,142 @@ limitations under the License. -->
     },
     mounted() {
       window.addEventListener('resize', this.resize);
-
-      // 添加svg
-      this.svg = d3
-        .select(this.$el) // this.$el指向元素.micro-topo-chart
-        .append('svg')
-        .attr('class', 'topo-svg')
-        .attr('height', this.$el.clientHeight);
-      
-      // 设置提示
-      this.tip = d3tip()
-        .attr('class', 'd3-tip')
-        .offset([-8, 0]);
-      this.graph = this.svg.append('g').attr('class', 'topo-svg_graph');
-      this.graph.call(this.tip);
-
-      // 设置力模型、仿真、节点分布/位移/运动？
-      this.simulation = simulationInit(d3, this.nodes, this.links, this.ticked);
-
-      // 设置缩放
-      this.svg.call(zoom(d3, this.graph));
-
-      // 类名topo-node、topo-line、topo-line-anchor何时设置？
-      this.node = this.graph.append('g').selectAll('.topo-node');
-      this.link = this.graph.append('g').selectAll('.topo-line'); // 链路
-      this.anchor = this.graph.append('g').selectAll('.topo-line-anchor'); // 链路中间的圆点
-
-      // 设置选中节点后展示的小六边形
-      this.tool = tool(this.graph, [
-        {icon: 'API', click: this.handleGoEndpoint},
-        {icon: 'INSTANCE', click: this.handleGoInstance},
-        {icon: 'TRACE', click: this.handleGoTrace},
-        {icon: 'ALARM', click: this.handleGoAlarm},
-        {icon: 'ENDPOINT', click: this.handleGoEndpointDependency},
-        {icon: ''},
-      ]);
-
-      // 设置单击svg事件
-      this.svg.on('click', (d, i) => {
-        event.stopPropagation();
-        event.preventDefault();
-        this.$store.commit('rocketTopo/SET_NODE', {});
-        this.$store.commit('rocketTopo/SET_LINK', {});
-        this.$store.dispatch('rocketTopo/CLEAR_TOPO_INFO');
-        this.tool.attr('style', 'display: none'); // 隐藏小六边形
-      });
+      this.drawTopo();
     },
-    watch: {
-      nodes: 'update',
-      links: 'update',
-    },
+    // watch: {
+    //   nodes: 'update',
+    //   links: 'update',
+    // },
     methods: {
-      // alarm hexagon
+      drawTopo() {
+        this.nodes = LOCAL_STATE_TOPO.nodes;
+        this.links = LOCAL_STATE_TOPO.calls;
+
+        const topoSize = {
+          width: this.$el.clientWidth,
+          height: this.$el.clientHeight
+        };
+
+        // 设置仿真
+        this.simulation = simulationInit(d3, this.nodes, this.links, this.ticked, topoSize);
+
+        // 初始画布
+        this.svg = d3
+          .select(this.$el) // this.$el指向元素.micro-topo-chart
+          .append('svg')
+          .attr('class', 'topo-svg')
+          .attr('height', this.$el.clientHeight);
+        this.graph = this.svg.append('g').attr('class', 'topo-svg_graph');
+
+         // 设置提示，单元素
+        this.tip = d3tip()
+          .attr('class', 'd3-tip')
+          .offset([-8, 0]);
+        this.graph.call(this.tip);
+
+         // 设置工具小六边形，单元素
+        const shapeOption = {
+          side: 6,
+          centerRadius: 25,
+          hexagonRadius: 10,
+          fixAngle: Math.PI / 2,
+          iconSize: 12,
+        };
+        this.tool = tool(this.graph, [
+          {icon: 'API', click: this.handleGoEndpoint},
+          {icon: 'INSTANCE', click: this.handleGoInstance},
+          {icon: 'TRACE', click: this.handleGoTrace},
+          {icon: 'ALARM', click: this.handleGoAlarm},
+          {icon: 'ENDPOINT', click: this.handleGoEndpointDependency},
+          {icon: ''},
+        ], shapeOption);
+
+        // 设置边
+        this.link = linkElement(this.graph.append('g').selectAll('.topo-line').data(this.links).enter());
+
+        // 设置点
+        this.node = nodeElement(d3, this.graph.append('g').selectAll('.topo-node').data(this.nodes).enter(), this.tool, {
+          dragstart: this.dragstart,
+          dragged: this.dragged,
+          dragended: this.dragended,
+          handleNodeClick: this.handleNodeClick,
+        }, this.tip);
+
+        // 设置缩放
+        this.svg.call(zoom(d3, this.graph));
+
+        // 点击事件
+        this.svg.on('click', (d, i) => {
+          event.stopPropagation();
+          event.preventDefault();
+          this.$store.commit('rocketTopo/SET_NODE', {});
+          this.$store.commit('rocketTopo/SET_LINK', {});
+          this.$store.dispatch('rocketTopo/CLEAR_TOPO_INFO');
+          this.tool.attr('style', 'display: none');
+        });
+      },
+
+      ticked() {
+        this.link.attr('d', (d) =>
+        {
+          return `M${d.source.x} ${d.source.y} Q ${(d.source.x + d.target.x) / 2} ${(d.target.y + d.source.y) / 2 - 90} ${d.target.x} ${d.target.y}`;
+        });
+        this.node.attr('transform', (d) => {
+          return `translate(${d.x},${d.y})`;
+        });
+      },
+
+      dragstart(d) {
+        this.node._groups[0].forEach((g) => {
+          g.__data__.fx = g.__data__.x;
+          g.__data__.fy = g.__data__.y;
+        });
+        if (!d3.event.active) {
+          this.simulation.alphaTarget(0.1).restart();
+        }
+        d3.event.sourceEvent.stopPropagation();
+
+        // if (!d3.event.active) {
+        //   this.simulation.alphaTarget(0.3).restart();
+        // }
+        // d.fx = d.x;
+        // d.fy = d.y;
+      },
+
+      dragged(d) {
+        d.fx = d3.event.x;
+        d.fy = d3.event.y;
+        d.x = d.fx;
+        d.y = d.fy;
+
+        // d.fx = d3.event.x;
+        // d.fy = d3.event.y;
+      },
+
+      dragended() {
+        if (!d3.event.active) {
+          this.simulation.alphaTarget(0);
+        }
+
+        // if (!d3.event.active) {
+        //   simulation.alphaTarget(0);
+        // }
+        // d.fx = null;
+        // d.fy = null;
+      },
+
       handleGoAlarm() {
         this.$emit('setDialog', 'alarm');
       },
-      // trace hexagon
+
       handleGoTrace() {
         this.$emit('setDialog', 'trace');
       },
-      // instace hexagon
+
       handleGoInstance() {
         this.$emit('setDialog', 'instance');
       },
-      // endpoint hexagon
+
       handleGoEndpoint() {
         this.$store.dispatch('SELECT_SERVICE', {
           service: { key: this.current.id, label: this.current.name },
@@ -120,10 +182,11 @@ limitations under the License. -->
         });
         this.$emit('setDialog', 'endpoint');
       },
-      // endpoint dependency hexagon
+
       handleGoEndpointDependency() {
         this.$emit('setDialog', 'endpoint_dependency');
       },
+
       handleNodeClick(d) {
         this.$emit('setCurrent', { key: d.id, label: d.name });
         const {x, y, vx, vy, fx, fy, index, ...rest} = d;
@@ -131,6 +194,7 @@ limitations under the License. -->
         this.$store.commit('rocketTopo/SET_NODE', rest);
         this.$store.commit('rocketTopo/SET_LINK', {});
       },
+
       handleLinkClick(d) {
         event.stopPropagation();
         this.$store.commit('rocketTopo/SET_NODE', {});
@@ -144,66 +208,9 @@ limitations under the License. -->
             'rocketTopo/GET_TOPO_CLIENT_INFO', { ...d, duration: this.$store.getters.durationTime });
         });
       },
+
       resize() {
         this.svg.attr('height', this.$el.clientHeight);
-      },
-      update() { // 绘制拓扑图
-        // node element
-        const that = this;
-        this.node = this.node.data(this.nodes, (d) => d.id);
-        this.node.exit().remove();
-        this.node = nodeElement(d3, this.node.enter(), this.tool, {
-          dragstart: this.dragstart,
-          dragged: this.dragged,
-          dragended: this.dragended,
-          handleNodeClick: this.handleNodeClick,
-        }, this.tip).merge(this.node);
-        // line element
-        this.link = this.link.data(this.links, (d) => d.id);
-        this.link.exit().remove();
-        this.link = linkElement(this.link.enter()).merge(this.link);
-        // anchorElement
-        this.anchor = this.anchor.data(this.links, (d) => d.id);
-        this.anchor.exit().remove();
-        this.anchor = anchorElement(this.anchor.enter(), {
-          handleLinkClick: this.handleLinkClick,
-          $tip: (data) =>
-          `
-            <div class="mb-5"><span class="grey">${this.$t('cpm')}: </span>${data.cpm}</div>
-            <div class="mb-5"><span class="grey">${this.$t('latency')}: </span>${data.latency}</div>
-            <div><span class="grey">${this.$t('detectPoint')}:</span>${data.detectPoints.join(' | ')}</div>
-          `,
-        }, this.tip).merge(this.anchor);
-        // force element
-        this.simulation.nodes(this.nodes);
-        this.simulation.force('link').links(this.links).id((d) => d.id);
-        simulationSkip(d3, this.simulation, this.ticked);
-      },
-      ticked() {
-        this.link.attr('d', (d) => `M${d.source.x} ${d.source.y} Q ${(d.source.x + d.target.x) / 2} ${(d.target.y + d.source.y) / 2 - 90} ${d.target.x} ${d.target.y}`);
-        this.anchor.attr('transform', (d) => `translate(${(d.source.x + d.target.x) / 2}, ${(d.target.y + d.source.y) / 2 - 45})`);
-        this.node.attr('transform', (d) => `translate(${d.x - 22},${d.y - 22})`);
-      },
-      dragstart(d) {
-        this.node._groups[0].forEach((g) => {
-          g.__data__.fx = g.__data__.x;
-          g.__data__.fy = g.__data__.y;
-        });
-        if (!d3.event.active) {
-          this.simulation.alphaTarget(0.1).restart();
-        }
-        d3.event.sourceEvent.stopPropagation();
-      },
-      dragged(d) {
-        d.fx = d3.event.x;
-        d.fy = d3.event.y;
-        d.x = d.fx;
-        d.y = d.fy;
-      },
-      dragended() {
-        if (!d3.event.active) {
-          this.simulation.alphaTarget(0);
-        }
       },
     },
   };
@@ -219,9 +226,9 @@ limitations under the License. -->
     .topo-line {
       stroke-linecap: round;
       stroke-width: 1.3px !important;
-      stroke-dasharray: 13 7;
+      // stroke-dasharray: 13 7;
       fill: none;
-      animation: topo-dash 1s linear infinite !important;
+      // animation: topo-dash 1s linear infinite !important;
     }
     .topo-line-anchor {
       cursor: pointer;

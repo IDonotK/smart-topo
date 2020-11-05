@@ -3,23 +3,7 @@
     <TopoView :topoData="{ nodes: filteredStateTopo.nodes, calls: filteredStateTopo.calls }" />
     <TopoSideNavigation />
     <TopoToolSet />
-
     <div style="display:none">{{ filterNodeType }}</div>
-
-    <!-- 中间拓扑图 -->
-    <!-- <Topo
-      :current="current"
-      @setDialog="(type) => (dialog = type)"
-      @setCurrent="setCurrent"
-      :nodes="stateTopo.nodes"
-      :links="stateTopo.calls"
-    /> -->
-
-    <!-- 左上角选择服务 -->
-    <!-- <TopoAside /> -->
-
-    <!-- 左下角创建分组 -->
-    <!-- <TopoGroup /> -->
   </div>
 </template>
 <script lang="ts">
@@ -38,9 +22,10 @@
   import WindowEndpointDependency from '@/views/containers/topology/endpoint-dependency/index.vue';
 
   import TopoView from '../../components/topology/topo-view.vue';
-  import LOCAL_STATE_TOPO from './data.js';
   import TopoSideNavigation from '../../components/topology/topo-side-navigation.vue';
   import TopoToolSet from '../../components/topology/topo-tool-set.vue';
+
+  import LOCAL_STATE_TOPO from './data.js';
 
   @Component({
     components: {
@@ -74,7 +59,7 @@
     private filteredStateTopo: any = {};
 
     private created() {
-      this.filterTopoOnType('All');
+      // this.filterTopoOnType('All');
     }
 
     private get filterNodeType() {
