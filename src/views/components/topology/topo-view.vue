@@ -111,10 +111,10 @@
         return link
       },
       nodeClick() {
-
+        console.log('node click');
       },
       linkClick() {
-
+        console.log('link click');
       },
       screenShotDone() {
 

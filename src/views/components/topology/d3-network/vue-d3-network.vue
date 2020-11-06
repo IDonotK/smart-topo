@@ -159,6 +159,9 @@
       if (this.resizeListener) window.removeEventListener('resize', this.onResize);
     },
     computed: {
+      zoomController() {
+        return this.$store.state.rocketTopo.zoomController;
+      },
       selected() {
         return this.selection.nodes;
       },
@@ -346,26 +349,22 @@
         let pos = this.clientPos(event);
         if (this.dragging !== false) {
           if (this.nodes[this.dragging]) {
-            let zoomTimes = d3.zoomTransform(d3.select('#zoomContainer').node()).k;
-            let centerX = document.getElementById('netSvg').clientWidth / 2;
-            let centerY = document.getElementById('netSvg').clientHeight / 2;
-            let offsetX = $jq('#netSvg').offset().left;
-            let offsetY = $jq('#netSvg').offset().top;
-            console.log(offsetX, offsetY);
-            // console.log("mouseMove");
-            // console.log("pos: ", pos.x, pos.y)
-            // console.log("node: ", this.nodes[this.dragging].x, this.nodes[this.dragging].y)
-            // console.log("mouseOfst: ", this.mouseOfst.x, this.mouseOfst.y)
-            // console.log('center: ', centerX, centerY)
-            console.log(
-              'to center: ',
-              (centerX + offsetX - pos.x) / zoomTimes,
-              (centerY + offsetY - pos.y) / zoomTimes,
-            );
             this.simulation.restart();
             this.simulation.alpha(0.5);
-            this.nodes[this.dragging].fx = pos.x - offsetX;
-            this.nodes[this.dragging].fy = pos.y - offsetY;
+            // this.nodes[this.dragging].fx = pos.x - offsetX;
+            // this.nodes[this.dragging].fy = pos.y - offsetY;x
+            // 适配缩放后的拖拽
+            let zoomK = d3.zoomTransform(d3.select('#zoomContainer').node()).k;
+            let zoomX = d3.zoomTransform(d3.select('#zoomContainer').node()).x;
+            let zoomY = d3.zoomTransform(d3.select('#zoomContainer').node()).y;
+            let offsetX = $jq('#netSvg').offset().left;
+            let offsetY = $jq('#netSvg').offset().top;
+            let centerX = $jq('#netSvg').width() / 2;
+            let centerY = $jq('#netSvg').height() / 2;
+            this.nodes[this.dragging].fx =
+              centerX - (centerX + offsetX - pos.x) / zoomK - (zoomX + centerX * (zoomK - 1)) / zoomK;
+            this.nodes[this.dragging].fy =
+              centerY - (centerY + offsetY - pos.y) / zoomK - (zoomY + centerY * (zoomK - 1)) / zoomK;
           }
         }
       },
@@ -398,6 +397,32 @@
       // -- Render helpers
       nodeClick(event, node) {
         this.$emit('node-click', event, node);
+        if (event && node) {
+          let pos = this.clientPos(event);
+          let centerX = $jq('#netSvg').width() / 2;
+          let centerY = $jq('#netSvg').height() / 2;
+          let offsetX = $jq('#netSvg').offset().left;
+          let offsetY = $jq('#netSvg').offset().top;
+          let zoomK = d3.zoomTransform(d3.select('#zoomContainer').node()).k;
+          let newZoomK = zoomK < 3 ? 3 : zoomK;
+          this.zoomController.translateBy(
+            d3
+              .select('.net-svg')
+              .transition()
+              .duration(500),
+            (centerX + offsetX - pos.x) / zoomK,
+            (centerY + offsetY - pos.y) / zoomK,
+          );
+          setTimeout(() => {
+            this.zoomController.scaleTo(
+              d3
+                .select('.net-svg')
+                .transition()
+                .duration(500),
+              newZoomK,
+            );
+          }, 550);
+        }
       },
       linkClick(event, link) {
         this.$emit('link-click', event, link);
@@ -451,7 +476,7 @@
       .node {
         stroke: rgba(18, 120, 98, 0.7);
         stroke-width: 3px;
-        transition: fill 0.5s ease;
+        // transition: fill 0.5s ease;
         fill: $white;
 
         &.dark-node {
