@@ -9,15 +9,7 @@
           <span class="tvclc-icon" @click="closeTopoDetail"></span>
         </div>
       </div>
-      <div class="tvc-r">
-        <!-- <RkEcharts height="100%" :option="responseConfig" ref="topo" /> -->
-        <!-- <Topo
-          :current="current"
-          @setDialog="(type) => (dialog = type)"
-          @setCurrent="setCurrent"
-          :nodesx="stateTopo.nodes"
-          :linksx="stateTopo.calls"
-        /> -->
+      <div class="tvc-r" id="tvcrId" ref="tvcr">
         <d3-network
           ref="net"
           :net-nodes="nodes"
@@ -35,8 +27,6 @@
   </div>
 </template>
 <script lang="js">
-  import D3Network from './d3-network/vue-d3-network.common.js';
-
   import * as d3 from 'd3';
   import d3tip from 'd3-tip';
 
@@ -47,46 +37,61 @@
   import podIcon from './assets/types/pod.png';
   import nodeIcon from './assets/types/node.png';
 
-  import Topo from './chart/topo.vue';
-  // import LOCAL_STATE_TOPO from './data.js';
-
-  import defaultData from './d3-network/data.js';
-  import * as utils from './d3-network/utils.js'
+  import * as utils from './d3-network/utils.js';
+  import D3Network from './d3-network/vue-d3-network.vue';
 
   export default {
     props: {
-      topoData: {
-        type: Object,
-        default() {
-          return {
-            nodes: [],
-            calls: [],
-          };
-        },
-      },
+      // topoData: {
+      //   type: Object,
+      //   default() {
+      //     return {
+      //       nodes: [],
+      //       calls: [],
+      //     };
+      //   },
+      // },
     },
 
     data() {
-      let data = Object.assign({}, defaultData);
-      data.lastNodeId = 0;
-      data.lastLinkId = 0;
-      data.settings = {
-        maxLinks: 1,
-        maxNodes: 100
-      };
-      data.nodeSym = null;
-
-      data.current = {};
-      data.stateTopo = {
+      return {
         nodes: [],
-        calls: []
-      };
-      return data;
+        links: [],
+        showMenu: false,
+        selected: {},
+        showSelection: false,
+        linksSelected: {},
+        options: {
+          canvas: false,
+          size: {
+            w: 0,
+            h: 0,
+          },
+          force: 350,
+          offset: {
+            x: 0,
+            y: 0,
+          },
+          nodeSize: 20,
+          linkWidth: 1,
+          nodeLabels: true,
+          linkLabels: true,
+          strLinks: true,
+        },
+
+        lastNodeId: 0,
+        lastLinkId: 0,
+        settings: {
+          maxLinks: 1,
+          maxNodes: 36
+        },
+        nodeSym: null,
+        current: {}
+      }
     },
 
     components: {
       TopoDetail,
-      Topo,
       D3Network
     },
 
@@ -94,145 +99,13 @@
       currentNode() {
         return this.$store.state.rocketTopo.currentNode;
       },
-      responseConfig() {
-        const graph = this.topoData;
-        // 设置图例
-        const categoriesOption = [...new Set(graph.nodes.map((item) => item.type))].map((item) => {
-          let itemTmp = {
-            name: item,
-            textStyle: {
-              color: '#ddd', // 设置图例被选中时的字体颜色
-            }
-          };
-          switch (item) {
-            case 'App': itemTmp.icon = 'image://' + appIcon + ''; break;
-            case 'Process': itemTmp.icon = 'image://' + processIcon + ''; break;
-            case 'Pod': itemTmp.icon = 'image://' + podIcon + ''; break;
-            case 'Node': itemTmp.icon = 'image://' + nodeIcon + ''; break;
-            default: break;
-          }
-          return itemTmp;
-        });
-        const legendOption = {
-          // top: 25,
-          show: false,
-          itemGap: 20,
-          itemWidth: 20,
-          itemHeight: 20,
-          selected: {
-            'App': true,
-            'Process': true,
-            'Pod': true,
-            'Node': true
-          },
-          inactiveColor: '#000', // 设置图例未被选中时的字体颜色
-          data: categoriesOption,
-        }
-
-        const linksOption = [];
-        const nodesOption = [];
-        graph.calls.forEach((call, index) => {
-          linksOption.push({
-            index,
-            source: call.source.id,
-            target: call.target.id,
-            type: call.type, // 支持自定义属性
-            tooltip: {
-              formatter: (params) => { // hover链路内容，待拓展
-                // return params.data.type;
-                return '';
-              },
-            },
-            emphasis: {
-              label: {
-                show: true,
-                formatter: (params) => { // 高亮链路内容，待拓展
-                  return params.data.type;
-                },
-              }
-            }
-          });
-        });
-        graph.nodes.forEach((node) => {
-          let itemTmp = {
-            id: node.id,
-            name: node.name,
-            value: 'some msg', // 待拓展
-            label: {
-              normal: {
-                show: true,
-              },
-            },
-            category: node.type,
-            tooltip: {
-              formatter: '{b} : {c}', // hover节点内容，待拓展
-            }
-          };
-          switch (node.type) {
-            case 'App': itemTmp.symbol = 'image://' + appIcon + ''; break;
-            case 'Process': itemTmp.symbol = 'image://' + processIcon + ''; break;
-            case 'Pod': itemTmp.symbol = 'image://' + podIcon + ''; break;
-            case 'Node': itemTmp.symbol = 'image://' + nodeIcon + ''; break;
-            default: break;
-          }
-          nodesOption.push(itemTmp);
-        });
-
-        return {
-          tooltip: {},
-          color: [
-            '#6be6c1',
-            '#a0a7e6',
-            '#96dee8',
-            '#3f96e3',
-            '#3fb1e3',
-            '#6be6c1',
-            '#626c91',
-            '#a0a7e6',
-            '#c4ebad',
-            '#96dee8',
-          ],
-          legend: legendOption,
-          series : [
-            {
-              legendHoverLink: true,
-              hoverAnimation: true,
-              focusNodeAdjacency: true,
-              edgeSymbol: ['', 'arrow'],
-              edgeSymbolSize: [0, 8],
-              symbolSize: 16,
-
-              top: '10%',
-              height: '75%',
-              name: '',
-              type: 'graph',
-              layout: 'circular',
-              circular: {
-                  rotateLabel: true,
-              },
-              nodes: nodesOption,
-              links: linksOption,
-              categories: categoriesOption,
-              roam: true,
-              label: {
-                normal: {
-                  position: 'right',
-                  formatter: '{b}',
-                },
-              },
-              lineStyle: {
-                normal: {
-                  color: 'source',
-                  curveness: 0.3,
-                },
-              },
-            },
-          ],
-        };
-      },
     },
 
     methods: {
+      initSvgSizeArg() {
+        this.options.size.w = this.$refs.tvcr.clientWidth;
+        this.options.size.h = this.$refs.tvcr.clientHeight;
+      },
       linkCb (link) {
         link.name = 'Link ' + link.id
         return link
@@ -267,82 +140,15 @@
     },
 
     created() {
-      this.reset();
+      // this.reset();
     },
 
     mounted() {
-      // this.stateTopo.nodes = LOCAL_STATE_TOPO.nodes;
-      // this.stateTopo.calls = LOCAL_STATE_TOPO.calls;
-      // this.$store.dispatch('rocketTopo/GET_TOPO', {
-      //   serviceId: 0,
-      // });
-      // this.stateTopo = this.$store.state.rocketTopo;
-      // console.log(this.stateTopo);
-
-      // let calls = [
-      //   {
-      //     cpm: 202,
-      //     id: "cHJvamVjdEMuYnVzaW5lc3Mtem9uZQ==.1",
-      //     isGroupActive: true,
-      //     isReal: true,
-      //     latency: 0,
-      //     name: "projectD.business-zone",
-      //     sla: 100,
-      //     type: "kafka-consumer"
-      //   }
-      // ];
-      // let nodes = [
-      //   {
-      //     cpm: 215,
-      //     detectPoints: ["CLIENT"],
-      //     id: "cHJvamVjdEMuYnVzaW5lc3Mtem9uZQ==.1-d3d3LmJhaWR1LmNvbTo4MA==.0",
-      //     isGroupActive: true,
-      //     latency: 32,
-      //     source: "cHJvamVjdEMuYnVzaW5lc3Mtem9uZQ==.1",
-      //     target: "d3d3LmJhaWR1LmNvbTo4MA==.0"
-      //   },
-      //   {
-      //     cpm: 0,
-      //     id: "d3d3LmJhaWR1LmNvbTo4MA==.0",
-      //     isGroupActive: true,
-      //     isReal: false,
-      //     latency: 0,
-      //     name: "www.baidu.com:80",
-      //     sla: -1,
-      //     type: "HttpClient"
-      //   }
-      // ];
-      // this.stateTopo.nodes = nodes;
-      // this.stateTopo.calls = calls;
-
-      // const currentCompIns = this;
-      // const myChart = this.$refs.topo.myChart;
-
-      // myChart.on('click', (params) => {
-      //   const currentNode = this.topoData.nodes.find((item) => item.id === params.data.id);
-      //   if (currentNode) { // 点击节点事件，待拓展
-      //     this.$store.commit('rocketTopo/SET_NODE', currentNode);
-      //     // 被选中节点居中放大
-      //     const optionTmp = myChart.getOption();
-      //     if (optionTmp.series[0].center == null) {
-      //       optionTmp.series[0].center = [myChart.getWidth() / 2, myChart.getHeight() / 2];
-      //     }
-      //     optionTmp.series[0].center = [
-      //       optionTmp.series[0].center[0] + (params.event.offsetX - myChart.getWidth() / 2) / optionTmp.series[0].zoom,
-      //       optionTmp.series[0].center[1] + (params.event.offsetY - myChart.getHeight() / 2) / optionTmp.series[0].zoom
-      //     ];
-      //     optionTmp.series[0].zoom = 3;
-      //     myChart.setOption(optionTmp, true);
-      //   } else {
-      //     this.$store.commit('rocketTopo/SET_NODE', {});
-      //   }
-      // });
+      this.initSvgSizeArg();
     },
   };
 </script>
 <style lang="scss">
-  @import './d3-network/vue-d3-network.css';
-
   .topo-view-chart {
     position: absolute;
     top: 2px;

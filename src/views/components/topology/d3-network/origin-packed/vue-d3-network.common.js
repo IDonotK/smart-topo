@@ -278,8 +278,7 @@ export default (function(modules) {
       $export($export.G + $export.W + $export.F * !USE_NATIVE, { Symbol: $Symbol });
 
       for (
-        var es6Symbols = // 19.4.2.2, 19.4.2.3, 19.4.2.4, 19.4.2.6, 19.4.2.8, 19.4.2.9, 19.4.2.10, 19.4.2.11, 19.4.2.12, 19.4.2.13, 19.4.2.14
-          'hasInstance,isConcatSpreadable,iterator,match,replace,search,species,split,toPrimitive,toStringTag,unscopables'.split(
+        var es6Symbols = 'hasInstance,isConcatSpreadable,iterator,match,replace,search,species,split,toPrimitive,toStringTag,unscopables'.split( // 19.4.2.2, 19.4.2.3, 19.4.2.4, 19.4.2.6, 19.4.2.8, 19.4.2.9, 19.4.2.10, 19.4.2.11, 19.4.2.12, 19.4.2.13, 19.4.2.14
             ',',
           ),
           j = 0;
@@ -9525,9 +9524,12 @@ export default (function(modules) {
           return (
             -0.5 <= this.r &&
             this.r < 255.5 &&
-            -0.5 <= this.g && this.g < 255.5 &&
-            -0.5 <= this.b && this.b < 255.5 &&
-            0 <= this.opacity && this.opacity <= 1
+            -0.5 <= this.g &&
+            this.g < 255.5 &&
+            -0.5 <= this.b &&
+            this.b < 255.5 &&
+            0 <= this.opacity &&
+            this.opacity <= 1
           );
         },
         hex: rgb_formatHex, // Deprecated! Use color.formatHex.
@@ -9628,8 +9630,10 @@ export default (function(modules) {
         displayable: function() {
           return (
             ((0 <= this.s && this.s <= 1) || isNaN(this.s)) &&
-            0 <= this.l && this.l <= 1 &&
-            0 <= this.opacity && this.opacity <= 1
+            0 <= this.l &&
+            this.l <= 1 &&
+            0 <= this.opacity &&
+            this.opacity <= 1
           );
         },
         formatHsl: function() {

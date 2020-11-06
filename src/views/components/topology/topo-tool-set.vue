@@ -86,6 +86,8 @@
   require('./assets/iconfont/iconfont.js');
   import TopoSelect from './topo-select.vue';
 
+  import * as d3 from 'd3';
+
   export default {
     data() {
       return {
@@ -129,12 +131,19 @@
             {key: 2, label: 'Created On'},
           ],
           select: {key: 0, label: 'All'}
-        }
+        },
+        zoomTimes: 1,
       }
     },
 
     components: {
       TopoSelect
+    },
+
+    computed: {
+      zoomController() {
+        return this.$store.state.rocketTopo.zoomController;
+      }
     },
 
     methods: {
@@ -151,15 +160,35 @@
       },
 
       handleEnlargeTopo() {
-        console.log('handleEnlargeTopo');
+        if (this.zoomTimes < 1) {
+          this.zoomTimes = Number((Number(this.zoomTimes.toFixed(1)) + 0.1).toFixed(1));
+        } else if (this.zoomTimes >= 1) {
+          this.zoomTimes = this.zoomTimes + 1;
+        }
+        if (this.zoomTimes > 10) {
+          this.zoomTimes = this.zoomTimes - 1;
+          return;
+        }
+        this.zoomController.scaleTo(d3.select('.net-svg').transition().duration(750), this.zoomTimes);
       },
 
       handleNarrowTopo() {
-        console.log('handleNarrowTopo');
+        if (this.zoomTimes <= 1) {
+          this.zoomTimes = Number((Number(this.zoomTimes.toFixed(1)) - 0.1).toFixed(1));
+        } else if (this.zoomTimes > 1) {
+          this.zoomTimes = this.zoomTimes - 1;
+        }
+        if (this.zoomTimes < 0.1) {
+          this.zoomTimes = Number((Number(this.zoomTimes.toFixed(1)) + 0.1).toFixed(1));
+          return;
+        }
+        this.zoomController.scaleTo(d3.select('.net-svg').transition().duration(750), this.zoomTimes);
       },
 
       handleRestoreTopo() {
-        console.log('handleRestoreTopo');
+        d3.select('#netSvg')
+          .transition().duration(750)
+          .call(this.zoomController.transform, d3.zoomIdentity);
       },
 
       handleToggleMoreTool() {
