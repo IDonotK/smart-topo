@@ -159,6 +159,9 @@
       if (this.resizeListener) window.removeEventListener('resize', this.onResize);
     },
     computed: {
+      currentNode() {
+        return this.$store.state.rocketTopo.currentNode;
+      },
       zoomController() {
         return this.$store.state.rocketTopo.zoomController;
       },
@@ -352,7 +355,7 @@
             this.simulation.restart();
             this.simulation.alpha(0.5);
             // this.nodes[this.dragging].fx = pos.x - offsetX;
-            // this.nodes[this.dragging].fy = pos.y - offsetY;x
+            // this.nodes[this.dragging].fy = pos.y - offsetY;
             // 适配缩放后的拖拽
             let zoomK = d3.zoomTransform(d3.select('#zoomContainer').node()).k;
             let zoomX = d3.zoomTransform(d3.select('#zoomContainer').node()).x;
@@ -405,15 +408,28 @@
           let offsetY = $jq('#netSvg').offset().top;
           let zoomK = d3.zoomTransform(d3.select('#zoomContainer').node()).k;
           let newZoomK = zoomK < 3 ? 3 : zoomK;
-          this.zoomController.translateBy(
+
+          // 拓扑回到视口中心
+          this.zoomController.translateTo(
             d3
               .select('.net-svg')
               .transition()
               .duration(500),
-            (centerX + offsetX - pos.x) / zoomK,
-            (centerY + offsetY - pos.y) / zoomK,
+            centerX,
+            centerY,
           );
+
           setTimeout(() => {
+            // 选中点居中
+            if (this.currentNode.id !== undefined) {
+              this.currentNode.fx = null;
+              this.currentNode.fy = null;
+            }
+            node.fx = centerX;
+            node.fy = centerY;
+            this.$store.commit('rocketTopo/SET_NODE', node);
+
+            // 放大拓扑
             this.zoomController.scaleTo(
               d3
                 .select('.net-svg')
@@ -421,7 +437,16 @@
                 .duration(500),
               newZoomK,
             );
-          }, 550);
+          }, 510);
+
+          // this.zoomController.translateBy(
+          //   d3
+          //     .select('.net-svg')
+          //     .transition()
+          //     .duration(500),
+          //   (centerX + offsetX - pos.x) / zoomK,
+          //   (centerY + offsetY - pos.y) / zoomK,
+          // );
         }
       },
       linkClick(event, link) {

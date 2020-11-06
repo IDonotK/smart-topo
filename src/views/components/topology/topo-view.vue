@@ -2,9 +2,9 @@
   <div class="topo-view-chart">
     <div id="tvccId" class="tvc-c">
       <div class="tvc-l">
-        <TopoDetail
+        <!-- <TopoDetail
           v-if="currentNode && currentNode.id !== undefined && currentNode.id !== '' && currentNode.id !== null"
-        />
+        /> -->
         <div class="tvcl-close">
           <span class="tvclc-icon" @click="closeTopoDetail"></span>
         </div>
