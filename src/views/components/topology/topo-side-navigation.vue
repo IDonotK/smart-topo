@@ -1,67 +1,90 @@
 <template>
   <div class="topo-side-nav">
-    <div class="tsn-item" v-for="(item, index) in navList" :key="index"
-      :class="{'tsni-odd': index % 2 != 0, 'tsni-even': index % 2 == 0, 'tsni-select': item.id == selectNav}"
-      @click="handleSelectNav(item.id)">
+    <div
+      class="tsn-item"
+      v-for="(item, index) in navList"
+      :key="index"
+      :class="{ 'tsni-odd': index % 2 != 0, 'tsni-even': index % 2 == 0, 'tsni-select': item.id == selectNav }"
+      @click="handleSelectNav(item.id)"
+    >
       <div class="tsni-h">
-        <img :src="item.imgUrl" alt="" width="20" height="20">
-        {{item.name}}
+        <img :src="item.imgUrl" alt="" width="20" height="20" />
+        {{ item.name }}
       </div>
       <div class="tsni-count">
-        <span class="tsnic-event" v-show="item.event > 0">{{item.event}}</span>
+        <span class="tsnic-event" v-show="item.event > 0">{{ item.event }}</span>
         <span v-show="item.event > 0">/</span>
-        <span class="tsnic-total">{{item.total}}</span>
+        <span class="tsnic-total">{{ item.total }}</span>
       </div>
     </div>
   </div>
 </template>
 
 <script lang="js">
-
-  import allIcon from './assets/types/all.png';
-  import appIcon from './assets/types/app.png';
-  import processIcon from './assets/types/process.png';
-  import podIcon from './assets/types/pod.png';
-  import nodeIcon from './assets/types/node.png';
+  import appIcon from './assets/APP.png';
+  import middlewareIcon from './assets/MIDDLEWARE.png';
+  import processIcon from './assets/PROCESS.png';
+  import deploymentIcon from './assets/DEPLOYMENT.png';
+  import podIcon from './assets/POD.png';
+  import nodeIcon from './assets/NODE.png';
 
   export default {
+    props: {
+      topoData: {
+        type: Object,
+        default() {
+          return {
+            nodes: [],
+            links: [],
+          };
+        },
+      },
+    },
+
     data() {
       return {
         navList: [
-          // {
-          //   id: 'All',
-          //   name: 'All',
-          //   imgUrl: allIcon,
-          //   event: 2,
-          //   total: 10
-          // },
           {
             id: 'App',
             name: 'Applications',
             imgUrl: appIcon,
-            event: 1,
-            total: 2
+            event: 0,
+            total: 0
+          },
+          {
+            id: 'Middleware',
+            name: 'Middlewares',
+            imgUrl: middlewareIcon,
+            event: 0,
+            total: 0
           },
           {
             id: 'Process',
             name: 'Processes',
             imgUrl: processIcon,
             event: 0,
-            total: 4
+            total: 0
+          },
+          {
+            id: 'Deployment',
+            name: 'Deployments',
+            imgUrl: deploymentIcon,
+            event: 0,
+            total: 0
           },
           {
             id: 'Pod',
             name: 'Pods',
             imgUrl: podIcon,
-            event: 1,
-            total: 2
+            event: 0,
+            total: 0
           },
           {
             id: 'Node',
             name: 'Nodes',
             imgUrl: nodeIcon,
             event: 0,
-            total: 2
+            total: 0
           }
         ],
       }
@@ -70,14 +93,29 @@
     computed: {
       selectNav() {
         return this.$store.state.rocketTopo.filterNodeType;
-      }
+      },
+    },
+
+    mounted() {
+      this.initNavList();
     },
 
     methods: {
       handleSelectNav(itemId) {
         this.$store.commit('rocketTopo/SET_FILTER_NODE_TYPE', itemId);
+      },
+      initNavList() {
+        this.topoData.nodes.forEach(node => {
+          let navItem = this.navList.find(item => item.id === node.type);
+          if (navItem) {
+            navItem.total++;
+            if (node.state === 'Event') {
+              navItem.event++;
+            }
+          }
+        });
       }
-    }
+    },
 
   }
 </script>
@@ -94,7 +132,7 @@
 
     .tsn-item {
       width: 100%;
-      height: 25%;
+      height: 16.66%;
       display: flex;
       flex-direction: column;
       justify-content: center;
@@ -127,7 +165,7 @@
         padding-bottom: 6px;
         display: flex;
         align-items: center;
-        
+
         img {
           margin-right: 5px;
         }
@@ -153,15 +191,16 @@
           right: 13px;
         }
 
-        &::before, &::after {
-          content: "";
+        &::before,
+        &::after {
+          content: '';
           display: block;
           height: 23px;
           position: absolute;
           top: 0;
-          -webkit-transform: skew(-55deg,0);
-          -ms-transform: skew(-55deg,0);
-          transform: skew(-55deg,0);
+          -webkit-transform: skew(-55deg, 0);
+          -ms-transform: skew(-55deg, 0);
+          transform: skew(-55deg, 0);
         }
 
         .tsnic-event {
@@ -170,5 +209,4 @@
       }
     }
   }
-
 </style>

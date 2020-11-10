@@ -2,7 +2,13 @@
   <div class="topo-tool-set">
     <!-- 搜索节点 -->
     <div class="search-wrapper">
-      <input type="text" class="sw-input" v-model="inputId" placeholder="请输入节点ID" />
+      <input
+        type="text"
+        class="sw-input"
+        v-model="inputId"
+        placeholder="请输入节点ID"
+        @keyup.prevent.enter="handleMouseUp"
+      />
       <span class="sw-clear">
         <svg class="icon sm close" @click="handleClearInputId" v-if="inputId">
           <use xlink:href="#clear"></use>
@@ -22,7 +28,12 @@
       <svg class="topo-icon smaller" aria-hidden="true" @click="handleNarrowTopo">
         <use xlink:href="#icon-fangdajingsuoxiao"></use>
       </svg>
-      <svg class="topo-icon restore" aria-hidden="true" @click="handleRestoreTopo">
+      <svg
+        class="topo-icon restore"
+        aria-hidden="true"
+        @click.stop.prevent="handleRestoreTopo(false)"
+        @dblclick.stop.prevent="handleRestoreTopo(true)"
+      >
         <use xlink:href="#icon-huanyuan"></use>
       </svg>
     </div>
@@ -89,6 +100,18 @@
   import * as d3 from 'd3';
 
   export default {
+    props: {
+      topoData: {
+        type: Object,
+        default() {
+          return {
+            nodes: [],
+            links: [],
+          };
+        },
+      },
+    },
+
     data() {
       return {
         inputId: '',
@@ -98,9 +121,11 @@
           data: [
             {key: 0, label: 'None'},
             {key: 1, label: 'Application'},
-            {key: 2, label: 'Process'},
-            {key: 3, label: 'Pod'},
-            {key: 4, label: 'Node'}
+            {key: 2, label: 'Middleware'},
+            {key: 3, label: 'Process'},
+            {key: 4, label: 'Deployment'},
+            {key: 5, label: 'Pod'},
+            {key: 6, label: 'Node'}
           ],
           select: {key: 0, label: 'None'},
         },
@@ -117,7 +142,7 @@
           title: '关联节点类型',
           data: [
             {key: 0, label: 'Single Hop'},
-            {key: 1, label: 'All'},
+            {key: 1, label: 'All Streams'},
             {key: 2, label: 'Up Stream'},
             {key: 3, label: 'Down Stream'},
           ],
@@ -143,20 +168,40 @@
     computed: {
       zoomController() {
         return this.$store.state.rocketTopo.zoomController;
+      },
+      currentNode() {
+        return this.$store.state.rocketTopo.currentNode;
+      },
+      // topoBasicData() {
+      //   return this.$store.state.rocketTopo.topoBasicData;
+      // }
+    },
+
+    watch: {
+      topoData(newVal, oldVal) {
+        console.log('topo-tool-set knows');
       }
     },
 
     methods: {
+      handleMouseUp() {
+        this.handleSearchOnId();
+      },
       handleSearchOnId() {
         if (this.inputId === '') {
           return;
         }
-        console.log('handleSearchOnId');
+        // let result = this.topoBasicData.nodes.find(node => String(node.id) === this.inputId);
+        let result = this.topoData.nodes.find(node => String(node.id) === this.inputId);
+        if (result === undefined) {
+          console.log('Not Match');
+        } else {
+          this.$store.commit('rocketTopo/SET_NODE', result);
+        }
       },
 
       handleClearInputId() {
         this.inputId = '';
-        console.log('handleClearInputId');
       },
 
       handleEnlargeTopo() {
@@ -185,7 +230,14 @@
         this.zoomController.scaleTo(d3.select('.net-svg').transition().duration(750), this.zoomTimes);
       },
 
-      handleRestoreTopo() {
+      handleRestoreTopo(isBackToAll) {
+        this.inputId = '';
+        this.currentNode.fx = null;
+        this.currentNode.fy = null;
+        this.$store.commit('rocketTopo/SET_NODE', {});
+        if (isBackToAll) {
+          this.$store.commit('rocketTopo/SET_FILTER_NODE_TYPE', 'All');
+        }
         d3.select('#netSvg')
           .transition().duration(750)
           .call(this.zoomController.transform, d3.zoomIdentity);
@@ -205,6 +257,7 @@
 
       handleChangeRelativeType(select) {
         this.relativeTypeOption.select = select;
+        this.$store.commit('rocketTopo/SET_RELATIVE_NODE_TYPE', select.label);
       },
 
       handleChangeEdgeType(select) {

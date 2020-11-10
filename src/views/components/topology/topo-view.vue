@@ -1,12 +1,14 @@
 <template>
   <div class="topo-view-chart">
     <div id="tvccId" class="tvc-c">
-      <div class="tvc-l">
-        <!-- <TopoDetail
-          v-if="currentNode && currentNode.id !== undefined && currentNode.id !== '' && currentNode.id !== null"
-        /> -->
-        <div class="tvcl-close">
-          <span class="tvclc-icon" @click="closeTopoDetail"></span>
+      <div class="tvc-l" id="tvcl">
+        <TopoDetail v-if="currentNode && currentNode.id !== undefined" :foldTopoDetail="foldTopoDetail" />
+        <div class="tvcl-close" v-if="currentNode && currentNode.id !== undefined">
+          <span
+            class="tvclc-icon"
+            :class="{ 'tvlci-fold': foldTopoDetail }"
+            @click.stop.prevent="toggleTopoDetail"
+          ></span>
         </div>
       </div>
       <div class="tvc-r" id="tvcrId" ref="tvcr">
@@ -14,13 +16,10 @@
           ref="net"
           :net-nodes="nodes"
           :net-links="links"
-          :selection="{ nodes: selected, links: linksSelected }"
           :options="options"
-          :linkCb="linkCb"
           :node-sym="nodeSym"
           @node-click="nodeClick"
           @link-click="linkClick"
-          @screen-shot="screenShotDone"
         />
       </div>
     </div>
@@ -29,6 +28,8 @@
 <script lang="js">
   import * as d3 from 'd3';
   import d3tip from 'd3-tip';
+
+  import $jq from 'jquery';
 
   import TopoDetail from './topo-detail.vue';
 
@@ -42,15 +43,15 @@
 
   export default {
     props: {
-      // topoData: {
-      //   type: Object,
-      //   default() {
-      //     return {
-      //       nodes: [],
-      //       calls: [],
-      //     };
-      //   },
-      // },
+      topoData: {
+        type: Object,
+        default() {
+          return {
+            nodes: [],
+            links: [],
+          };
+        },
+      },
     },
 
     data() {
@@ -78,15 +79,12 @@
           linkLabels: true,
           strLinks: true,
         },
-
-        lastNodeId: 0,
-        lastLinkId: 0,
         settings: {
           maxLinks: 1,
           maxNodes: 36
         },
         nodeSym: null,
-        current: {}
+        foldTopoDetail: false,
       }
     },
 
@@ -101,50 +99,46 @@
       },
     },
 
+    watch: {
+      topoData(newVal, oldVal) {
+        console.log('topo-view knows');
+        this.initTopoData(); // 可优化，考虑props
+      }
+    },
+
+    mounted() {
+      this.initSvgSizeArg();
+      this.initTopoData();
+      // this.reset(); // 拓扑布局测试
+    },
+
     methods: {
       initSvgSizeArg() {
         this.options.size.w = this.$refs.tvcr.clientWidth;
         this.options.size.h = this.$refs.tvcr.clientHeight;
       },
-      linkCb (link) {
-        link.name = 'Link ' + link.id
-        return link
+      initTopoData() {
+        this.nodes = this.topoData.nodes;
+        this.links = this.topoData.links;
       },
-      nodeClick() {
-        console.log('node click');
+      nodeClick() {},
+      linkClick() {},
+      toggleTopoDetail() {
+        this.foldTopoDetail = !this.foldTopoDetail;
+        // if (this.foldTopoDetail) {
+        //   $jq('#tvcl').css('width', '20px');
+        // } else {
+        //   $jq('#tvcl').css('width', 'auto');
+        // }
       },
-      linkClick() {
-        console.log('link click');
+      reset () {
+        this.selected = {}
+        this.linksSelected = {}
+        this.nodes = utils.makeRandomNodes(this.settings.maxNodes)
+        this.lastNodeId = this.nodes.length + 1
+        this.links = utils.makeRandomLinks(this.nodes, this.settings.maxLinks)
+        this.lastLinkId = this.links.length + 1
       },
-      screenShotDone() {
-
-      },
-
-      closeTopoDetail() {
-        this.$store.commit('rocketTopo/SET_NODE', {});
-      },
-
-      setCurrent(d) {
-        this.current = d;
-        this.$store.commit('SET_CURRENT_SERVICE', d);
-      },
-
-      reset() {
-        this.selected = {};
-        this.linksSelected = {};
-        this.nodes = utils.makeRandomNodes(this.settings.maxNodes);
-        this.lastNodeId = this.nodes.length + 1;
-        this.links = utils.makeRandomLinks(this.nodes, this.settings.maxLinks);
-        this.lastLinkId = this.links.length + 1;
-      }
-    },
-
-    created() {
-      // this.reset();
-    },
-
-    mounted() {
-      this.initSvgSizeArg();
     },
   };
 </script>
@@ -171,19 +165,28 @@
         position: relative;
 
         .tvcl-close {
-          position: absolute;
-          top: 10px;
-          right: 15px;
+          width: 20px;
+          height: 100%;
 
           .tvclc-icon {
-            cursor: pointer;
+            position: absolute;
+            top: 10px;
+            right: 5px;
             width: 0;
             height: 0;
             border-style: solid;
             border-width: 16px 12px 16px 0;
             border-color: transparent #ccc transparent transparent;
             display: block;
-            z-index: 2;
+            z-index: 9999;
+            transition: all 2s;
+            -webkit-transition: all 0.5s;
+            cursor: pointer;
+          }
+
+          .tvlci-fold {
+            transform: rotate(180deg);
+            -webkit-transform: rotate(180deg);
           }
         }
       }

@@ -83,13 +83,16 @@ limitations under the License. -->
     private auto: boolean = false;
     private autoTime: number = 6;
     private timer: any = null;
-    private handleReload() { // 更新localStorage里的durationRow
+    private handleReload() {
+      // 更新localStorage里的durationRow
+      console.log('Refresh Topo');
       const gap = this.duration.end.getTime() - this.duration.start.getTime();
       const utcCopy: any = -(new Date().getTimezoneOffset() / 60);
       const time: Date[] = [new Date(new Date().getTime() - gap), new Date()];
       this.SET_DURATION(timeFormat(time));
     }
-    private handleAuto() { // 开启轮询刷新 query queryServices($duration: Duration!,$keyword: String!)
+    private handleAuto() {
+      // 开启轮询刷新 query queryServices($duration: Duration!,$keyword: String!)
       this.auto = !this.auto;
       if (this.auto) {
         this.handleReload();

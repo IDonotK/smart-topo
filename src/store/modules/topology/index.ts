@@ -80,6 +80,11 @@ export interface State {
   topoInstances: any[];
   filterNodeType: string;
   zoomController: any;
+  relativeNodeType: string;
+  topoBasicData: {
+    nodes: any[];
+    links: any[];
+  };
 }
 
 const PercentileItem: string[] = ['p50', 'p75', 'p90', 'p95', 'p99'];
@@ -129,6 +134,11 @@ const initState: State = {
   topoInstances: [],
   filterNodeType: 'All',
   zoomController: null,
+  relativeNodeType: 'Single Hop',
+  topoBasicData: {
+    nodes: [],
+    links: [],
+  },
 };
 
 // getters
@@ -157,6 +167,12 @@ const mutations = {
   },
   [types.SET_ZOOM_CONTROLLER](state: State, data: any) {
     state.zoomController = data;
+  },
+  [types.SET_RELATIVE_NODE_TYPE](state: State, data: any) {
+    state.relativeNodeType = data;
+  },
+  [types.SET_TOPO_BASIC_DATA](state: State, data: any) {
+    state.topoBasicData = data;
   },
   [types.SET_LINK](state: State, data: any) {
     state.currentLink = data;

@@ -1,5 +1,5 @@
 <template>
-  <div class="topo-detail" ref="tdDom">
+  <div class="topo-detail" ref="tdDom" v-show="!foldTopoDetail">
     <div
       class="td-item"
       v-for="(item, index) in navList"
@@ -26,16 +26,23 @@
   import * as d3 from 'd3';
   import d3tip from 'd3-tip';
 
-  import allIcon from './assets/types/all.png';
-  import appIcon from './assets/types/app.png';
-  import processIcon from './assets/types/process.png';
-  import podIcon from './assets/types/pod.png';
-  import nodeIcon from './assets/types/node.png';
+  import appIcon from './assets/APP.png';
+  import middlewareIcon from './assets/MIDDLEWARE.png';
+  import processIcon from './assets/PROCESS.png';
+  import deploymentIcon from './assets/DEPLOYMENT.png';
+  import podIcon from './assets/POD.png';
+  import nodeIcon from './assets/NODE.png';
 
   import icons from './chart/utils/icons';
   import tool from './chart/utils/tool';
 
   export default {
+    props: {
+      foldTopoDetail: {
+        type: Boolean,
+        default: false
+      }
+    },
     data() {
       return {
         topoData: {
@@ -135,40 +142,35 @@
           ]
         },
         navList: [
-          // {
-          //   id: 'All',
-          //   name: 'All',
-          //   imgUrl: allIcon,
-          //   event: 2,
-          //   total: 10
-          // },
           {
             id: 'App',
             name: 'Applications',
             imgUrl: appIcon,
-            event: 1,
-            total: 2
+          },
+          {
+            id: 'Middleware',
+            name: 'Middlewares',
+            imgUrl: middlewareIcon,
           },
           {
             id: 'Process',
             name: 'Processes',
             imgUrl: processIcon,
-            event: 0,
-            total: 4
+          },
+          {
+            id: 'Deployment',
+            name: 'Deployments',
+            imgUrl: deploymentIcon,
           },
           {
             id: 'Pod',
             name: 'Pods',
             imgUrl: podIcon,
-            event: 1,
-            total: 2
           },
           {
             id: 'Node',
             name: 'Nodes',
             imgUrl: nodeIcon,
-            event: 0,
-            total: 2
           }
         ],
         showDetailTopoSameLayer: false,
@@ -382,12 +384,12 @@
     // width: 100%;
     height: 100%;
     position: relative;
-    -webkit-transition: 0.5s width;
-    transition: 0.5s width;
+    -webkit-transition: all 0.5s;
+    transition: all 0.5s;
 
     .td-item {
       width: 100%;
-      height: 25%;
+      height: 16.66%;
       cursor: pointer;
 
       &.tdi-odd {

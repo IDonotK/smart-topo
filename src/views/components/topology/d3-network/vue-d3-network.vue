@@ -1,14 +1,13 @@
 <script>
   // import * as forceSimulation from 'd3-force'
   import * as d3 from 'd3';
+  import $jq from 'jquery';
+
   import svgRenderer from './components/svgRenderer.vue';
   import saveImage from './lib/js/saveImage.js';
   import svgExport from './lib/js/svgExport.js';
-  import { NODES, LINKS } from './data-20.js';
 
   // const d3 = Object.assign({}, forceSimulation)
-
-  import $jq from 'jquery';
 
   export default {
     name: 'd3-network',
@@ -93,6 +92,17 @@
         simulation: null,
         nodeSvg: null,
         resizeListener: true,
+        mouseEnterElemTimer: null,
+        mouseLeaveElemTimer: null,
+        linkTextPosition: {
+          left: 0,
+          top: 0,
+        },
+        linkTextVisible: false,
+        linkTextContent: '',
+        nodeClicked: true,
+        clickNodeTimer: null,
+        isMouseDwonNet: true,
       };
     },
     render(createElement) {
@@ -115,6 +125,9 @@
         'padding',
         'nodeSize',
         'noNodes',
+        'linkTextPosition',
+        'linkTextVisible',
+        'linkTextContent',
       ];
 
       for (let prop of bindProps) {
@@ -127,8 +140,9 @@
         {
           attrs: { class: 'net' },
           on: {
-            mousemove: this.mouseMove,
-            '&touchmove': this.mouseMove,
+            '&touchmove': this.mouseMoveNet,
+            mousemove: this.mouseMoveNet,
+            click: this.handleClickNet,
           },
         },
         [
@@ -137,16 +151,28 @@
             ref,
             on: { action: this.methodCall },
           }),
+          createElement('div', {
+            style: {
+              display: 'none',
+            },
+            domProps: {
+              innerHTML: this.relativeNodeType,
+            },
+          }),
         ],
       );
     },
     created() {
       this.updateOptions(this.options);
-      // this.buildNodes(this.netNodes)
-      // this.links = this.buildLinks(this.netLinks)
-      this.nodes = NODES;
-      this.links = LINKS;
+      this.buildNodes(this.netNodes);
+      this.links = this.buildLinks(this.netLinks);
       this.updateNodeSvg();
+      setTimeout(() => {
+        this.$store.commit('rocketTopo/SET_TOPO_BASIC_DATA', {
+          nodes: this.nodes,
+          links: this.links,
+        });
+      });
     },
     mounted() {
       this.onResize();
@@ -159,6 +185,9 @@
       if (this.resizeListener) window.removeEventListener('resize', this.onResize);
     },
     computed: {
+      relativeNodeType() {
+        return this.$store.state.rocketTopo.relativeNodeType;
+      },
       currentNode() {
         return this.$store.state.rocketTopo.currentNode;
       },
@@ -185,7 +214,21 @@
       },
     },
     watch: {
+      relativeNodeType: {
+        handler(newVal, oldVal) {
+          this.lightAroundCurrentNode(this.currentNode, newVal);
+        },
+        // deep: true
+      },
+      currentNode: {
+        handler(newVal, oldVal) {
+          this.setCurNodePosition(newVal, oldVal);
+          this.lightAroundCurrentNode(newVal, this.relativeNodeType);
+        },
+        // deep: true
+      },
       netNodes(newValue) {
+        console.log('vue-d3-network knows');
         this.buildNodes(newValue);
         this.reset();
       },
@@ -207,6 +250,271 @@
       },
     },
     methods: {
+      handleClickNet(event) {
+        if (!this.isMouseDwonNet) {
+          this.isMouseDwonNet = true;
+          return;
+        }
+        if (event.target.tagName === 'circle' || event.target.tagName === 'path') {
+          return;
+        }
+        this.currentNode.fx = null;
+        this.currentNode.fy = null;
+        this.simulation.restart();
+        this.simulation.alpha(0.5);
+        this.$store.commit('rocketTopo/SET_NODE', {});
+      },
+      restoreAroundCurrentNode() {
+        this.nodes.forEach((node) => {
+          node.isDark = false;
+          node.isBright = false;
+          node.showLabel = false;
+          node.isRelatedToCurNode = false;
+        });
+
+        this.links.forEach((link) => {
+          link.isDark = false;
+          link.isBright = false;
+          // link.showLabel = false;
+          link.isRelatedToCurNode = false;
+        });
+      },
+      lightAroundCurrentNode(curNode, relativeNodeType) {
+        this.restoreAroundCurrentNode();
+        if (curNode.id === undefined) {
+          return;
+        }
+        if (!relativeNodeType) {
+          relativeNodeType = 'Single Hop';
+        }
+        if (relativeNodeType === 'Single Hop') {
+          const lightdNodeIds = new Set();
+          lightdNodeIds.add(curNode.id);
+          this.links.forEach((link) => {
+            if (link.sid === curNode.id || link.tid === curNode.id) {
+              link.isDark = false;
+              link.isBright = true;
+              // link.showLabel = true;
+              link.isRelatedToCurNode = true;
+
+              link.source.isDark = false;
+              link.source.isBright = true;
+              link.source.showLabel = true;
+              link.source.isRelatedToCurNode = true;
+
+              link.target.isDark = false;
+              link.target.isBright = true;
+              link.target.showLabel = true;
+              link.target.isRelatedToCurNode = true;
+
+              lightdNodeIds.add(link.source.id);
+              lightdNodeIds.add(link.target.id);
+            } else {
+              link.isDark = true;
+              link.isBright = false;
+              // link.showLabel = false;
+              link.isRelatedToCurNode = false;
+
+              if (!lightdNodeIds.has(link.source.id)) {
+                link.source.isDark = true;
+                link.source.isBright = false;
+                link.source.showLabel = false;
+                link.source.isRelatedToCurNode = false;
+              }
+              if (!lightdNodeIds.has(link.target.id)) {
+                link.target.isDark = true;
+                link.target.isBright = false;
+                link.target.showLabel = false;
+                link.target.isRelatedToCurNode = false;
+              }
+            }
+          });
+          this.nodes.forEach((node) => {
+            if (!lightdNodeIds.has(node.id) && !node.isRelatedToCurNode) {
+              node.isDark = true;
+              node.isBright = false;
+              node.showLabel = false;
+              node.isRelatedToCurNode = false;
+            } else {
+              node.isDark = false;
+              node.isBright = true;
+              node.showLabel = true;
+              node.isRelatedToCurNode = true;
+            }
+          });
+          return;
+        }
+        if (relativeNodeType === 'All Streams') {
+          // query
+          return;
+        }
+        if (relativeNodeType === 'Up Stream') {
+          // query
+          return;
+        }
+        if (relativeNodeType === 'Down Stream') {
+          // query
+          return;
+        }
+      },
+      restoreAroundELemHovered() {
+        this.linkTextVisible = false;
+        this.linkTextContent = '';
+        this.linkTextPosition = {
+          left: 0 + 'px',
+          top: 0 + 'px',
+        };
+
+        this.nodes.forEach((node) => {
+          if (!node.isRelatedToCurNode) {
+            node.isDark = false;
+            node.isBright = false;
+            node.showLabel = false;
+          }
+        });
+
+        this.links.forEach((link) => {
+          if (!link.isRelatedToCurNode) {
+            link.isDark = false;
+            link.isBright = false;
+            link.showLabel = false;
+          }
+        });
+      },
+      lightAroundELemHovered(event, type, elem) {
+        if (type === 'node') {
+          const lightdNodeIds = new Set();
+          lightdNodeIds.add(elem.id);
+          this.links.forEach((link) => {
+            if (link.sid === elem.id || link.tid === elem.id) {
+              link.isDark = false;
+              link.isBright = true;
+              link.showLabel = true;
+
+              link.source.isDark = false;
+              link.source.isBright = true;
+              link.source.showLabel = true;
+
+              link.target.isDark = false;
+              link.target.isBright = true;
+              link.target.showLabel = true;
+
+              lightdNodeIds.add(link.source.id);
+              lightdNodeIds.add(link.target.id);
+            } else {
+              if (!link.isRelatedToCurNode) {
+                link.isDark = true;
+                link.isBright = false;
+                link.showLabel = false;
+              }
+
+              if (!lightdNodeIds.has(link.source.id) && !link.source.isRelatedToCurNode) {
+                link.source.isDark = true;
+                link.source.isBright = false;
+                link.source.showLabel = false;
+              }
+              if (!lightdNodeIds.has(link.target.id) && !link.target.isRelatedToCurNode) {
+                link.target.isDark = true;
+                link.target.isBright = false;
+                link.target.showLabel = false;
+              }
+            }
+          });
+          this.nodes.forEach((node) => {
+            if (!lightdNodeIds.has(node.id) && !node.isRelatedToCurNode) {
+              node.isDark = true;
+              node.isBright = false;
+              node.showLabel = false;
+            } else {
+              node.isDark = false;
+              node.isBright = true;
+              node.showLabel = true;
+            }
+          });
+        } else if (type === 'link') {
+          // 边提示
+          let offsetX = $jq('#netContent').offset().left;
+          let offsetY = $jq('#netContent').offset().top;
+          this.linkTextPosition = {
+            left: event.clientX - offsetX + 10 + 'px',
+            top: event.clientY - offsetY - 25 + 'px',
+          };
+          this.linkTextContent = elem.type;
+          this.linkTextVisible = true;
+
+          this.links.forEach((link) => {
+            if (link.id === elem.id) {
+              link.isDark = false;
+              link.isBright = true;
+              link.showLabel = true;
+            } else {
+              if (!link.isRelatedToCurNode) {
+                link.isDark = true;
+                link.isBright = false;
+                link.showLabel = false;
+              }
+            }
+          });
+
+          this.nodes.forEach((node) => {
+            if (node.id === elem.source.id || node.id === elem.target.id) {
+              node.isDark = false;
+              node.isBright = true;
+              node.showLabel = true;
+            } else {
+              if (!node.isRelatedToCurNode) {
+                node.isDark = true;
+                node.isBright = false;
+                node.showLabel = false;
+              }
+            }
+          });
+        }
+      },
+      mouseEnterNode(event, elem) {
+        if (this.currentNode.id !== undefined) {
+          // 已选中节点，enter节点无效
+          return;
+        }
+        this.lightAroundELemHovered(event, 'node', elem);
+      },
+      mouseLeaveNode(event, elem) {
+        if (this.currentNode.id !== undefined) {
+          // 已选中节点，leave节点无效
+          return;
+        }
+        this.restoreAroundELemHovered();
+      },
+      mouseEnterLink(event, elem) {
+        if (this.currentNode.id !== undefined) {
+          // 已选中节点，enter关联边才有效
+          if (elem.isRelatedToCurNode) {
+            // 边提示
+            let offsetX = $jq('#netContent').offset().left;
+            let offsetY = $jq('#netContent').offset().top;
+            this.linkTextPosition = {
+              left: event.clientX - offsetX + 10 + 'px',
+              top: event.clientY - offsetY - 25 + 'px',
+            };
+            this.linkTextContent = elem.type;
+            this.linkTextVisible = true;
+          }
+          return;
+        }
+        this.lightAroundELemHovered(event, 'link', elem);
+      },
+      mouseLeaveLink(event, elem) {
+        if (this.currentNode.id !== undefined) {
+          this.linkTextVisible = false;
+          this.linkTextContent = '';
+          this.linkTextPosition = {
+            left: 0 + 'px',
+            top: 0 + 'px',
+          };
+          return;
+        }
+        this.restoreAroundELemHovered();
+      },
       updateNodeSvg() {
         let svg = null;
         if (this.nodeSym) {
@@ -263,10 +571,10 @@
           vm.$set(node, 'showLabel', false);
           vm.$set(node, 'isDark', false);
           vm.$set(node, 'isBright', false);
+          vm.$set(node, 'isRelatedToCurNode', false);
           return node;
         });
       },
-
       buildLinks(links) {
         let vm = this;
         return links.concat().map((link, index) => {
@@ -279,6 +587,7 @@
           vm.$set(link, 'showLabel', false);
           vm.$set(link, 'isDark', false);
           vm.$set(link, 'isBright', false);
+          vm.$set(link, 'isRelatedToCurNode', false);
           return link;
         });
       },
@@ -348,14 +657,25 @@
         if (this.forces.links) this.links = this.simulation.force('link').links();
       },
       // -- Mouse Interaction
-      mouseMove(event) {
-        let pos = this.clientPos(event);
+      mouseUpNet(event) {
+        event.preventDefault();
+        event.stopPropagation();
+        console.log('mouseUpNet');
+      },
+      mouseDownNet(event) {
+        event.preventDefault();
+        event.stopPropagation();
+        console.log('mouseDownNet');
+      },
+      mouseMoveNet(event) {
         if (this.dragging !== false) {
           if (this.nodes[this.dragging]) {
+            if (this.nodes[this.dragging].id === this.currentNode.id) {
+              return;
+            }
             this.simulation.restart();
             this.simulation.alpha(0.5);
-            // this.nodes[this.dragging].fx = pos.x - offsetX;
-            // this.nodes[this.dragging].fy = pos.y - offsetY;
+            let pos = this.clientPos(event);
             // 适配缩放后的拖拽
             let zoomK = d3.zoomTransform(d3.select('#zoomContainer').node()).k;
             let zoomX = d3.zoomTransform(d3.select('#zoomContainer').node()).x;
@@ -378,8 +698,20 @@
         y = y || 0;
         return { x, y };
       },
-      dragStart(event, nodeKey) {
-        event.stopPropagation();
+      dragNodeStart(event, nodeKey, node) {
+        // 区分net拖拽和点击
+        this.isMouseDwonNet = false;
+
+        if (node && this.currentNode && node.id === this.currentNode.id) {
+          return;
+        }
+
+        // 区分节点拖拽和点击
+        this.nodeClicked = true;
+        this.clickNodeTimer = setTimeout(() => {
+          this.nodeClicked = false;
+        }, 200);
+
         this.dragging = nodeKey === false ? false : nodeKey;
         this.setMouseOffset(event, this.nodes[nodeKey]);
         if (this.dragging === false) {
@@ -388,65 +720,73 @@
           this.setMouseOffset();
         }
       },
-      dragEnd() {
-        event.stopPropagation();
-        let node = this.nodes[this.dragging];
-        if (node && !node.pinned) {
-          node.fx = null;
-          node.fy = null;
+      dragNodeEnd(event, nodeKey, node) {
+        if (node && this.currentNode && node.id === this.currentNode.id) {
+          return;
         }
-        this.dragStart(event, false);
+
+        if (this.nodeClicked) {
+          clearTimeout(this.clickNodeTimer);
+          this.nodeClick(event, node);
+        }
+
+        let nodeDragging = this.nodes[this.dragging];
+        if (nodeDragging && !nodeDragging.pinned) {
+          nodeDragging.fx = null;
+          nodeDragging.fy = null;
+        }
+        this.dragNodeStart(event, false);
       },
       // -- Render helpers
-      nodeClick(event, node) {
-        this.$emit('node-click', event, node);
-        if (event && node) {
-          let pos = this.clientPos(event);
-          let centerX = $jq('#netSvg').width() / 2;
-          let centerY = $jq('#netSvg').height() / 2;
-          let offsetX = $jq('#netSvg').offset().left;
-          let offsetY = $jq('#netSvg').offset().top;
-          let zoomK = d3.zoomTransform(d3.select('#zoomContainer').node()).k;
-          let newZoomK = zoomK < 3 ? 3 : zoomK;
+      setCurNodePosition(curNode, preNode, event = null) {
+        if (curNode && curNode.id === undefined) {
+          return;
+        }
+        let centerX = $jq('#netSvg').width() / 2;
+        let centerY = $jq('#netSvg').height() / 2;
+        let offsetX = $jq('#netSvg').offset().left;
+        let offsetY = $jq('#netSvg').offset().top;
+        let zoomK = d3.zoomTransform(d3.select('#zoomContainer').node()).k;
+        let newZoomK = zoomK < 2 ? 2 : zoomK;
 
-          // 拓扑回到视口中心
-          this.zoomController.translateTo(
+        // 拓扑回到视口中心
+        this.zoomController.translateTo(
+          d3
+            .select('.net-svg')
+            .transition()
+            .duration(500),
+          centerX,
+          centerY,
+        );
+
+        setTimeout(() => {
+          // 选中点居中
+          if (preNode && preNode.id !== undefined) {
+            preNode.fx = null;
+            preNode.fy = null;
+          }
+          curNode.fx = centerX;
+          curNode.fy = centerY;
+          this.simulation.restart();
+          this.simulation.alpha(0.5);
+
+          // 放大拓扑
+          this.zoomController.scaleTo(
             d3
               .select('.net-svg')
               .transition()
               .duration(500),
-            centerX,
-            centerY,
+            newZoomK,
           );
-
-          setTimeout(() => {
-            // 选中点居中
-            if (this.currentNode.id !== undefined) {
-              this.currentNode.fx = null;
-              this.currentNode.fy = null;
-            }
-            node.fx = centerX;
-            node.fy = centerY;
-            this.$store.commit('rocketTopo/SET_NODE', node);
-
-            // 放大拓扑
-            this.zoomController.scaleTo(
-              d3
-                .select('.net-svg')
-                .transition()
-                .duration(500),
-              newZoomK,
-            );
-          }, 510);
-
-          // this.zoomController.translateBy(
-          //   d3
-          //     .select('.net-svg')
-          //     .transition()
-          //     .duration(500),
-          //   (centerX + offsetX - pos.x) / zoomK,
-          //   (centerY + offsetY - pos.y) / zoomK,
-          // );
+        }, 510);
+      },
+      nodeClick(event, node) {
+        if (node && this.currentNode && node.id === this.currentNode.id) {
+          return;
+        }
+        this.$emit('node-click', event, node);
+        if (event && node) {
+          this.$store.commit('rocketTopo/SET_NODE', node);
         }
       },
       linkClick(event, link) {
@@ -489,71 +829,86 @@
     height: 100%;
     margin: 0;
 
-    .arrows .dark-arrow {
-      opacity: 0.5;
-    }
+    .net-content {
+      width: 100%;
+      height: 100%;
+      position: relative;
 
-    .arrows .bright-arrow {
-      fill: yellow !important;
-    }
-
-    .net-svg {
-      .node {
-        stroke: rgba(18, 120, 98, 0.7);
-        stroke-width: 3px;
-        // transition: fill 0.5s ease;
-        fill: $white;
-
-        &.dark-node {
-          opacity: 0.5;
-        }
-
-        &.bright-node {
-          fill: yellow;
-        }
-
-        &.selected {
-          stroke: $color2;
-        }
-
-        &.pinned {
-          stroke: rgba(190, 56, 93, 0.6);
-        }
+      .linkText {
+        position: absolute;
+        z-index: 999;
+        background-color: rgba(75, 75, 75, 0.596);
+        border-radius: 2px;
+        color: white;
+        padding: 2px;
       }
 
-      .link {
-        stroke: rgba(18, 120, 98, 0.3);
+      .arrows .dark-arrow {
+        opacity: 0.5;
+      }
 
-        &.dark-link {
-          opacity: 0.5;
+      .arrows .bright-arrow {
+        fill: yellow !important;
+      }
+
+      .net-svg {
+        .node {
+          stroke: rgba(18, 120, 98, 0.7);
+          stroke-width: 3px;
+          transition: translate 0.5s ease;
+          fill: $white;
+
+          &.dark-node {
+            opacity: 0.5;
+          }
+
+          &.bright-node {
+            fill: yellow;
+          }
+
+          &.selected {
+            stroke: $color2;
+          }
+
+          &.pinned {
+            stroke: rgba(190, 56, 93, 0.6);
+          }
         }
 
-        &.bright-link {
-          stroke: yellow !important;
+        .link {
+          stroke: rgba(18, 120, 98, 0.3);
+
+          &.dark-link {
+            opacity: 0.5;
+          }
+
+          &.bright-link {
+            stroke: yellow !important;
+          }
+
+          &.selected {
+            stroke: rgba(202, 164, 85, 0.6);
+          }
         }
 
-        &.selected {
-          stroke: rgba(202, 164, 85, 0.6);
+        .node,
+        .link {
+          stroke-linecap: round;
         }
-      }
 
-      .node,
-      .link {
-        stroke-linecap: round;
-      }
+        .curve {
+          fill: none;
+        }
 
-      .curve {
-        fill: none;
-      }
+        .node-label {
+          fill: $dark;
+        }
 
-      .node-label {
-        fill: $dark;
-      }
-
-      .link-label {
-        fill: $dark;
-        transform: translate(0, -1.5em);
-        text-anchor: middle;
+        .link-label {
+          fill: $dark;
+          transform: translate(0, -1.5em);
+          text-anchor: middle;
+        }
       }
     }
   }
