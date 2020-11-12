@@ -31,7 +31,7 @@
   font-size: 12px;
 }
 .d3-tip {
-  background: #252a2f;
+  background: rgba(75, 75, 75, 0.596);
 }
 
 .d3-tip:after {
@@ -40,7 +40,7 @@
   font-size: 10px;
   width: 100%;
   line-height: 0.8;
-  color: #252a2f;
+  color: rgba(75, 75, 75, 0.596);
   content: '\25BC';
   position: absolute;
   text-align: center;

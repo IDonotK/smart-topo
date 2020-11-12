@@ -2,7 +2,12 @@
   <div class="topo-view-chart">
     <div id="tvccId" class="tvc-c">
       <div class="tvc-l" id="tvcl">
-        <TopoDetail v-if="currentNode && currentNode.id !== undefined" :foldTopoDetail="foldTopoDetail" />
+        <TopoDetail
+          v-if="currentNode && currentNode.id !== undefined"
+          :foldTopoDetail="foldTopoDetail"
+          :topoDetailData="topoDetailData"
+          :topoData="topoData"
+        />
         <div class="tvcl-close" v-if="currentNode && currentNode.id !== undefined">
           <span
             class="tvclc-icon"
@@ -52,6 +57,15 @@
           };
         },
       },
+      topoDataFiltered: {
+        type: Object,
+        default() {
+          return {
+            nodes: [],
+            links: [],
+          };
+        },
+      },
     },
 
     data() {
@@ -85,6 +99,10 @@
         },
         nodeSym: null,
         foldTopoDetail: false,
+        topoDetailData: {
+          nodes: [],
+          links: []
+        }
       }
     },
 
@@ -100,36 +118,64 @@
     },
 
     watch: {
-      topoData(newVal, oldVal) {
+      topoDataFiltered(newVal, oldVal) {
         console.log('topo-view knows');
-        this.initTopoData(); // 可优化，考虑props
+        this.initTopoDataFiltered(); // 可优化，考虑props
+      },
+      currentNode(newVal, oldVal) {
+        if (newVal.id !== undefined) {
+          this.foldTopoDetail = false;
+          // 根据选中的节点过滤拓扑数据
+          this.resetTopoDetailData(newVal);
+        } else {
+          this.foldTopoDetail = true;
+        }
       }
     },
 
     mounted() {
       this.initSvgSizeArg();
-      this.initTopoData();
+      this.initTopoDataFiltered();
       // this.reset(); // 拓扑布局测试
     },
 
     methods: {
+      resetTopoDetailData(curNode) {
+        // query
+        const nodesTmp = new Set();
+        const linksTmp = new Set();
+        nodesTmp.add(curNode);
+        this.deepSearchTopo(curNode, nodesTmp, linksTmp);
+        this.topoDetailData = {
+          nodes: Array.from(nodesTmp),
+          links: Array.from(linksTmp)
+        };
+      },
+      deepSearchTopo(curNode, nodeSet, linkSet) {
+        for (let i = 0; i < this.topoData.links.length; i++) { // 基于全局的拓扑数据
+          let link = this.topoData.links[i];
+          if (link.sid === curNode.id) {
+            if (link.target.type === curNode.type) {
+              continue;
+            }
+            linkSet.add(link);
+            nodeSet.add(link.target);
+            this.deepSearchTopo(link.target, nodeSet, linkSet);
+          }
+        }
+      },
       initSvgSizeArg() {
         this.options.size.w = this.$refs.tvcr.clientWidth;
         this.options.size.h = this.$refs.tvcr.clientHeight;
       },
-      initTopoData() {
-        this.nodes = this.topoData.nodes;
-        this.links = this.topoData.links;
+      initTopoDataFiltered() {
+        this.nodes = this.topoDataFiltered.nodes;
+        this.links = this.topoDataFiltered.links;
       },
       nodeClick() {},
       linkClick() {},
       toggleTopoDetail() {
         this.foldTopoDetail = !this.foldTopoDetail;
-        // if (this.foldTopoDetail) {
-        //   $jq('#tvcl').css('width', '20px');
-        // } else {
-        //   $jq('#tvcl').css('width', 'auto');
-        // }
       },
       reset () {
         this.selected = {}
@@ -165,6 +211,9 @@
         position: relative;
 
         .tvcl-close {
+          position: absolute;
+          top: 0;
+          right: 0;
           width: 20px;
           height: 100%;
 
@@ -178,7 +227,7 @@
             border-width: 16px 12px 16px 0;
             border-color: transparent #ccc transparent transparent;
             display: block;
-            z-index: 9999;
+            z-index: 990;
             transition: all 2s;
             -webkit-transition: all 0.5s;
             cursor: pointer;

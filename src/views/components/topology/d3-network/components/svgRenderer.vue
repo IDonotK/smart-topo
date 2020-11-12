@@ -30,8 +30,8 @@
             orient="auto"
           >
             <path
-              d="M2,2 L10,6 L2,10 L6,6 L2,2"
-              :style="getArrowStyle()"
+              d="M2,3 L10,6 L2,9 L5,6 L2,3"
+              :style="getArrowStyle(link)"
               :class="arrowClass([link.isDark ? 'dark-arrow' : '', link.isBright ? 'bright-arrow' : ''])"
             />
           </marker>
@@ -176,8 +176,10 @@
         classes.forEach((c) => cssClass.push(c));
         return cssClass;
       },
-      getArrowStyle() {
-        return 'fill: rgba(18,120,98);';
+      getArrowStyle(link) {
+        let style = {};
+        if (link._color) style.fill = link._color;
+        return style;
       },
       getArrowRefX(link) {
         let size = this.nodes.find((node) => node.id === link.tid)._size || this.nodeSize;

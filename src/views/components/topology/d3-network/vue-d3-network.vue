@@ -92,8 +92,6 @@
         simulation: null,
         nodeSvg: null,
         resizeListener: true,
-        mouseEnterElemTimer: null,
-        mouseLeaveElemTimer: null,
         linkTextPosition: {
           left: 0,
           top: 0,
@@ -103,6 +101,18 @@
         nodeClicked: true,
         clickNodeTimer: null,
         isMouseDwonNet: true,
+        pallet: [
+          '#6be6c1',
+          '#a0a7e6',
+          '#96dee8',
+          '#3f96e3',
+          '#3fb1e3',
+          '#6be6c1',
+          '#626c91',
+          '#a0a7e6',
+          '#c4ebad',
+          '#96dee8',
+        ],
       };
     },
     render(createElement) {
@@ -572,6 +582,32 @@
           vm.$set(node, 'isDark', false);
           vm.$set(node, 'isBright', false);
           vm.$set(node, 'isRelatedToCurNode', false);
+
+          let nodeColor = '';
+          switch (
+            node.type // 调色板如何解耦？
+          ) {
+            case 'App':
+              nodeColor = this.pallet[0];
+              break;
+            case 'Middleware':
+              nodeColor = this.pallet[1];
+              break;
+            case 'Process':
+              nodeColor = this.pallet[2];
+              break;
+            case 'Deployment':
+              nodeColor = this.pallet[3];
+              break;
+            case 'Pod':
+              nodeColor = this.pallet[4];
+              break;
+            case 'Node':
+              nodeColor = this.pallet[5];
+              break;
+          }
+          vm.$set(node, '_color', nodeColor);
+
           return node;
         });
       },
@@ -588,6 +624,10 @@
           vm.$set(link, 'isDark', false);
           vm.$set(link, 'isBright', false);
           vm.$set(link, 'isRelatedToCurNode', false);
+
+          // let linkColor = link.type === 'tracingto' ? this.pallet[8] : this.pallet[9];
+          vm.$set(link, '_color', 'rgba(33, 126, 242, 0.373)');
+
           return link;
         });
       },
@@ -747,30 +787,29 @@
         let offsetX = $jq('#netSvg').offset().left;
         let offsetY = $jq('#netSvg').offset().top;
         let zoomK = d3.zoomTransform(d3.select('#zoomContainer').node()).k;
+        let zoomX = d3.zoomTransform(d3.select('#zoomContainer').node()).x;
+        let zoomY = d3.zoomTransform(d3.select('#zoomContainer').node()).y;
         let newZoomK = zoomK < 2 ? 2 : zoomK;
 
-        // 拓扑回到视口中心
+        /* 移动方式一 */
+        // 选中节点回到视口中心
         this.zoomController.translateTo(
           d3
             .select('.net-svg')
             .transition()
             .duration(500),
-          centerX,
-          centerY,
+          this.currentNode.x,
+          this.currentNode.y,
         );
-
+        // 固定当前节点坐标，并放大拓扑
         setTimeout(() => {
-          // 选中点居中
           if (preNode && preNode.id !== undefined) {
             preNode.fx = null;
             preNode.fy = null;
           }
-          curNode.fx = centerX;
-          curNode.fy = centerY;
-          this.simulation.restart();
-          this.simulation.alpha(0.5);
+          curNode.fx = curNode.x;
+          curNode.fy = curNode.y;
 
-          // 放大拓扑
           this.zoomController.scaleTo(
             d3
               .select('.net-svg')
@@ -778,7 +817,7 @@
               .duration(500),
             newZoomK,
           );
-        }, 510);
+        }, 501);
       },
       nodeClick(event, node) {
         if (node && this.currentNode && node.id === this.currentNode.id) {
@@ -823,7 +862,7 @@
 </script>
 
 <style lang="scss">
-  @import 'lib/scss/vars.scss';
+  // @import 'lib/scss/vars.scss';
   .net {
     width: 100%;
     height: 100%;
@@ -848,30 +887,29 @@
       }
 
       .arrows .bright-arrow {
-        fill: yellow !important;
+        fill: rgba(255, 255, 0, 1) !important;
       }
 
       .net-svg {
         .node {
-          stroke: rgba(18, 120, 98, 0.7);
-          stroke-width: 3px;
+          // stroke: rgba(18, 120, 98, 0.7);
+          // stroke-width: 3px;
           transition: translate 0.5s ease;
-          fill: $white;
 
           &.dark-node {
-            opacity: 0.5;
+            opacity: 0.3;
           }
 
           &.bright-node {
-            fill: yellow;
+            fill: rgba(255, 255, 0, 1) !important;
           }
 
           &.selected {
-            stroke: $color2;
+            stroke: #caa455;
           }
 
           &.pinned {
-            stroke: rgba(190, 56, 93, 0.6);
+            stroke: #ccc;
           }
         }
 
@@ -879,11 +917,11 @@
           stroke: rgba(18, 120, 98, 0.3);
 
           &.dark-link {
-            opacity: 0.5;
+            opacity: 0.1;
           }
 
           &.bright-link {
-            stroke: yellow !important;
+            stroke: rgba(255, 255, 0, 1) !important;
           }
 
           &.selected {
@@ -901,11 +939,12 @@
         }
 
         .node-label {
-          fill: $dark;
+          pointer-events: none;
+          fill: #ccc;
         }
 
         .link-label {
-          fill: $dark;
+          fill: #ccc;
           transform: translate(0, -1.5em);
           text-anchor: middle;
         }

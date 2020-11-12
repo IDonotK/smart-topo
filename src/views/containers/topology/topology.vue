@@ -1,8 +1,8 @@
 <template>
   <div class="rk-topo">
-    <TopoView :topoData="topoDataFiltered" />
+    <TopoView :topoDataFiltered="topoDataFiltered" :topoData="topoData" />
     <TopoSideNavigation :topoData="topoData" />
-    <TopoToolSet :topoData="topoDataFiltered" />
+    <TopoToolSet :topoDataFiltered="topoDataFiltered" />
   </div>
 </template>
 <script lang="js">

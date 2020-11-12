@@ -101,7 +101,7 @@
 
   export default {
     props: {
-      topoData: {
+      topoDataFiltered: {
         type: Object,
         default() {
           return {
@@ -178,7 +178,7 @@
     },
 
     watch: {
-      topoData(newVal, oldVal) {
+      topoDataFiltered(newVal, oldVal) {
         console.log('topo-tool-set knows');
       }
     },
@@ -192,7 +192,7 @@
           return;
         }
         // let result = this.topoBasicData.nodes.find(node => String(node.id) === this.inputId);
-        let result = this.topoData.nodes.find(node => String(node.id) === this.inputId);
+        let result = this.topoDataFiltered.nodes.find(node => String(node.id) === this.inputId);
         if (result === undefined) {
           console.log('Not Match');
         } else {
