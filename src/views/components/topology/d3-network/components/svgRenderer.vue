@@ -96,6 +96,20 @@
               @mouseenter.stop.prevent="emit('mouseEnterNode', [$event, node])"
               @mouseleave.stop.prevent="emit('mouseLeaveNode', [$event, node])"
             />
+
+            <!-- warn icon -->
+            <svg
+              v-if="node.state === 'Event'"
+              :x="node.x - (getNodeSize(node) - 4) / 2"
+              :y="node.y - (getNodeSize(node) - 4) / 2"
+              :width="getNodeSize(node) - 4"
+              :height="getNodeSize(node) - 4"
+              class="event-node-main-topo"
+              :key="'event' + key"
+              aria-hidden="true"
+            >
+              <use xlink:href="#icon-jingbaoxinxi-"></use>
+            </svg>
           </template>
         </g>
 
@@ -120,6 +134,8 @@
   </div>
 </template>
 <script>
+  require('../../assets/iconfont-topos/iconfont.js');
+
   import svgExport from '../lib/js/svgExport.js';
 
   import * as d3 from 'd3';

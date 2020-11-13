@@ -62,9 +62,11 @@
   import deploymentIcon from './assets/DEPLOYMENT.png';
   import podIcon from './assets/POD.png';
   import nodeIcon from './assets/NODE.png';
+  import eventIcon from './assets/EVENT.png';
 
   import icons from './chart/utils/icons';
   import tool from './chart/utils/tool';
+  require('./assets/iconfont-topos/iconfont.js');
 
   export default {
     props: {
@@ -227,6 +229,7 @@
               color: color2
             };
           }
+
         });
         links.forEach(link => {
           link.lineStyle = {
@@ -369,6 +372,7 @@
             id: node.id,
             name: node.name,
             type: node.type,
+            state: node.state,
           };
           switch (node.type) {
             case 'App': {
@@ -486,7 +490,14 @@
 
         nodeEles = nodeEles.data(nodesOption)
           .enter().append("g")
-          .attr("class", "topo-node")
+          .attr("class", "topo-node");
+        nodeEles.append('image')
+          .attr('width', 28)
+          .attr('height', 28)
+          .attr('x', -14)
+          .attr('y', -14)
+          .attr('style', 'cursor: pointer;')
+          .attr('xlink:href', d => icons[d.type.toUpperCase()])
           .on('mouseenter', (data, index, element) => {
             d3.event.stopPropagation();
             d3.event.preventDefault();
@@ -508,14 +519,15 @@
             d3.event.stopPropagation();
             d3.event.preventDefault();
             usedTool.attr('transform', `translate(${d.x}, ${d.y})`).attr('style', 'display: block');
-          })
-          .append('image')
-          .attr('width', 20)
-          .attr('height', 20)
-          .attr('x', -10)
-          .attr('y', -10)
-          .attr('style', 'cursor: pointer;')
-          .attr('xlink:href', d => icons[d.type.toUpperCase()]);
+          });
+        nodeEles.append('svg')
+          .attr("class", "event-node-cross-topo")
+          .attr('width', 18)
+          .attr('height', 18)
+          .attr('x', 5)
+          .attr('y', -25)
+          .append('use')
+          .attr('xlink:href', d => d.state === 'Event' ? '#icon-jingbaoxinxi-' : '');
 
         linkEles = linkEles.data(linksOption)
           .enter().append("path")

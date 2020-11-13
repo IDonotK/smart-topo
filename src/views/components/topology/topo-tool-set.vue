@@ -94,7 +94,7 @@
 </template>
 
 <script lang="js">
-  require('./assets/iconfont/iconfont.js');
+  require('./assets/iconfont-toolset/iconfont.js');
   import TopoSelect from './topo-select.vue';
 
   import * as d3 from 'd3';

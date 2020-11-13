@@ -913,6 +913,15 @@
           }
         }
 
+        .event-node-main-topo {
+          width: 18px;
+          height: 18px;
+          overflow: hidden;
+          fill: currentColor;
+          color: #efeff1;
+          pointer-events: none;
+        }
+
         .link {
           stroke: rgba(18, 120, 98, 0.3);
 
