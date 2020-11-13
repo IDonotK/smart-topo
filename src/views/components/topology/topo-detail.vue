@@ -128,7 +128,19 @@
         },
         linkTextVisible: false,
         linkTextContent: '',
-        smallTopoOption: {}
+        smallTopoOption: {},
+        pallet: [
+          '#3fb1e3',
+          '#a0a7e6',
+          '#96dee8',
+          '#3f96e3',
+          '#6be6c1',
+          '#6be6c1',
+          '#626c91',
+          '#a0a7e6',
+          '#c4ebad',
+          '#96dee8',
+        ],
       }
     },
 
@@ -156,20 +168,14 @@
 
     methods: {
       setSmallTopoOption() {
-        const color1 = '#006acc';
-        const color2 = '#ff7d18';
+        // const color1 = '#006acc';
+        // const color2 = '#ff7d18';
         let categories = [
           {
             name: 'Current Node',
-            itemStyle: {
-                color: color1
-            }
           },
           {
             name: 'Single Hop Nodes',
-            itemStyle: {
-                color: color2
-            }
         }];
 
         // 点边初始化
@@ -179,10 +185,8 @@
           id: this.currentNode.id,
           name: this.currentNode.name,
           type: this.currentNode.type,
-          category: 0,
-          label: {
-            show: true,
-          }
+          state: this.currentNode.state,
+          category: 0
         });
         this.topoData.links.forEach(link => {
           if (link.sid === this.currentNode.id) {
@@ -197,6 +201,7 @@
               id: link.target.id,
               name: link.target.name,
               type: link.target.type,
+              state: link.target.state,
               category: 1
             });
           } else if (link.tid === this.currentNode.id) {
@@ -211,40 +216,68 @@
               id: link.source.id,
               name: link.source.name,
               type: link.source.type,
+              state: link.source.state,
               category: 1
             });
           }
         });
 
-        // 调色
+        // 特别设置
         nodes.forEach(node => {
           if (node.category === 0) {
             node.symbolSize = 30;
-            node.itemStyle = {
-              color: color1
-            };
           } else if (node.category === 1) {
             node.symbolSize = 20;
-            node.itemStyle = {
-              color: color2
-            };
           }
-
+          let nodeColor = '#fff';
+          switch (node.type) {
+            case 'App':
+              nodeColor = this.pallet[0];
+              break;
+            case 'Middleware':
+              nodeColor = this.pallet[1];
+              break;
+            case 'Process':
+              nodeColor = this.pallet[2];
+              break;
+            case 'Deployment':
+              nodeColor = this.pallet[3];
+              break;
+            case 'Pod':
+              nodeColor = this.pallet[4];
+              break;
+            case 'Node':
+              nodeColor = this.pallet[5];
+              break;
+          }
+          node.itemStyle = {
+            color: nodeColor
+          };
+          node.label = {
+            show: true,
+            color: nodeColor,
+            offset: [0, 17],
+            borderColor: 'transparent',
+            borderWith: 0,
+            textBorderColor: 'transparent',
+            textBorderWith: 0,
+          };
+          if (node.id === this.currentNode.id) {
+            node.label.offset = [0, 22];
+          }
         });
         links.forEach(link => {
           link.lineStyle = {
-            color: link.type === 'tracingto' ? color1 : color2
+            color: 'rgba(33, 126, 242, 0.373)'
           };
-          link.emphasis = {
-            label: {
-              show: true,
-              position: 'middle',
-              align: 'center',
-              fontSize: 12,
-              formatter: (params) => { // 高亮链路内容，待拓展
-                return params.data.type;
-              },
-            }
+          link.label = {
+            show: true,
+            position: 'middle',
+            align: 'center',
+            fontSize: 12,
+            formatter: (params) => { // 高亮链路内容，待拓展
+              return params.data.type;
+            },
           };
         });
 
@@ -260,6 +293,26 @@
             nodes[i].value = [x.toFixed(2), y.toFixed(2)];
           }
         }
+
+        // 提取事件节点
+        let eventNodes = [];
+        nodes.forEach(node => {
+          if (node.state === 'Event') {
+            let nodeObj = JSON.parse(JSON.stringify(node));
+            nodeObj.symbol = 'image://' + eventIcon + '';
+            nodeObj.symbolOffset = ['75%', '-75%'];
+            nodeObj.name = '';
+            if (nodeObj.id === this.currentNode.id) {
+              nodeObj.label.show = false;
+            }
+            if (nodeObj.category === 0) {
+              nodeObj.symbolSize = 24;
+            } else if (nodeObj.category === 1) {
+              nodeObj.symbolSize = 16;
+            }
+            eventNodes.push(nodeObj);
+          }
+        });
 
         this.smallTopoOption = {
           title: {
@@ -295,11 +348,19 @@
             type: "graph",
             coordinateSystem: "cartesian2d",
             roam: true,
-            focusNodeAdjacency: true,
+            focusNodeAdjacency: false,
             categories: categories,
             edgeSymbol: ['', 'arrow'],
             nodes: nodes,
-            links: links
+            links: links,
+          },
+          {
+            type: "graph",
+            coordinateSystem: "cartesian2d",
+            roam: true,
+            focusNodeAdjacency: false,
+            categories: categories,
+            nodes: eventNodes,
           }]
         };
       },

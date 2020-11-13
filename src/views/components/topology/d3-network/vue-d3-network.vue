@@ -102,11 +102,11 @@
         clickNodeTimer: null,
         isMouseDwonNet: true,
         pallet: [
-          '#6be6c1',
+          '#3fb1e3',
           '#a0a7e6',
           '#96dee8',
           '#3f96e3',
-          '#3fb1e3',
+          '#6be6c1',
           '#6be6c1',
           '#626c91',
           '#a0a7e6',
