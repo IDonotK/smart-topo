@@ -159,7 +159,6 @@
           ],
           select: {key: 0, label: 'All'}
         },
-        zoomTimes: 1,
       }
     },
 
@@ -236,29 +235,31 @@
       },
 
       handleEnlargeTopo() {
-        if (this.zoomTimes < 1) {
-          this.zoomTimes = Number((Number(this.zoomTimes.toFixed(1)) + 0.1).toFixed(1));
-        } else if (this.zoomTimes >= 1) {
-          this.zoomTimes = this.zoomTimes + 1;
+        let zoomTimes = d3.zoomTransform(d3.select('#zoomContainer').node()).k;
+        if (zoomTimes < 1) {
+          zoomTimes = Number((Number(zoomTimes.toFixed(1)) + 0.1).toFixed(1));
+        } else if (zoomTimes >= 1) {
+          zoomTimes = zoomTimes + 1;
         }
-        if (this.zoomTimes > 10) {
-          this.zoomTimes = this.zoomTimes - 1;
+        if (zoomTimes > 10) {
+          zoomTimes = zoomTimes - 1;
           return;
         }
-        this.zoomController.scaleTo(d3.select('.net-svg').transition().duration(750), this.zoomTimes);
+        this.zoomController.scaleTo(d3.select('.net-svg').transition().duration(750), zoomTimes);
       },
 
       handleNarrowTopo() {
-        if (this.zoomTimes <= 1) {
-          this.zoomTimes = Number((Number(this.zoomTimes.toFixed(1)) - 0.1).toFixed(1));
-        } else if (this.zoomTimes > 1) {
-          this.zoomTimes = this.zoomTimes - 1;
+        let zoomTimes = d3.zoomTransform(d3.select('#zoomContainer').node()).k;
+        if (zoomTimes <= 1) {
+          zoomTimes = Number((Number(zoomTimes.toFixed(1)) - 0.1).toFixed(1));
+        } else if (zoomTimes > 1) {
+          zoomTimes = zoomTimes - 1;
         }
-        if (this.zoomTimes < 0.1) {
-          this.zoomTimes = Number((Number(this.zoomTimes.toFixed(1)) + 0.1).toFixed(1));
+        if (zoomTimes < 0.1) {
+          zoomTimes = Number((Number(zoomTimes.toFixed(1)) + 0.1).toFixed(1));
           return;
         }
-        this.zoomController.scaleTo(d3.select('.net-svg').transition().duration(750), this.zoomTimes);
+        this.zoomController.scaleTo(d3.select('.net-svg').transition().duration(750), zoomTimes);
       },
 
       restoreFilters() {
