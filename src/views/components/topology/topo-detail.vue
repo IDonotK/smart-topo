@@ -1,5 +1,6 @@
 <template>
   <div class="topo-detail" ref="tdDom" v-show="!foldTopoDetail">
+    <!-- 背景调色 -->
     <div
       class="td-item"
       v-for="(item, index) in navList"
@@ -9,11 +10,13 @@
       <div class="tdi-c"></div>
     </div>
     <div class="td-topo" ref="tdTopo">
+      <!-- 节点纵向依赖 -->
       <div id="tdt-view-cross-layer">
         <!-- link text -->
         <div class="linkText" :style="linkTextPosition" v-show="linkTextVisible" v-text="linkTextContent"></div>
       </div>
-      <div id="tdt-view-same-layer" v-if="showNodeDetail">
+      <!-- 节点详情页面 -->
+      <div id="tdt-view-node-detail" v-if="showNodeDetail">
         <div class="tvsl-close">
           <span class="tvslc-icon" @click="closeNodeDetail"></span>
         </div>
@@ -21,27 +24,21 @@
           <RkEcharts :option="smallTopoOption" ref="smallTopo" />
         </div>
         <div class="tvsl-node-info">
-          <!-- <div class="info-item"
-            v-for="(value, key) in currentNode"
-            :key="key">
-            <span class="item-title" :title="key">{{key}} :</span>
-            <span class="item-content" :title="vaule">{{value}}</span>
-          </div> -->
           <div class="info-item">
             <span class="item-title" title="id">id :</span>
-            <span class="item-content" :title="currentNode.id">{{ currentNode.id }}</span>
+            <span class="item-content" :title="curNodeCrossLayer.id">{{ curNodeCrossLayer.id }}</span>
           </div>
           <div class="info-item">
             <span class="item-title" title="name">name :</span>
-            <span class="item-content" :title="currentNode.name">{{ currentNode.name }}</span>
+            <span class="item-content" :title="curNodeCrossLayer.name">{{ curNodeCrossLayer.name }}</span>
           </div>
           <div class="info-item">
             <span class="item-title" title="label">label :</span>
-            <span class="item-content" :title="currentNode.type">{{ currentNode.type }}</span>
+            <span class="item-content" :title="curNodeCrossLayer.type">{{ curNodeCrossLayer.type }}</span>
           </div>
           <div class="info-item">
             <span class="item-title" title="state">state :</span>
-            <span class="item-content" :title="currentNode.state">{{ currentNode.state }}</span>
+            <span class="item-content" :title="curNodeCrossLayer.state">{{ curNodeCrossLayer.state }}</span>
           </div>
           <div class="clear"></div>
         </div>
@@ -141,6 +138,9 @@
           '#c4ebad',
           '#96dee8',
         ],
+        curNodeCrossLayer: {},
+        nodeSingleClickTimer: null,
+        usedTool: null,
       }
     },
 
@@ -150,6 +150,9 @@
       },
       currentNode() {
         return this.$store.state.rocketTopo.currentNode;
+      },
+      showNodeTypeFilter() {
+        return this.$store.state.rocketTopo.showNodeTypeFilter;
       },
     },
 
@@ -182,14 +185,14 @@
         let nodes = [];
         let links = [];
         nodes.push({
-          id: this.currentNode.id,
-          name: this.currentNode.name,
-          type: this.currentNode.type,
-          state: this.currentNode.state,
+          id: this.curNodeCrossLayer.id,
+          name: this.curNodeCrossLayer.name,
+          type: this.curNodeCrossLayer.type,
+          state: this.curNodeCrossLayer.state,
           category: 0
         });
         this.topoData.links.forEach(link => {
-          if (link.sid === this.currentNode.id) {
+          if (link.sid === this.curNodeCrossLayer.id) {
             links.push({
               id: link.id,
               name: link.name,
@@ -204,7 +207,7 @@
               state: link.target.state,
               category: 1
             });
-          } else if (link.tid === this.currentNode.id) {
+          } else if (link.tid === this.curNodeCrossLayer.id) {
             links.push({
               id: link.id,
               name: link.name,
@@ -262,7 +265,7 @@
             textBorderColor: 'transparent',
             textBorderWith: 0,
           };
-          if (node.id === this.currentNode.id) {
+          if (node.id === this.curNodeCrossLayer.id) {
             node.label.offset = [0, 22];
           }
         });
@@ -302,7 +305,7 @@
             nodeObj.symbol = 'image://' + eventIcon + '';
             nodeObj.symbolOffset = ['75%', '-75%'];
             nodeObj.name = '';
-            if (nodeObj.id === this.currentNode.id) {
+            if (nodeObj.id === this.curNodeCrossLayer.id) {
               nodeObj.label.show = false;
             }
             if (nodeObj.category === 0) {
@@ -401,7 +404,7 @@
           }
         });
         let maxNum = Math.max(appNum, middlewareNum, processNum, deploymentNum, podNum, nodeNum);
-        let topoWidth = maxNum * deltaw + 20 > topoWidthMax ? topoWidthMax : maxNum * deltaw + 20;
+        let topoWidth = 20 + maxNum * deltaw + 30 > topoWidthMax ? topoWidthMax : 20 + maxNum * deltaw + 30;
         // 设置拓扑容器宽度 overflow:scroll-x？
         this.$refs.tdDom.style.width = topoWidth + 'px';
 
@@ -541,11 +544,11 @@
           side: 3,
           centerRadius: 25,
           hexagonRadius: 10,
-          fixAngle: Math.PI / 2,
+          fixAngle: Math.PI / 6,
           iconSize: 12,
         };
-        let usedTool = tool(svg, [
-          {icon: 'TRACE', click: this.handleGoNodeDetail},
+        this.usedTool = tool(svg, [
+          {icon: 'NODEDETAIL', click: this.handleGoNodeDetail},
           {icon: ''},
           {icon: ''},
         ], shapeOption);
@@ -580,7 +583,26 @@
           .on('click', d => {
             d3.event.stopPropagation();
             d3.event.preventDefault();
-            usedTool.attr('transform', `translate(${d.x}, ${d.y})`).attr('style', 'display: block');
+            if (this.nodeSingleClickTimer !== null) {
+              clearTimeout(this.nodeSingleClickTimer);
+              this.nodeSingleClickTimer = null;
+              return;
+            }
+            this.nodeSingleClickTimer = setTimeout(() => {
+              this.nodeSingleClickTimer = null;
+              this.curNodeCrossLayer = d; // curNodeCrossLayer如何传给usedTool？
+              this.usedTool
+                .attr('transform', `translate(${d.x}, ${d.y})`)
+                .attr('style', 'display: block');
+            }, 300);
+          })
+          .on('dblclick', d => {
+            d3.event.stopPropagation();
+            d3.event.preventDefault();
+            $jq('.topo-line').removeClass('tl-static');
+            tip.hide(this);
+            this.usedTool.attr('style', 'display: none');
+            this.handleNodeDblclicked(d);
           });
         nodeEles.append('svg')
           .attr("class", "event-node-cross-topo")
@@ -621,13 +643,43 @@
         svg.on('click', (d, i) => {
           d3.event.stopPropagation();
           d3.event.preventDefault();
-          usedTool.attr('style', 'display: none');
+          this.curNodeCrossLayer = {};
+          this.usedTool.attr('style', 'display: none');
         });
 
+      },
+      handleNodeDblclicked(nodeTmp) {
+        if (nodeTmp.id === this.currentNode.id) {
+          return;
+        }
+        let node = this.topoData.nodes.find(node => node.id === nodeTmp.id); // 对应主拓扑的节点对象
+        if (node.type !== this.showNodeTypeFilter) {
+          this.$store.commit('rocketTopo/SET_SHOW_NODE_TYPE_FILTER', node.type);
+          let lastX = node.x;
+          let lastY = node.y;
+          let staticNum = 0;
+          let tickTimer = setInterval(() => {
+            if (parseInt(node.x) === parseInt(lastX) && parseInt(node.y) === parseInt(lastY)) {
+              // 可放宽限制，加快速度
+              staticNum++;
+            } else {
+              lastX = node.x;
+              lastY = node.y;
+              staticNum = 0;
+            }
+            if (staticNum > 10) {
+              clearTimeout(tickTimer);
+              this.$store.commit('rocketTopo/SET_NODE', node);
+            }
+          }, 10);
+        } else {
+          this.$store.commit('rocketTopo/SET_NODE', node);
+        }
       },
       handleGoNodeDetail() {
         event.stopPropagation();
         event.preventDefault();
+        this.usedTool.attr('style', 'display: none');
         this.setSmallTopoOption();
         this.showNodeDetail = true;
       },
@@ -726,7 +778,7 @@
         }
       }
 
-      #tdt-view-same-layer {
+      #tdt-view-node-detail {
         position: absolute;
         top: 0;
         left: 0;

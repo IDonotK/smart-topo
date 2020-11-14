@@ -1,6 +1,7 @@
 <template>
   <div class="topo-view-chart">
     <div id="tvccId" class="tvc-c">
+      <!-- 拓扑详情 -->
       <div class="tvc-l" id="tvcl">
         <TopoDetail
           v-if="currentNode && currentNode.id !== undefined"
@@ -16,6 +17,7 @@
           ></span>
         </div>
       </div>
+      <!-- 主拓扑图 -->
       <div class="tvc-r" id="tvcrId" ref="tvcr">
         <d3-network
           ref="net"
@@ -168,7 +170,7 @@
         this.options.size.w = this.$refs.tvcr.clientWidth;
         this.options.size.h = this.$refs.tvcr.clientHeight;
       },
-      initTopoDataFiltered() {
+      initTopoDataFiltered() {  // 必须是浅拷贝
         this.nodes = this.topoDataFiltered.nodes;
         this.links = this.topoDataFiltered.links;
       },

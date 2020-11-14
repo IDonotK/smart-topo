@@ -44,7 +44,7 @@
       </svg>
     </div>
     <!-- 工具集合 -->
-    <div class="more-tool-wrapper" v-if="moreToolState">
+    <div class="more-tool-wrapper" v-show="moreToolState">
       <!-- 隐藏节点类型 -->
       <div id="hideType" class="fw-item hide-type" v-show="showNodeTypeFilter === 'All'">
         <TopoSelect
@@ -56,8 +56,8 @@
           @onChoose="handleChangeHideType"
         />
       </div>
-      <!-- 节点状态类型 -->
-      <div id="stateType" class="fw-item state-type">
+      <!-- 节点状态类型：非选中节点 -->
+      <div id="stateType" class="fw-item state-type" v-show="currentNode.id === undefined">
         <TopoSelect
           :wrapper="'stateType'"
           :hasSearch="false"
@@ -68,7 +68,7 @@
         />
       </div>
       <!-- 显示边的类型 -->
-      <div id="edgeType" class="fw-item edge-type">
+      <div id="edgeType" class="fw-item edge-type" v-show="currentNode.id === undefined">
         <TopoSelect
           :wrapper="'edgeType'"
           :hasSearch="false"
@@ -78,6 +78,8 @@
           @onChoose="handleChangeEdgeType"
         />
       </div>
+      <!-- 节点状态类型：已选中节点？ -->
+
       <!-- 关联节点类型 -->
       <div id="relativeType" class="fw-item relative-type" v-show="currentNode.id !== undefined">
         <TopoSelect
@@ -172,9 +174,6 @@
       currentNode() {
         return this.$store.state.rocketTopo.currentNode;
       },
-      // topoBasicData() {
-      //   return this.$store.state.rocketTopo.topoBasicData;
-      // },
       showNodeTypeFilter() {
         return this.$store.state.rocketTopo.showNodeTypeFilter;
       },
@@ -183,6 +182,16 @@
     watch: {
       topoDataFiltered(newVal, oldVal) {
         console.log('topo-tool-set knows');
+      },
+      currentNode(newVal) {
+        if (newVal.id !== undefined) {
+          this.moreToolState = true;
+        } else {
+          this.moreToolState = false;
+        }
+      },
+      showNodeTypeFilter(newVal) {
+        this.restoreFilters();
       }
     },
 
@@ -252,22 +261,26 @@
         this.zoomController.scaleTo(d3.select('.net-svg').transition().duration(750), this.zoomTimes);
       },
 
+      restoreFilters() {
+        this.moreToolState = false;
+        this.hideTypeOption.select = this.hideTypeOption.data[0];
+        this.stateTypeOption.select = this.stateTypeOption.data[0];
+        this.edgeTypeOption.select = this.edgeTypeOption.data[0];
+        this.relativeTypeOption.select = this.relativeTypeOption.data[0];
+        this.$store.commit('rocketTopo/SET_HIDE_NODE_TYPE_FILTER', 'None');
+        this.$store.commit('rocketTopo/SET_NODE_STATE_TYPE_FILTER', 'All');
+        this.$store.commit('rocketTopo/SET_SHOW_EDGE_TYPE_FILTER', 'All');
+        this.$store.commit('rocketTopo/SET_RELATIVE_NODE_TYPE', 'Single Hop');
+      },
+
       handleRestoreTopo(isBackToAll) {
         this.inputId = '';
         this.currentNode.fx = null;
         this.currentNode.fy = null;
         this.$store.commit('rocketTopo/SET_NODE', {});
         if (isBackToAll) {
-          this.moreToolState = false;
-          this.hideTypeOption.select = this.hideTypeOption.data[0];
-          this.stateTypeOption.select = this.stateTypeOption.data[0];
-          this.edgeTypeOption.select = this.edgeTypeOption.data[0];
-          this.relativeTypeOption.select = this.relativeTypeOption.data[0];
           this.$store.commit('rocketTopo/SET_SHOW_NODE_TYPE_FILTER', 'All');
-          this.$store.commit('rocketTopo/SET_HIDE_NODE_TYPE_FILTER', 'None');
-          this.$store.commit('rocketTopo/SET_NODE_STATE_TYPE_FILTER', 'All');
-          this.$store.commit('rocketTopo/SET_SHOW_EDGE_TYPE_FILTER', 'All');
-          this.$store.commit('rocketTopo/SET_RELATIVE_NODE_TYPE', 'Single Hop');
+          this.restoreFilters();
         }
         d3.select('#netSvg')
           .transition().duration(750)

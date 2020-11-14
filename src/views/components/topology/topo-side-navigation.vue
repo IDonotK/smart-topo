@@ -4,7 +4,7 @@
       class="tsn-item"
       v-for="(item, index) in navList"
       :key="index"
-      :class="{ 'tsni-odd': index % 2 != 0, 'tsni-even': index % 2 == 0, 'tsni-select': item.id == selectNav }"
+      :class="{ 'tsni-odd': index % 2 != 0, 'tsni-even': index % 2 == 0, 'tsni-select': item.id == showNodeTypeFilter }"
       @click="handleSelectNav(item.id)"
     >
       <div class="tsni-h">
@@ -21,6 +21,8 @@
 </template>
 
 <script lang="js">
+  import * as d3 from 'd3';
+
   import appIcon from './assets/APP.png';
   import middlewareIcon from './assets/MIDDLEWARE.png';
   import processIcon from './assets/PROCESS.png';
@@ -91,9 +93,16 @@
     },
 
     computed: {
-      selectNav() {
+      showNodeTypeFilter() {
         return this.$store.state.rocketTopo.showNodeTypeFilter;
       },
+      currentNode() {
+        return this.$store.state.rocketTopo.currentNode;
+      },
+      zoomController() {
+        return this.$store.state.rocketTopo.zoomController;
+      },
+
     },
 
     mounted() {
@@ -102,7 +111,16 @@
 
     methods: {
       handleSelectNav(itemId) {
+        if (itemId === this.showNodeTypeFilter) {
+          return;
+        }
+        this.currentNode.fx = null;
+        this.currentNode.fy = null;
+        this.$store.commit('rocketTopo/SET_NODE', {});
         this.$store.commit('rocketTopo/SET_SHOW_NODE_TYPE_FILTER', itemId);
+        d3.select('#netSvg')
+          .transition().duration(750)
+          .call(this.zoomController.transform, d3.zoomIdentity);
       },
       initNavList() {
         this.topoData.nodes.forEach(node => {
