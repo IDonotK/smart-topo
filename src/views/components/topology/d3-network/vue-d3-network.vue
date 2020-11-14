@@ -177,12 +177,12 @@
       this.buildNodes(this.netNodes);
       this.links = this.buildLinks(this.netLinks);
       this.updateNodeSvg();
-      setTimeout(() => {
-        this.$store.commit('rocketTopo/SET_TOPO_BASIC_DATA', {
-          nodes: this.nodes,
-          links: this.links,
-        });
-      });
+      // setTimeout(() => {
+      //   this.$store.commit('rocketTopo/SET_TOPO_BASIC_DATA', {
+      //     nodes: this.nodes,
+      //     links: this.links,
+      //   });
+      // });
     },
     mounted() {
       this.onResize();
@@ -195,6 +195,9 @@
       if (this.resizeListener) window.removeEventListener('resize', this.onResize);
     },
     computed: {
+      showNodeTypeFilter() {
+        return this.$store.state.rocketTopo.showNodeTypeFilter;
+      },
       relativeNodeType() {
         return this.$store.state.rocketTopo.relativeNodeType;
       },
@@ -825,7 +828,34 @@
         }
         this.$emit('node-click', event, node);
         if (event && node) {
-          this.$store.commit('rocketTopo/SET_NODE', node);
+          if (node.type !== this.showNodeTypeFilter) {
+            this.$store.commit('rocketTopo/SET_SHOW_NODE_TYPE_FILTER', node.type);
+            // setTimeout(() => {
+            //   this.$store.commit('rocketTopo/SET_NODE', node);
+            // }, 500);
+            // this.simulation.on('end', () => {
+            //   this.$store.commit('rocketTopo/SET_NODE', node);
+            // });
+            let lastX = node.x;
+            let lastY = node.y;
+            let staticNum = 0;
+            let tickTimer = setInterval(() => {
+              if (parseInt(node.x) === parseInt(lastX) && parseInt(node.y) === parseInt(lastY)) {
+                // 可放宽限制，加快速度
+                staticNum++;
+              } else {
+                lastX = node.x;
+                lastY = node.y;
+                staticNum = 0;
+              }
+              if (staticNum > 10) {
+                clearTimeout(tickTimer);
+                this.$store.commit('rocketTopo/SET_NODE', node);
+              }
+            }, 10);
+          } else {
+            this.$store.commit('rocketTopo/SET_NODE', node);
+          }
         }
       },
       linkClick(event, link) {

@@ -46,7 +46,7 @@
     <!-- 工具集合 -->
     <div class="more-tool-wrapper" v-if="moreToolState">
       <!-- 隐藏节点类型 -->
-      <div id="hideType" class="fw-item hide-type">
+      <div id="hideType" class="fw-item hide-type" v-show="showNodeTypeFilter === 'All'">
         <TopoSelect
           :wrapper="'hideType'"
           :hasSearch="false"
@@ -67,18 +67,7 @@
           @onChoose="handleChangeStateType"
         />
       </div>
-      <!-- 关联节点类型 -->
-      <div id="relativeType" class="fw-item relative-type">
-        <TopoSelect
-          :wrapper="'relativeType'"
-          :hasSearch="false"
-          :current="relativeTypeOption.select"
-          :data="relativeTypeOption.data"
-          :title="relativeTypeOption.title"
-          @onChoose="handleChangeRelativeType"
-        />
-      </div>
-      <!-- 边类型 -->
+      <!-- 显示边的类型 -->
       <div id="edgeType" class="fw-item edge-type">
         <TopoSelect
           :wrapper="'edgeType'"
@@ -87,6 +76,17 @@
           :data="edgeTypeOption.data"
           :title="edgeTypeOption.title"
           @onChoose="handleChangeEdgeType"
+        />
+      </div>
+      <!-- 关联节点类型 -->
+      <div id="relativeType" class="fw-item relative-type" v-show="currentNode.id !== undefined">
+        <TopoSelect
+          :wrapper="'relativeType'"
+          :hasSearch="false"
+          :current="relativeTypeOption.select"
+          :data="relativeTypeOption.data"
+          :title="relativeTypeOption.title"
+          @onChoose="handleChangeRelativeType"
         />
       </div>
     </div>
@@ -120,7 +120,7 @@
           title: '隐藏节点类型',
           data: [
             {key: 0, label: 'None'},
-            {key: 1, label: 'Application'},
+            {key: 1, label: 'App'},
             {key: 2, label: 'Middleware'},
             {key: 3, label: 'Process'},
             {key: 4, label: 'Deployment'},
@@ -149,11 +149,11 @@
           select: {key: 0, label: 'Single Hop'}
         },
         edgeTypeOption: {
-          title: '边类型',
+          title: '显示边的类型',
           data: [
             {key: 0, label: 'All'},
-            {key: 1, label: 'Traceing To'},
-            {key: 2, label: 'Created On'},
+            {key: 1, label: 'Tracing To'},
+            {key: 2, label: 'Create On'},
           ],
           select: {key: 0, label: 'All'}
         },
@@ -174,7 +174,10 @@
       },
       // topoBasicData() {
       //   return this.$store.state.rocketTopo.topoBasicData;
-      // }
+      // },
+      showNodeTypeFilter() {
+        return this.$store.state.rocketTopo.showNodeTypeFilter;
+      },
     },
 
     watch: {
@@ -191,12 +194,31 @@
         if (this.inputId === '') {
           return;
         }
-        // let result = this.topoBasicData.nodes.find(node => String(node.id) === this.inputId);
         let result = this.topoDataFiltered.nodes.find(node => String(node.id) === this.inputId);
         if (result === undefined) {
           console.log('Not Match');
         } else {
-          this.$store.commit('rocketTopo/SET_NODE', result);
+          if (result.type !== this.showNodeTypeFilter) {
+            this.$store.commit('rocketTopo/SET_SHOW_NODE_TYPE_FILTER', result.type);
+            let lastX = result.x;
+            let lastY = result.y;
+            let staticNum = 0;
+            let tickTimer = setInterval(() => {
+              if (parseInt(result.x) === parseInt(lastX) && parseInt(result.y) === parseInt(lastY)) { // 可放宽限制，加快速度
+                staticNum++;
+              } else {
+                lastX = result.x;
+                lastY = result.y;
+                staticNum = 0;
+              }
+              if (staticNum > 10) {
+                clearTimeout(tickTimer);
+                this.$store.commit('rocketTopo/SET_NODE', result);
+              }
+            }, 10);
+          } else {
+            this.$store.commit('rocketTopo/SET_NODE', result);
+          }
         }
       },
 
@@ -236,7 +258,16 @@
         this.currentNode.fy = null;
         this.$store.commit('rocketTopo/SET_NODE', {});
         if (isBackToAll) {
-          this.$store.commit('rocketTopo/SET_FILTER_NODE_TYPE', 'All');
+          this.moreToolState = false;
+          this.hideTypeOption.select = this.hideTypeOption.data[0];
+          this.stateTypeOption.select = this.stateTypeOption.data[0];
+          this.edgeTypeOption.select = this.edgeTypeOption.data[0];
+          this.relativeTypeOption.select = this.relativeTypeOption.data[0];
+          this.$store.commit('rocketTopo/SET_SHOW_NODE_TYPE_FILTER', 'All');
+          this.$store.commit('rocketTopo/SET_HIDE_NODE_TYPE_FILTER', 'None');
+          this.$store.commit('rocketTopo/SET_NODE_STATE_TYPE_FILTER', 'All');
+          this.$store.commit('rocketTopo/SET_SHOW_EDGE_TYPE_FILTER', 'All');
+          this.$store.commit('rocketTopo/SET_RELATIVE_NODE_TYPE', 'Single Hop');
         }
         d3.select('#netSvg')
           .transition().duration(750)
@@ -249,10 +280,12 @@
 
       handleChangeHideType(select) {
         this.hideTypeOption.select = select;
+        this.$store.commit('rocketTopo/SET_HIDE_NODE_TYPE_FILTER', select.label);
       },
 
       handleChangeStateType(select) {
         this.stateTypeOption.select = select;
+        this.$store.commit('rocketTopo/SET_NODE_STATE_TYPE_FILTER', select.label);
       },
 
       handleChangeRelativeType(select) {
@@ -262,6 +295,7 @@
 
       handleChangeEdgeType(select) {
         this.edgeTypeOption.select = select;
+        this.$store.commit('rocketTopo/SET_SHOW_EDGE_TYPE_FILTER', select.label);
       }
     }
   }
@@ -279,6 +313,12 @@
     display: flex;
     justify-content: flex-end;
     align-items: center;
+
+    -moz-user-select: none;
+    -webkit-user-select: none;
+    -ms-user-select: none;
+    -khtml-user-select: none;
+    user-select: none;
 
     .search-wrapper,
     .size-controller,

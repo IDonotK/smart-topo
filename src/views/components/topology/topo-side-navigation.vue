@@ -92,7 +92,7 @@
 
     computed: {
       selectNav() {
-        return this.$store.state.rocketTopo.filterNodeType;
+        return this.$store.state.rocketTopo.showNodeTypeFilter;
       },
     },
 
@@ -102,7 +102,7 @@
 
     methods: {
       handleSelectNav(itemId) {
-        this.$store.commit('rocketTopo/SET_FILTER_NODE_TYPE', itemId);
+        this.$store.commit('rocketTopo/SET_SHOW_NODE_TYPE_FILTER', itemId);
       },
       initNavList() {
         this.topoData.nodes.forEach(node => {

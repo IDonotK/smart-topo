@@ -78,7 +78,10 @@ export interface State {
   serviceApdexScore: { ApdexScore: number[] };
   topoEndpoints: any[];
   topoInstances: any[];
-  filterNodeType: string;
+  showNodeTypeFilter: string;
+  hideNodeTypeFilter: string;
+  nodeStateTypeFilter: string;
+  showEdgeTypeFilter: string;
   zoomController: any;
   relativeNodeType: string;
   topoBasicData: {
@@ -132,7 +135,10 @@ const initState: State = {
   serviceApdexScore: { ApdexScore: [] },
   topoEndpoints: [],
   topoInstances: [],
-  filterNodeType: 'All',
+  showNodeTypeFilter: 'All',
+  hideNodeTypeFilter: 'None',
+  nodeStateTypeFilter: 'All',
+  showEdgeTypeFilter: 'All',
   zoomController: null,
   relativeNodeType: 'Single Hop',
   topoBasicData: {
@@ -162,8 +168,17 @@ const mutations = {
   [types.SET_NODE](state: State, data: any) {
     state.currentNode = data;
   },
-  [types.SET_FILTER_NODE_TYPE](state: State, data: any) {
-    state.filterNodeType = data;
+  [types.SET_SHOW_NODE_TYPE_FILTER](state: State, data: any) {
+    state.showNodeTypeFilter = data;
+  },
+  [types.SET_HIDE_NODE_TYPE_FILTER](state: State, data: any) {
+    state.hideNodeTypeFilter = data;
+  },
+  [types.SET_NODE_STATE_TYPE_FILTER](state: State, data: any) {
+    state.nodeStateTypeFilter = data;
+  },
+  [types.SET_SHOW_EDGE_TYPE_FILTER](state: State, data: any) {
+    state.showEdgeTypeFilter = data;
   },
   [types.SET_ZOOM_CONTROLLER](state: State, data: any) {
     state.zoomController = data;

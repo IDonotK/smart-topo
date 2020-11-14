@@ -146,7 +146,7 @@
 
     computed: {
       selectNav() {
-        return this.$store.state.rocketTopo.filterNodeType;
+        return this.$store.state.rocketTopo.showNodeTypeFilter;
       },
       currentNode() {
         return this.$store.state.rocketTopo.currentNode;
@@ -365,9 +365,10 @@
         };
       },
       handleSelectNav(itemId) {
-        this.$store.commit('rocketTopo/SET_FILTER_NODE_TYPE', itemId);
+        this.$store.commit('rocketTopo/SET_SHOW_NODE_TYPE_FILTER', itemId);
       },
       drawDetailTopoCrossLayer() {
+        console.log('drawDetailTopoCrossLayer', this);
         if (this.topoDetailData.nodes.length <= 0) {
           return;
         }
@@ -636,6 +637,7 @@
         this.showNodeDetail = false;
       },
       resize() {
+        console.log('resize', this);
         this.drawDetailTopoCrossLayer();
       },
     }
