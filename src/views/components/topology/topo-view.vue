@@ -90,7 +90,7 @@
             w: 0,
             h: 0,
           },
-          force: 350,
+          force: 700,
           offset: {
             x: 0,
             y: 0,
