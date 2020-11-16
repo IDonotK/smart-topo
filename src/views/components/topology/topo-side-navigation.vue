@@ -105,6 +105,12 @@
 
     },
 
+    watch: {
+      topoData() {
+        this.initNavList();
+      }
+    },
+
     mounted() {
       this.initNavList();
     },

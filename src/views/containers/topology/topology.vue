@@ -19,8 +19,14 @@
   export default {
     data() {
       return {
-        topoData: {},
-        topoDataFiltered: {}
+        topoData: {
+          nodes: [],
+          links: []
+        },
+        topoDataFiltered: {
+          nodes: [],
+          links: []
+        }
       }
     },
 
@@ -66,11 +72,14 @@
 
     methods: {
       initTopoData() {
-        this.topoData = {
-          nodes: NODES,
-          links: LINKS
-        };
-        this.topoDataFiltered = this.topoData; // 浅拷贝
+        setTimeout(() => {
+          // query
+          this.topoData = {
+            nodes: NODES,
+            links: LINKS
+          };
+          this.topoDataFiltered = this.topoData; // 浅拷贝
+        }, 2000);
       },
       filterTopo() { // 注意过滤时不应改变原数组元素对象的引用，使用浅拷贝
         // let topoDataFilteredTmp = JSON.parse(JSON.stringify(this.topoData));

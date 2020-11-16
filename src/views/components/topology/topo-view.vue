@@ -20,6 +20,7 @@
       <!-- 主拓扑图 -->
       <div class="tvc-r" id="tvcrId" ref="tvcr">
         <d3-network
+          v-show="topoData.nodes.length > 0"
           ref="net"
           :net-nodes="nodes"
           :net-links="links"
@@ -28,6 +29,11 @@
           @node-click="nodeClick"
           @link-click="linkClick"
         />
+        <div class="main-topo-loading" v-show="topoData.nodes.length === 0">
+          <svg class="icon loading">
+            <use xlink:href="#spinner-light"></use>
+          </svg>
+        </div>
       </div>
     </div>
   </div>
@@ -104,7 +110,8 @@
         topoDetailData: {
           nodes: [],
           links: []
-        }
+        },
+        loading: true,
       }
     },
 
@@ -247,6 +254,20 @@
         -webkit-transition: 0.1s width;
         transition: 0.1s width;
         height: 100%;
+
+        .main-topo-loading {
+          position: absolute;
+          width: 100%;
+          height: 100%;
+          display: flex;
+          justify-content: center;
+          align-items: center;
+
+          .icon {
+            width: 50px;
+            height: 50px;
+          }
+        }
       }
     }
   }

@@ -55,6 +55,7 @@ import './svg/soft-unwrap.svg';
 import './svg/sort-lowest.svg';
 import './svg/spam.svg';
 import './svg/spinner.svg';
+import './svg/spinner-light.svg';
 import './svg/table.svg';
 import './svg/todo-add.svg';
 import './svg/token.svg';
