@@ -6,6 +6,7 @@
   import svgRenderer from './components/svgRenderer.vue';
   import saveImage from './lib/js/saveImage.js';
   import svgExport from './lib/js/svgExport.js';
+  import { defaults } from 'lodash';
 
   // const d3 = Object.assign({}, forceSimulation)
 
@@ -75,7 +76,7 @@
         },
         noNodes: false,
         strLinks: true,
-        fontSize: 10,
+        fontSize: 16,
         dragging: false,
         linkWidth: 1,
         nodeLabels: false,
@@ -113,6 +114,10 @@
           '#c4ebad',
           '#96dee8',
         ],
+        topoTickCount: 0,
+        defaultNodeSize: 20,
+        nodeNumSmall: 20,
+        defaultFontSize: 16,
       };
     },
     render(createElement) {
@@ -195,6 +200,12 @@
       if (this.resizeListener) window.removeEventListener('resize', this.onResize);
     },
     computed: {
+      isFirstTick() {
+        return this.$store.state.rocketTopo.isFirstTick;
+      },
+      topoScaleFix() {
+        return this.$store.state.rocketTopo.topoScaleFix;
+      },
       showNodeTypeFilter() {
         return this.$store.state.rocketTopo.showNodeTypeFilter;
       },
@@ -263,7 +274,80 @@
       },
     },
     methods: {
+      getScaleFix(nodes, fix, isOnNodeSize) {
+        if (nodes.length === 1) {
+          return 1;
+        }
+        let centerX = $jq('#netSvg').width() / 2;
+        let centerY = $jq('#netSvg').height() / 2;
+        let xMin = nodes[0].x;
+        let xMax = nodes[0].x;
+        let yMin = nodes[0].y;
+        let yMax = nodes[0].y;
+        for (let i = 0; i < nodes.length; i++) {
+          xMin = xMin > nodes[i].x ? nodes[i].x : xMin;
+          xMax = xMax < nodes[i].x ? nodes[i].x : xMax;
+          yMin = yMin > nodes[i].y ? nodes[i].y : yMin;
+          yMax = yMax < nodes[i].y ? nodes[i].y : yMax;
+        }
+        let scaleFixX = 1;
+        let scaleFixY = 1;
+        let scaleFix = 1;
+        scaleFixX = (fix * 2 * centerX) / (xMax - xMin);
+        scaleFixY = (fix * 2 * centerY) / (yMax - yMin);
+        scaleFix = Math.min(scaleFixX, scaleFixY);
+        if (isOnNodeSize) {
+          // 关系？
+          // scaleFixX = fix * 2 * centerX / (xMax - xMin + this.defaultNodeSize * scaleFix);
+          // scaleFixY = fix * 2 * centerY / (yMax - yMin + this.defaultNodeSize * scaleFix);
+          scaleFixX = (fix * 2 * centerX) / (xMax - xMin + this.nodeSize * scaleFix);
+          scaleFixY = (fix * 2 * centerY) / (yMax - yMin + this.nodeSize * scaleFix);
+          // scaleFixX = fix * 2 * centerX / (xMax - xMin + this.nodeSize);
+          // scaleFixY = fix * 2 * centerY / (yMax - yMin + this.nodeSize);
+          scaleFix = Math.min(scaleFixX, scaleFixY);
+          // scaleFix = Math.min(scaleFixX, scaleFixY) * this.topoScaleFix;
+        }
+        return scaleFix;
+      },
+      fixTopoScale(isSetTopoScaleFix, isEnlargeTopo) {
+        let centerX = $jq('#netSvg').width() / 2;
+        let centerY = $jq('#netSvg').height() / 2;
+        let bounds = d3
+          .select('#zoomContainer')
+          .node()
+          .getBBox();
+        let scaleFixX = (0.8 * centerX) / (centerX - bounds.x);
+        let scaleFixY = (0.8 * centerY) / (centerY - bounds.y);
+        let scaleFix = Math.min(scaleFixX, scaleFixY);
+        if (isEnlargeTopo) {
+          if (this.nodes.length <= 20) {
+            scaleFix = this.getScaleFix(this.nodes, 0.6, false);
+          } else {
+            scaleFixX = (0.8 * centerX) / (centerX - bounds.x);
+            scaleFixY = (0.8 * centerY) / (centerY - bounds.y);
+            scaleFix = Math.min(scaleFixX, scaleFixY);
+          }
+          this.nodeSize = this.defaultNodeSize / scaleFix;
+          this.linkWidth = 1 / (this.defaultNodeSize / this.nodeSize);
+          this.fontSize = this.defaultFontSize / scaleFix;
+        }
+        if (isSetTopoScaleFix) {
+          this.$store.commit('rocketTopo/SET_TOPO_SCALE_FIX', scaleFix);
+        }
+        this.zoomController.scaleTo(
+          d3
+            .select('.net-svg')
+            .transition()
+            .duration(200),
+          scaleFix,
+        );
+      },
       handleClickNet(event) {
+        // 提前终止仿真？
+        this.simulation.stop();
+        if (this.isFirstTick) {
+          this.$store.commit('rocketTopo/SET_IS_FIRST_TICK', false);
+        }
         if (!this.isMouseDwonNet) {
           this.isMouseDwonNet = true;
           return;
@@ -273,8 +357,8 @@
         }
         this.currentNode.fx = null;
         this.currentNode.fy = null;
-        this.simulation.restart();
-        this.simulation.alpha(0.5);
+        // this.simulation.restart();
+        // this.simulation.alpha(0.5);
         this.$store.commit('rocketTopo/SET_NODE', {});
       },
       restoreAroundCurrentNode() {
@@ -564,6 +648,8 @@
             this[op] = options[op];
           }
         }
+        this.defaultNodeSize = this.nodeSize;
+        this.defaultFontSize = this.fontSize;
       },
       buildNodes(nodes) {
         let vm = this;
@@ -608,6 +694,9 @@
             case 'Node':
               nodeColor = this.pallet[5];
               break;
+            default:
+              nodeColor = '#dcfaf3';
+              break;
           }
           vm.$set(node, '_color', nodeColor);
 
@@ -644,11 +733,15 @@
         let sim = d3
           .forceSimulation()
           .stop()
-          .alpha(0.5)
-          // .alphaMin(0.05)
+          .alpha(0.5) // 0.5以0.01的速度衰减到0.01，控制它们，让布局更合理
+          .alphaMin(0.01)
+          .alphaDecay(0.01)
+          .velocityDecay(0.5) // 控制节点速度
           .nodes(nodes);
 
-        if (forces.Center !== false) sim.force('center', d3.forceCenter(this.center.x, this.center.y));
+        if (forces.Center !== false) {
+          sim.force('center', d3.forceCenter(this.center.x, this.center.y));
+        }
         if (forces.X !== false) {
           sim.force('X', d3.forceX(this.center.x).strength(forces.X));
         }
@@ -658,6 +751,7 @@
         if (forces.ManyBody !== false) {
           sim.force('charge', d3.forceManyBody().strength(-this.force));
         }
+
         if (forces.Link !== false) {
           sim.force(
             'link',
@@ -666,6 +760,43 @@
             }),
           );
         }
+        sim.on('tick', () => {
+          if (this.isFirstTick) {
+            if (this.nodes.length > this.nodeNumSmall) {
+              let bounds = d3
+                .select('#zoomContainer')
+                .node()
+                .getBBox();
+              if (bounds.x !== 0 && bounds.y !== 0) {
+                this.topoTickCount++;
+              }
+              if (this.topoTickCount % 5 === 1) {
+                if (bounds.x < 0 || bounds.y < 0) {
+                  this.fixTopoScale(true, false);
+                } else {
+                  this.fixTopoScale(true, true);
+                }
+              }
+            } else if (this.nodes.length > 1 && this.nodes.length <= this.nodeNumSmall) {
+              this.topoTickCount++;
+              if (this.topoTickCount % 3 === 0) {
+                this.fixTopoScale(true, true);
+              }
+            }
+          }
+        });
+        sim.on('end', () => {
+          if (this.isFirstTick) {
+            this.$store.commit('rocketTopo/SET_IS_FIRST_TICK', false);
+            this.topoTickCount = 0;
+            if (this.nodes.length > this.nodeNumSmall) {
+              this.fixTopoScale(true, false);
+            } else if (this.nodes.length <= this.nodeNumSmall) {
+              this.fixTopoScale(true, true);
+            }
+          }
+        });
+
         sim = this.setCustomForces(sim);
         sim = this.itemCb(this.simCb, sim);
         return sim;
@@ -792,7 +923,6 @@
         let zoomK = d3.zoomTransform(d3.select('#zoomContainer').node()).k;
         let zoomX = d3.zoomTransform(d3.select('#zoomContainer').node()).x;
         let zoomY = d3.zoomTransform(d3.select('#zoomContainer').node()).y;
-        let newZoomK = zoomK < 2 ? 2 : zoomK;
 
         /* 移动方式一 */
         // 选中节点回到视口中心
@@ -813,6 +943,19 @@
           curNode.fx = curNode.x;
           curNode.fy = curNode.y;
 
+          // 单跳视口，百万级数据查询耗时？
+          let nodesTmp = [];
+          nodesTmp.push(curNode);
+          this.links.forEach((link) => {
+            if (link.sid === curNode.id) {
+              nodesTmp.push(link.target);
+            }
+            if (link.tid === curNode.id) {
+              nodesTmp.push(link.source);
+            }
+          });
+          let newZoomK = this.getScaleFix(nodesTmp, 0.9, true);
+
           this.zoomController.scaleTo(
             d3
               .select('.net-svg')
@@ -830,12 +973,6 @@
         if (event && node) {
           if (node.type !== this.showNodeTypeFilter) {
             this.$store.commit('rocketTopo/SET_SHOW_NODE_TYPE_FILTER', node.type);
-            // setTimeout(() => {
-            //   this.$store.commit('rocketTopo/SET_NODE', node);
-            // }, 500);
-            // this.simulation.on('end', () => {
-            //   this.$store.commit('rocketTopo/SET_NODE', node);
-            // });
             let lastX = node.x;
             let lastY = node.y;
             let staticNum = 0;

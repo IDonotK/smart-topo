@@ -88,6 +88,8 @@ export interface State {
     nodes: any[];
     links: any[];
   };
+  topoScaleFix: number;
+  isFirstTick: boolean;
 }
 
 const PercentileItem: string[] = ['p50', 'p75', 'p90', 'p95', 'p99'];
@@ -145,6 +147,8 @@ const initState: State = {
     nodes: [],
     links: [],
   },
+  topoScaleFix: -1,
+  isFirstTick: true,
 };
 
 // getters
@@ -188,6 +192,12 @@ const mutations = {
   },
   [types.SET_TOPO_BASIC_DATA](state: State, data: any) {
     state.topoBasicData = data;
+  },
+  [types.SET_TOPO_SCALE_FIX](state: State, data: any) {
+    state.topoScaleFix = data;
+  },
+  [types.SET_IS_FIRST_TICK](state: State, data: any) {
+    state.isFirstTick = data;
   },
   [types.SET_LINK](state: State, data: any) {
     state.currentLink = data;

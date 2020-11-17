@@ -100,6 +100,7 @@
   import TopoSelect from './topo-select.vue';
 
   import * as d3 from 'd3';
+  import $jq from 'jquery';
 
   export default {
     props: {
@@ -167,6 +168,9 @@
     },
 
     computed: {
+      topoScaleFix() {
+        return this.$store.state.rocketTopo.topoScaleFix;
+      },
       zoomController() {
         return this.$store.state.rocketTopo.zoomController;
       },
@@ -241,7 +245,7 @@
         } else if (zoomTimes >= 1) {
           zoomTimes = zoomTimes + 1;
         }
-        if (zoomTimes > 10) {
+        if (zoomTimes > 100) {
           zoomTimes = zoomTimes - 1;
           return;
         }
@@ -283,9 +287,65 @@
           this.$store.commit('rocketTopo/SET_SHOW_NODE_TYPE_FILTER', 'All');
           this.restoreFilters();
         }
-        d3.select('#netSvg')
-          .transition().duration(750)
-          .call(this.zoomController.transform, d3.zoomIdentity);
+        // d3.select('#netSvg')
+        //   .transition().duration(750)
+        //   .call(this.zoomController.transform, d3.zoomIdentity);
+        let centerX = $jq('#netSvg').width() / 2;
+        let centerY = $jq('#netSvg').height() / 2;
+        let zoomK = d3.zoomTransform(d3.select('#zoomContainer').node()).k;
+
+        // 莫名偏上？
+        // let transform = d3.zoomIdentity.translate(centerX / 2, centerY / 2).scale(this.topoScaleFix);
+        // d3.select('#netSvg')
+        //   .transition().duration(750)
+        //   .call(this.zoomController.transform, transform);
+
+        if (zoomK > this.topoScaleFix) {
+          this.zoomController.scaleTo(
+            d3
+              .select('.net-svg')
+              .transition()
+              .duration(500),
+            this.topoScaleFix,
+          );
+          setTimeout(() => {
+            this.zoomController.translateTo(
+              d3
+                .select('.net-svg')
+                .transition()
+                .duration(500),
+              centerX,
+              centerY,
+            );
+          }, 500);
+        } else if (zoomK === this.topoScaleFix) {
+          this.zoomController.translateTo(
+            d3
+              .select('.net-svg')
+              .transition()
+              .duration(500),
+            centerX,
+            centerY,
+          );
+        } else {
+          this.zoomController.translateTo(
+            d3
+              .select('.net-svg')
+              .transition()
+              .duration(500),
+            centerX,
+            centerY,
+          );
+          setTimeout(() => {
+            this.zoomController.scaleTo(
+              d3
+                .select('.net-svg')
+                .transition()
+                .duration(500),
+              this.topoScaleFix,
+            );
+          }, 500);
+        }
       },
 
       handleToggleMoreTool() {

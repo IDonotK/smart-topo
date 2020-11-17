@@ -1,6 +1,5 @@
 <template>
   <div class="rk-topo">
-    <!-- gittest -->
     <TopoView :topoDataFiltered="topoDataFiltered" :topoData="topoData" />
     <TopoSideNavigation :topoData="topoData" />
     <TopoToolSet :topoDataFiltered="topoDataFiltered" />
@@ -53,6 +52,14 @@
     },
 
     watch: {
+      topoData(newVal) {
+        if (newVal.length === 1) {
+          this.$store.commit('rocketTopo/SET_TOPO_SCALE_FIX', 1);
+        } else {
+          this.$store.commit('rocketTopo/SET_TOPO_SCALE_FIX', -1);
+        }
+        this.$store.commit('rocketTopo/SET_IS_FIRST_TICK', true);
+      },
       showNodeTypeFilter(newVal, oldVal) { // 性能优化，降低过滤频率
         this.filterTopo();
       },

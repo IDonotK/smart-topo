@@ -22,10 +22,10 @@
             :key="index"
             :id="'arrow' + link.id"
             markerUnits="userSpaceOnUse"
-            markerWidth="10"
-            markerHeight="10"
+            :markerWidth="nodeSize / 2"
+            :markerHeight="nodeSize / 2"
             viewBox="0 0 10 10"
-            :refX="getArrowRefX(link)"
+            refX="18"
             refY="6"
             orient="auto"
           >
@@ -86,6 +86,7 @@
               :cx="node.x"
               :cy="node.y"
               :style="nodeStyle(node)"
+              :stroke-width="fontSize / 8"
               :title="node.name"
               :class="nodeClass(node, [node.isDark ? 'dark-node' : '', node.isBright ? 'bright-node' : ''])"
               v-bind="node._svgAttrs"
@@ -161,6 +162,7 @@
       'linkTextPosition',
       'linkTextVisible',
       'linkTextContent',
+      'defaultNodeSize',
     ],
 
     data() {
@@ -199,7 +201,7 @@
       },
       getArrowRefX(link) {
         let size = this.nodes.find((node) => node.id === link.tid)._size || this.nodeSize;
-        return size / 2 + 10;
+        return size / 2 + size;
       },
       setZoom() {
         const zoomed = () => {
@@ -207,8 +209,12 @@
             'transform',
             'translate(' + d3.event.transform.x + ',' + d3.event.transform.y + ') scale(' + d3.event.transform.k + ')',
           );
+          // d3.selectAll('.node-label').attr(
+          //   'transform',
+          //   'scale(' + 1 / d3.event.transform.k + ')' + ' translate(' + -d3.event.transform.x + ',' + -d3.event.transform.y + ')',
+          // );
         };
-        this.zoom.scaleExtent([0.1, 10]).on('zoom', zoomed);
+        this.zoom.scaleExtent([0.1, 100]).on('zoom', zoomed);
         d3.select('.net-svg')
           .call(this.zoom)
           .on('dblclick.zoom', null);
@@ -251,8 +257,8 @@
       },
       linkPath(link) {
         let d = {
-          M: [link.source.x | 0, link.source.y | 0],
-          X: [link.target.x | 0, link.target.y | 0],
+          M: [link.source.x, link.source.y],
+          X: [link.target.x, link.target.y],
         };
         if (this.strLinks) {
           return 'M ' + d.M.join(' ') + ' L' + d.X.join(' ');

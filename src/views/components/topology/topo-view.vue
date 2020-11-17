@@ -3,7 +3,7 @@
     <div id="tvccId" class="tvc-c">
       <!-- 拓扑详情 -->
       <div class="tvc-l" id="tvcl">
-        <TopoDetail
+        <!-- <TopoDetail
           v-if="currentNode && currentNode.id !== undefined"
           :foldTopoDetail="foldTopoDetail"
           :topoDetailData="topoDetailData"
@@ -15,7 +15,7 @@
             :class="{ 'tvlci-fold': foldTopoDetail }"
             @click.stop.prevent="toggleTopoDetail"
           ></span>
-        </div>
+        </div> -->
       </div>
       <!-- 主拓扑图 -->
       <div class="tvc-r" id="tvcrId" ref="tvcr">
@@ -90,7 +90,7 @@
             w: 0,
             h: 0,
           },
-          force: 700,
+          force: 350,
           offset: {
             x: 0,
             y: 0,
@@ -103,7 +103,7 @@
         },
         settings: {
           maxLinks: 1,
-          maxNodes: 36
+          maxNodes: 500
         },
         nodeSym: null,
         foldTopoDetail: false,
@@ -129,7 +129,7 @@
     watch: {
       topoDataFiltered(newVal, oldVal) {
         console.log('topo-view knows');
-        this.initTopoDataFiltered(); // 可优化，考虑props
+        // this.initTopoDataFiltered(); // 可优化，考虑props
       },
       currentNode(newVal, oldVal) {
         if (newVal.id !== undefined) {
@@ -144,8 +144,8 @@
 
     mounted() {
       this.initSvgSizeArg();
-      this.initTopoDataFiltered();
-      // this.reset(); // 拓扑布局测试
+      // this.initTopoDataFiltered();
+      this.reset(); // 拓扑布局测试
     },
 
     methods: {
