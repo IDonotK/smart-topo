@@ -56,10 +56,11 @@
   import appIcon from './assets/APP.png';
   import middlewareIcon from './assets/MIDDLEWARE.png';
   import processIcon from './assets/PROCESS.png';
-  import deploymentIcon from './assets/DEPLOYMENT.png';
+  import workloadIcon from './assets/WORKLOAD.png';
   import podIcon from './assets/POD.png';
   import nodeIcon from './assets/NODE.png';
-  import eventIcon from './assets/EVENT.png';
+  // import eventIcon from './assets/EVENT.png';
+  import eventIcon from './assets/EVENT_LIGHT.png';
 
   import icons from './chart/utils/icons';
   import tool from './chart/utils/tool';
@@ -106,8 +107,8 @@
             name: 'Processes',
           },
           {
-            id: 'Deployment',
-            name: 'Deployments',
+            id: 'Workload',
+            name: 'Workloads',
           },
           {
             id: 'Pod',
@@ -243,7 +244,7 @@
             case 'Process':
               nodeColor = this.pallet[2];
               break;
-            case 'Deployment':
+            case 'Workload':
               nodeColor = this.pallet[3];
               break;
             case 'Pod':
@@ -300,7 +301,7 @@
         // 提取事件节点
         let eventNodes = [];
         nodes.forEach(node => {
-          if (node.state === 'Event') {
+          if (node.state === 'Abnormal') {
             let nodeObj = JSON.parse(JSON.stringify(node));
             nodeObj.symbol = 'image://' + eventIcon + '';
             nodeObj.symbolOffset = ['75%', '-75%'];
@@ -389,7 +390,7 @@
         let appNum = 0;
         let middlewareNum = 0;
         let processNum = 0;
-        let deploymentNum = 0;
+        let workloadNum = 0;
         let podNum = 0;
         let nodeNum = 0;
         graph.nodes.forEach(node => {
@@ -397,13 +398,13 @@
             case 'App': appNum++; break;
             case 'Middleware': middlewareNum++; break;
             case 'Process': processNum++; break;
-            case 'Deployment': deploymentNum++; break;
+            case 'Workload': workloadNum++; break;
             case 'Pod': podNum++; break;
             case 'Node': nodeNum++; break;
             default: break;
           }
         });
-        let maxNum = Math.max(appNum, middlewareNum, processNum, deploymentNum, podNum, nodeNum);
+        let maxNum = Math.max(appNum, middlewareNum, processNum, workloadNum, podNum, nodeNum);
         let topoWidth = 20 + maxNum * deltaw + 30 > topoWidthMax ? topoWidthMax : 20 + maxNum * deltaw + 30;
         // 设置拓扑容器宽度 overflow:scroll-x？
         this.$refs.tdDom.style.width = topoWidth + 'px';
@@ -412,21 +413,21 @@
         let appDeltaX =  (topoWidth - 20) / appNum;
         let middlewareDeltaX =  (topoWidth - 20) / middlewareNum;
         let processDeltaX =  (topoWidth - 20) / processNum;
-        let deploymentDeltaX =  (topoWidth - 20) / deploymentNum;
+        let workloadDeltaX =  (topoWidth - 20) / workloadNum;
         let podDeltaX =  (topoWidth - 20) / podNum;
         let nodeDeltaX =  (topoWidth - 20) / nodeNum;
 
         // 调整曲线
         let isAppLine2Src = appNum >= middlewareNum ? true : false;
         let isMiddlewareLine2Src = middlewareNum >= processNum ? true : false;
-        let isProcessLine2Src = processNum >= deploymentNum ? true : false;
-        let isDeploymentLine2Src = deploymentNum >= podNum ? true : false;
+        let isProcessLine2Src = processNum >= workloadNum ? true : false;
+        let isWorkloadLine2Src = workloadNum >= podNum ? true : false;
         let isPodLine2Src = podNum >= nodeNum ? true : false;
 
         appNum = 0;
         middlewareNum = 0;
         processNum = 0;
-        deploymentNum = 0;
+        workloadNum = 0;
         podNum = 0;
         nodeNum = 0;
 
@@ -464,13 +465,13 @@
                 itemTmp.fy = itemTmp.y;
                 itemTmp.symbol = 'image://' + processIcon + '';
               } break;
-            case 'Deployment': {
-                deploymentNum++;
-                itemTmp.x = (10 + deploymentDeltaX / 2) + (deploymentNum - 1) * deploymentDeltaX;
+            case 'Workload': {
+                workloadNum++;
+                itemTmp.x = (10 + workloadDeltaX / 2) + (workloadNum - 1) * workloadDeltaX;
                 itemTmp.y = 3.5 * deltah;
                 itemTmp.fx = itemTmp.x;
                 itemTmp.fy = itemTmp.y;
-                itemTmp.symbol = 'image://' + deploymentIcon + '';
+                itemTmp.symbol = 'image://' + workloadIcon + '';
               } break;
             case 'Pod': {
                 podNum++;
@@ -503,7 +504,7 @@
             case 'App': itemTmp.isLine2Src = isAppLine2Src; break;
             case 'Middleware': itemTmp.isLine2Src = isMiddlewareLine2Src; break;
             case 'Process': itemTmp.isLine2Src = isProcessLine2Src; break;
-            case 'Deployment': itemTmp.isLine2Src = isDeploymentLine2Src; break;
+            case 'Workload': itemTmp.isLine2Src = isWorkloadLine2Src; break;
             case 'Pod': itemTmp.isLine2Src = isPodLine2Src; break;
             default: break;
           }
@@ -611,7 +612,7 @@
           .attr('x', 5)
           .attr('y', -25)
           .append('use')
-          .attr('xlink:href', d => d.state === 'Event' ? '#icon-jingbaoxinxi-' : '');
+          .attr('xlink:href', d => d.state === 'Abnormal' ? '#icon-tanhao' : '');
 
         linkEles = linkEles.data(linksOption)
           .enter().append("path")

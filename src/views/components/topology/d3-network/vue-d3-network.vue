@@ -93,10 +93,11 @@
         simulation: null,
         nodeSvg: null,
         resizeListener: true,
-        linkTextPosition: {
+        linkTextStyle: {
           left: 0,
           top: 0,
         },
+        isLinkTextDark: false,
         linkTextVisible: false,
         linkTextContent: '',
         nodeClicked: true,
@@ -118,6 +119,18 @@
         defaultNodeSize: 20,
         nodeNumSmall: 20,
         defaultFontSize: 16,
+        elemsAroundPreHovNodeDeep: {
+          nodes: [],
+          links: [],
+        },
+        elemsAroundPreHovNodeShallow: {
+          nodes: [],
+          links: [],
+        },
+        elemsAroundPreHovLinkShallow: {
+          nodes: [],
+          links: [],
+        },
       };
     },
     render(createElement) {
@@ -140,7 +153,8 @@
         'padding',
         'nodeSize',
         'noNodes',
-        'linkTextPosition',
+        'linkTextStyle',
+        'isLinkTextDark',
         'linkTextVisible',
         'linkTextContent',
       ];
@@ -166,14 +180,6 @@
             ref,
             on: { action: this.methodCall },
           }),
-          createElement('div', {
-            style: {
-              display: 'none',
-            },
-            domProps: {
-              innerHTML: this.relativeNodeType,
-            },
-          }),
         ],
       );
     },
@@ -182,12 +188,6 @@
       this.buildNodes(this.netNodes);
       this.links = this.buildLinks(this.netLinks);
       this.updateNodeSvg();
-      // setTimeout(() => {
-      //   this.$store.commit('rocketTopo/SET_TOPO_BASIC_DATA', {
-      //     nodes: this.nodes,
-      //     links: this.links,
-      //   });
-      // });
     },
     mounted() {
       this.onResize();
@@ -208,9 +208,6 @@
       },
       showNodeTypeFilter() {
         return this.$store.state.rocketTopo.showNodeTypeFilter;
-      },
-      relativeNodeType() {
-        return this.$store.state.rocketTopo.relativeNodeType;
       },
       currentNode() {
         return this.$store.state.rocketTopo.currentNode;
@@ -238,18 +235,8 @@
       },
     },
     watch: {
-      relativeNodeType: {
-        handler(newVal, oldVal) {
-          this.lightAroundCurrentNode(this.currentNode, newVal);
-        },
-        // deep: true
-      },
-      currentNode: {
-        handler(newVal, oldVal) {
-          this.setCurNodePosition(newVal, oldVal);
-          this.lightAroundCurrentNode(newVal, this.relativeNodeType);
-        },
-        // deep: true
+      currentNode(newVal, oldVal) {
+        this.setTopoViewport(newVal, oldVal);
       },
       netNodes(newValue) {
         console.log('vue-d3-network knows');
@@ -361,256 +348,143 @@
         // this.simulation.alpha(0.5);
         this.$store.commit('rocketTopo/SET_NODE', {});
       },
-      restoreAroundCurrentNode() {
-        this.nodes.forEach((node) => {
-          node.isDark = false;
+      normalAroundHoveredNode() {
+        this.elemsAroundPreHovNodeShallow.nodes.forEach((node) => {
           node.isBright = false;
           node.showLabel = false;
-          node.isRelatedToCurNode = false;
         });
-
-        this.links.forEach((link) => {
-          link.isDark = false;
+        this.elemsAroundPreHovNodeShallow.links.forEach((link) => {
           link.isBright = false;
-          // link.showLabel = false;
-          link.isRelatedToCurNode = false;
         });
       },
-      lightAroundCurrentNode(curNode, relativeNodeType) {
-        this.restoreAroundCurrentNode();
-        if (curNode.id === undefined) {
-          return;
-        }
-        if (!relativeNodeType) {
-          relativeNodeType = 'Single Hop';
-        }
-        if (relativeNodeType === 'Single Hop') {
-          const lightdNodeIds = new Set();
-          lightdNodeIds.add(curNode.id);
-          this.links.forEach((link) => {
-            if (link.sid === curNode.id || link.tid === curNode.id) {
-              link.isDark = false;
-              link.isBright = true;
-              // link.showLabel = true;
-              link.isRelatedToCurNode = true;
-
-              link.source.isDark = false;
-              link.source.isBright = true;
-              link.source.showLabel = true;
-              link.source.isRelatedToCurNode = true;
-
-              link.target.isDark = false;
-              link.target.isBright = true;
-              link.target.showLabel = true;
-              link.target.isRelatedToCurNode = true;
-
-              lightdNodeIds.add(link.source.id);
-              lightdNodeIds.add(link.target.id);
-            } else {
-              link.isDark = true;
-              link.isBright = false;
-              // link.showLabel = false;
-              link.isRelatedToCurNode = false;
-
-              if (!lightdNodeIds.has(link.source.id)) {
-                link.source.isDark = true;
-                link.source.isBright = false;
-                link.source.showLabel = false;
-                link.source.isRelatedToCurNode = false;
-              }
-              if (!lightdNodeIds.has(link.target.id)) {
-                link.target.isDark = true;
-                link.target.isBright = false;
-                link.target.showLabel = false;
-                link.target.isRelatedToCurNode = false;
-              }
-            }
-          });
-          this.nodes.forEach((node) => {
-            if (!lightdNodeIds.has(node.id) && !node.isRelatedToCurNode) {
-              node.isDark = true;
-              node.isBright = false;
-              node.showLabel = false;
-              node.isRelatedToCurNode = false;
-            } else {
-              node.isDark = false;
-              node.isBright = true;
-              node.showLabel = true;
-              node.isRelatedToCurNode = true;
-            }
-          });
-          return;
-        }
-        if (relativeNodeType === 'All Streams') {
-          // query
-          return;
-        }
-        if (relativeNodeType === 'Up Stream') {
-          // query
-          return;
-        }
-        if (relativeNodeType === 'Down Stream') {
-          // query
-          return;
-        }
-      },
-      restoreAroundELemHovered() {
-        this.linkTextVisible = false;
-        this.linkTextContent = '';
-        this.linkTextPosition = {
-          left: 0 + 'px',
-          top: 0 + 'px',
+      lightAroundHoveredNode(hoveredNode) {
+        this.normalAroundHoveredNode();
+        let elemsAround = {
+          nodes: [],
+          links: [],
         };
-
-        this.nodes.forEach((node) => {
+        elemsAround.nodes.push(hoveredNode);
+        this.links.forEach((link) => {
+          if (link.sid === hoveredNode.id) {
+            elemsAround.nodes.push(link.target);
+            elemsAround.links.push(link);
+          } else if (link.tid === hoveredNode.id) {
+            elemsAround.nodes.push(link.source);
+            elemsAround.links.push(link);
+          }
+        });
+        // 注意，这里记录的上一个hover节点被light前的周边元素集合，深拷贝
+        this.elemsAroundPreHovNodeDeep = JSON.parse(JSON.stringify(elemsAround));
+        elemsAround.nodes.forEach((node) => {
+          node.isBright = true;
+          node.showLabel = true;
+        });
+        elemsAround.links.forEach((link) => {
+          link.isBright = true;
+        });
+        // 注意，这里记录的上一个hover节点被light后的周边元素集合，浅拷贝
+        this.elemsAroundPreHovNodeShallow = elemsAround;
+      },
+      mouseEnterNode(event, hoveredNode) {
+        if (this.currentNode.id !== undefined) {
+          return;
+        }
+        this.lightAroundHoveredNode(hoveredNode);
+      },
+      mouseLeaveNode(event, elem) {
+        if (this.currentNode.id !== undefined) {
+          return;
+        }
+        this.normalAroundHoveredNode();
+        this.elemsAroundPreHovNodeShallow = null;
+        this.elemsAroundPreHovNodeShallow = {
+          nodes: [],
+          links: [],
+        };
+        this.elemsAroundPreHovNodeDeep = null;
+        this.elemsAroundPreHovNodeDeep = {
+          nodes: [],
+          links: [],
+        };
+      },
+      normalAroundHoveredLink() {
+        this.elemsAroundPreHovLinkShallow.nodes.forEach((node) => {
           if (!node.isRelatedToCurNode) {
-            node.isDark = false;
             node.isBright = false;
             node.showLabel = false;
           }
         });
-
-        this.links.forEach((link) => {
+        this.elemsAroundPreHovLinkShallow.links.forEach((link) => {
           if (!link.isRelatedToCurNode) {
-            link.isDark = false;
             link.isBright = false;
             link.showLabel = false;
           }
         });
       },
-      lightAroundELemHovered(event, type, elem) {
-        if (type === 'node') {
-          const lightdNodeIds = new Set();
-          lightdNodeIds.add(elem.id);
-          this.links.forEach((link) => {
-            if (link.sid === elem.id || link.tid === elem.id) {
-              link.isDark = false;
-              link.isBright = true;
-              link.showLabel = true;
+      lightAroundHoveredLink(event, hoveredLink) {
+        this.normalAroundHoveredLink();
 
-              link.source.isDark = false;
-              link.source.isBright = true;
-              link.source.showLabel = true;
+        let elemsAround = {
+          nodes: [],
+          links: [],
+        };
+        elemsAround.links.push(hoveredLink);
+        elemsAround.nodes.push(hoveredLink.source);
+        elemsAround.nodes.push(hoveredLink.target);
 
-              link.target.isDark = false;
-              link.target.isBright = true;
-              link.target.showLabel = true;
-
-              lightdNodeIds.add(link.source.id);
-              lightdNodeIds.add(link.target.id);
-            } else {
-              if (!link.isRelatedToCurNode) {
-                link.isDark = true;
-                link.isBright = false;
-                link.showLabel = false;
-              }
-
-              if (!lightdNodeIds.has(link.source.id) && !link.source.isRelatedToCurNode) {
-                link.source.isDark = true;
-                link.source.isBright = false;
-                link.source.showLabel = false;
-              }
-              if (!lightdNodeIds.has(link.target.id) && !link.target.isRelatedToCurNode) {
-                link.target.isDark = true;
-                link.target.isBright = false;
-                link.target.showLabel = false;
-              }
-            }
-          });
-          this.nodes.forEach((node) => {
-            if (!lightdNodeIds.has(node.id) && !node.isRelatedToCurNode) {
-              node.isDark = true;
-              node.isBright = false;
-              node.showLabel = false;
-            } else {
-              node.isDark = false;
-              node.isBright = true;
-              node.showLabel = true;
-            }
-          });
-        } else if (type === 'link') {
-          // 边提示
-          let offsetX = $jq('#netContent').offset().left;
-          let offsetY = $jq('#netContent').offset().top;
-          this.linkTextPosition = {
-            left: event.clientX - offsetX + 10 + 'px',
-            top: event.clientY - offsetY - 25 + 'px',
-          };
-          this.linkTextContent = elem.type;
-          this.linkTextVisible = true;
-
-          this.links.forEach((link) => {
-            if (link.id === elem.id) {
-              link.isDark = false;
-              link.isBright = true;
-              link.showLabel = true;
-            } else {
-              if (!link.isRelatedToCurNode) {
-                link.isDark = true;
-                link.isBright = false;
-                link.showLabel = false;
-              }
-            }
-          });
-
-          this.nodes.forEach((node) => {
-            if (node.id === elem.source.id || node.id === elem.target.id) {
-              node.isDark = false;
-              node.isBright = true;
-              node.showLabel = true;
-            } else {
-              if (!node.isRelatedToCurNode) {
-                node.isDark = true;
-                node.isBright = false;
-                node.showLabel = false;
-              }
-            }
-          });
-        }
+        elemsAround.links.forEach((link) => {
+          link.isBright = true;
+          link.showLabel = true;
+        });
+        elemsAround.nodes.forEach((node) => {
+          node.isBright = true;
+          node.showLabel = true;
+        });
+        this.elemsAroundPreHovLinkShallow = elemsAround;
       },
-      mouseEnterNode(event, elem) {
+      mouseEnterLink(event, hoveredLink) {
         if (this.currentNode.id !== undefined) {
-          // 已选中节点，enter节点无效
-          return;
-        }
-        this.lightAroundELemHovered(event, 'node', elem);
-      },
-      mouseLeaveNode(event, elem) {
-        if (this.currentNode.id !== undefined) {
-          // 已选中节点，leave节点无效
-          return;
-        }
-        this.restoreAroundELemHovered();
-      },
-      mouseEnterLink(event, elem) {
-        if (this.currentNode.id !== undefined) {
-          // 已选中节点，enter关联边才有效
-          if (elem.isRelatedToCurNode) {
-            // 边提示
+          if (hoveredLink.isRelatedToCurNode) {
             let offsetX = $jq('#netContent').offset().left;
             let offsetY = $jq('#netContent').offset().top;
-            this.linkTextPosition = {
+            this.linkTextStyle = {
               left: event.clientX - offsetX + 10 + 'px',
               top: event.clientY - offsetY - 25 + 'px',
             };
-            this.linkTextContent = elem.type;
+            this.isLinkTextDark = hoveredLink.isDark;
+            this.linkTextContent = hoveredLink.type;
             this.linkTextVisible = true;
           }
           return;
         }
-        this.lightAroundELemHovered(event, 'link', elem);
+        let offsetX = $jq('#netContent').offset().left;
+        let offsetY = $jq('#netContent').offset().top;
+        this.linkTextStyle = {
+          left: event.clientX - offsetX + 10 + 'px',
+          top: event.clientY - offsetY - 25 + 'px',
+        };
+        this.isLinkTextDark = hoveredLink.isDark;
+        this.linkTextContent = hoveredLink.type;
+        this.linkTextVisible = true;
+        this.lightAroundHoveredLink(event, hoveredLink);
       },
-      mouseLeaveLink(event, elem) {
+      mouseLeaveLink(event, hoveredLink) {
+        this.linkTextVisible = false;
+        this.linkTextContent = '';
+        this.linkTextStyle = {
+          left: 0 + 'px',
+          top: 0 + 'px',
+        };
+        this.isLinkTextDark = hoveredLink.isDark;
         if (this.currentNode.id !== undefined) {
-          this.linkTextVisible = false;
-          this.linkTextContent = '';
-          this.linkTextPosition = {
-            left: 0 + 'px',
-            top: 0 + 'px',
-          };
           return;
         }
-        this.restoreAroundELemHovered();
+        this.normalAroundHoveredLink();
+        this.elemsAroundPreHovLinkShallow = null;
+        this.elemsAroundPreHovLinkShallow = {
+          nodes: [],
+          links: [],
+        };
       },
       updateNodeSvg() {
         let svg = null;
@@ -652,6 +526,7 @@
         this.defaultFontSize = this.fontSize;
       },
       buildNodes(nodes) {
+        console.log('buildNodes');
         let vm = this;
         this.nodes = nodes.map((node, index) => {
           // node formatter option
@@ -685,7 +560,7 @@
             case 'Process':
               nodeColor = this.pallet[2];
               break;
-            case 'Deployment':
+            case 'Workload':
               nodeColor = this.pallet[3];
               break;
             case 'Pod':
@@ -831,16 +706,6 @@
         if (this.forces.links) this.links = this.simulation.force('link').links();
       },
       // -- Mouse Interaction
-      mouseUpNet(event) {
-        event.preventDefault();
-        event.stopPropagation();
-        console.log('mouseUpNet');
-      },
-      mouseDownNet(event) {
-        event.preventDefault();
-        event.stopPropagation();
-        console.log('mouseDownNet');
-      },
       mouseMoveNet(event) {
         if (this.dragging !== false) {
           if (this.nodes[this.dragging]) {
@@ -912,7 +777,7 @@
         this.dragNodeStart(event, false);
       },
       // -- Render helpers
-      setCurNodePosition(curNode, preNode, event = null) {
+      setTopoViewport(curNode, preNode, event = null) {
         if (curNode && curNode.id === undefined) {
           return;
         }
@@ -924,7 +789,6 @@
         let zoomX = d3.zoomTransform(d3.select('#zoomContainer').node()).x;
         let zoomY = d3.zoomTransform(d3.select('#zoomContainer').node()).y;
 
-        /* 移动方式一 */
         // 选中节点回到视口中心
         this.zoomController.translateTo(
           d3
@@ -934,6 +798,7 @@
           this.currentNode.x,
           this.currentNode.y,
         );
+
         // 固定当前节点坐标，并放大拓扑
         setTimeout(() => {
           if (preNode && preNode.id !== undefined) {
@@ -943,7 +808,7 @@
           curNode.fx = curNode.x;
           curNode.fy = curNode.y;
 
-          // 单跳视口，百万级数据查询耗时？
+          // 单跳视口，查询耗时？
           let nodesTmp = [];
           nodesTmp.push(curNode);
           this.links.forEach((link) => {
@@ -1003,7 +868,6 @@
         let y = 0;
         if (event && node) {
           let pos = this.clientPos(event);
-          // let zoomTimes = d3.zoomTransform(d3.select('#zoomContainer').node()).k
           x = pos.x ? pos.x - node.x : node.x;
           y = pos.y ? pos.y - node.y : node.y;
         }
@@ -1047,10 +911,14 @@
         border-radius: 2px;
         color: white;
         padding: 2px;
+
+        &.dark-linkText {
+          opacity: 0.1;
+        }
       }
 
       .arrows .dark-arrow {
-        opacity: 0.5;
+        opacity: 0.8;
       }
 
       .arrows .bright-arrow {
@@ -1064,7 +932,7 @@
           transition: translate 0.5s ease;
 
           &.dark-node {
-            opacity: 0.3;
+            opacity: 0.1;
           }
 
           &.bright-node {
@@ -1080,13 +948,19 @@
           }
         }
 
-        .event-node-main-topo {
+        .warn-icon-in-main-topo {
           width: 18px;
           height: 18px;
           overflow: hidden;
           fill: currentColor;
           color: #efeff1;
           pointer-events: none;
+          &.dark-warn-icon {
+            opacity: 0.1;
+          }
+          &.bright-warn-icon {
+            color: rgba(255, 255, 0, 1) !important; // 如何改变颜色？
+          }
         }
 
         .link {
@@ -1117,6 +991,14 @@
         .node-label {
           pointer-events: none;
           fill: #ccc;
+
+          &.dark-node-label {
+            opacity: 0.1;
+          }
+
+          // &.bright-node-label {
+          //   color: yellow;
+          // }
         }
 
         .link-label {

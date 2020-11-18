@@ -12,9 +12,14 @@
         {{ item.name }}
       </div>
       <div class="tsni-count">
-        <span class="tsnic-event" v-show="item.event > 0">{{ item.event }}</span>
-        <span v-show="item.event > 0">/</span>
-        <span class="tsnic-total">{{ item.total }}</span>
+        <div class="tsnic-item total">
+          <span class="item-title" title="All">All : </span>
+          <span class="item-content" :title="item.total">{{ item.total }}</span>
+        </div>
+        <div class="tsnic-item">
+          <span class="item-title" title="All">Abnormal : </span>
+          <span class="item-content abnormal-number" :title="item.abnormal">{{ item.abnormal }}</span>
+        </div>
       </div>
     </div>
   </div>
@@ -22,11 +27,12 @@
 
 <script lang="js">
   import * as d3 from 'd3';
+  import $jq from 'jquery';
 
   import appIcon from './assets/APP.png';
   import middlewareIcon from './assets/MIDDLEWARE.png';
   import processIcon from './assets/PROCESS.png';
-  import deploymentIcon from './assets/DEPLOYMENT.png';
+  import workloadIcon from './assets/WORKLOAD.png';
   import podIcon from './assets/POD.png';
   import nodeIcon from './assets/NODE.png';
 
@@ -50,42 +56,42 @@
             id: 'App',
             name: 'Applications',
             imgUrl: appIcon,
-            event: 0,
+            abnormal: 0,
             total: 0
           },
           {
             id: 'Middleware',
             name: 'Middlewares',
             imgUrl: middlewareIcon,
-            event: 0,
+            abnormal: 0,
             total: 0
           },
           {
             id: 'Process',
             name: 'Processes',
             imgUrl: processIcon,
-            event: 0,
+            abnormal: 0,
             total: 0
           },
           {
-            id: 'Deployment',
-            name: 'Deployments',
-            imgUrl: deploymentIcon,
-            event: 0,
+            id: 'Workload',
+            name: 'Workloads',
+            imgUrl: workloadIcon,
+            abnormal: 0,
             total: 0
           },
           {
             id: 'Pod',
             name: 'Pods',
             imgUrl: podIcon,
-            event: 0,
+            abnormal: 0,
             total: 0
           },
           {
             id: 'Node',
             name: 'Nodes',
             imgUrl: nodeIcon,
-            event: 0,
+            abnormal: 0,
             total: 0
           }
         ],
@@ -93,6 +99,9 @@
     },
 
     computed: {
+      topoScaleFix() {
+        return this.$store.state.rocketTopo.topoScaleFix;
+      },
       showNodeTypeFilter() {
         return this.$store.state.rocketTopo.showNodeTypeFilter;
       },
@@ -116,6 +125,58 @@
     },
 
     methods: {
+      restoreTopoViewport() {
+        let centerX = $jq('#netSvg').width() / 2;
+        let centerY = $jq('#netSvg').height() / 2;
+        let zoomK = d3.zoomTransform(d3.select('#zoomContainer').node()).k;
+
+        if (zoomK > this.topoScaleFix) {
+          this.zoomController.scaleTo(
+            d3
+              .select('.net-svg')
+              .transition()
+              .duration(500),
+            this.topoScaleFix,
+          );
+          setTimeout(() => {
+            this.zoomController.translateTo(
+              d3
+                .select('.net-svg')
+                .transition()
+                .duration(500),
+              centerX,
+              centerY,
+            );
+          }, 500);
+        } else if (zoomK === this.topoScaleFix) {
+          this.zoomController.translateTo(
+            d3
+              .select('.net-svg')
+              .transition()
+              .duration(500),
+            centerX,
+            centerY,
+          );
+        } else {
+          this.zoomController.translateTo(
+            d3
+              .select('.net-svg')
+              .transition()
+              .duration(500),
+            centerX,
+            centerY,
+          );
+          setTimeout(() => {
+            this.zoomController.scaleTo(
+              d3
+                .select('.net-svg')
+                .transition()
+                .duration(500),
+              this.topoScaleFix,
+            );
+          }, 500);
+        }
+      },
       handleSelectNav(itemId) {
         if (itemId === this.showNodeTypeFilter) {
           return;
@@ -124,17 +185,15 @@
         this.currentNode.fy = null;
         this.$store.commit('rocketTopo/SET_NODE', {});
         this.$store.commit('rocketTopo/SET_SHOW_NODE_TYPE_FILTER', itemId);
-        d3.select('#netSvg')
-          .transition().duration(750)
-          .call(this.zoomController.transform, d3.zoomIdentity);
+        this.restoreTopoViewport();
       },
       initNavList() {
         this.topoData.nodes.forEach(node => {
           let navItem = this.navList.find(item => item.id === node.type);
           if (navItem) {
             navItem.total++;
-            if (node.state === 'Event') {
-              navItem.event++;
+            if (node.state === 'Abnormal') {
+              navItem.abnormal++;
             }
           }
         });
@@ -175,18 +234,18 @@
         background-color: #333840 !important;
 
         .tsni-h {
-          color: skyblue !important;
+          color: skyblue;
         }
 
-        .tsni-count::before {
-          background-color: skyblue !important;
+        .tsni-count {
+          color: skyblue;
         }
       }
 
       .tsni-h {
         font-size: 16px;
         color: #ccc;
-        padding-bottom: 6px;
+        padding-bottom: 2px;
         display: flex;
         align-items: center;
 
@@ -196,38 +255,11 @@
       }
 
       .tsni-count {
-        text-align: right;
-        padding-top: 9px;
+        padding-top: 2px;
         color: #ccc;
         font-size: 14px;
-        position: relative;
 
-        &::before {
-          width: 30px;
-          left: 13px;
-          background-color: #ccc;
-        }
-
-        &::after {
-          border-top: 1px solid #ccc;
-          border-left: 2px solid #ccc;
-          left: 49px;
-          right: 13px;
-        }
-
-        &::before,
-        &::after {
-          content: '';
-          display: block;
-          height: 23px;
-          position: absolute;
-          top: 0;
-          -webkit-transform: skew(-55deg, 0);
-          -ms-transform: skew(-55deg, 0);
-          transform: skew(-55deg, 0);
-        }
-
-        .tsnic-event {
+        .abnormal-number {
           color: red;
         }
       }

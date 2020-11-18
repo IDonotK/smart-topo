@@ -6,7 +6,7 @@
 * 事件标记改为节点右上角叹号
 * 部分图标不够形象：workloads、nodes
 * 拓扑图增加中上标题，基于筛选条件，如：App3所有关联节点
-* Deployments改为Workloads
+* Workloads改为Workloads
 * 纵向依赖展示向上提供，展示可优化，如超5个显示省略号，非简单
 * Event字段值改为Abnormal
 * 节点统计添加中文说明信息

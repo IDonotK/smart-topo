@@ -3,7 +3,7 @@
     <div id="tvccId" class="tvc-c">
       <!-- 拓扑详情 -->
       <div class="tvc-l" id="tvcl">
-        <!-- <TopoDetail
+        <TopoDetail
           v-if="currentNode && currentNode.id !== undefined"
           :foldTopoDetail="foldTopoDetail"
           :topoDetailData="topoDetailData"
@@ -15,7 +15,7 @@
             :class="{ 'tvlci-fold': foldTopoDetail }"
             @click.stop.prevent="toggleTopoDetail"
           ></span>
-        </div> -->
+        </div>
       </div>
       <!-- 主拓扑图 -->
       <div class="tvc-r" id="tvcrId" ref="tvcr">
@@ -65,15 +65,6 @@
           };
         },
       },
-      topoDataFiltered: {
-        type: Object,
-        default() {
-          return {
-            nodes: [],
-            links: [],
-          };
-        },
-      },
     },
 
     data() {
@@ -103,7 +94,7 @@
         },
         settings: {
           maxLinks: 1,
-          maxNodes: 500
+          maxNodes: 36
         },
         nodeSym: null,
         foldTopoDetail: false,
@@ -127,9 +118,8 @@
     },
 
     watch: {
-      topoDataFiltered(newVal, oldVal) {
-        console.log('topo-view knows');
-        // this.initTopoDataFiltered(); // 可优化，考虑props
+      topoData(newVal, oldVal) {
+        this.initNetTopoData();
       },
       currentNode(newVal, oldVal) {
         if (newVal.id !== undefined) {
@@ -142,10 +132,13 @@
       }
     },
 
+    created() {
+      this.initNetTopoData();
+      // this.reset(); // 拓扑布局测试
+    },
+
     mounted() {
       this.initSvgSizeArg();
-      // this.initTopoDataFiltered();
-      this.reset(); // 拓扑布局测试
     },
 
     methods: {
@@ -177,9 +170,9 @@
         this.options.size.w = this.$refs.tvcr.clientWidth;
         this.options.size.h = this.$refs.tvcr.clientHeight;
       },
-      initTopoDataFiltered() {  // 必须是浅拷贝
-        this.nodes = this.topoDataFiltered.nodes;
-        this.links = this.topoDataFiltered.links;
+      initNetTopoData() {  // 浅拷贝
+        this.nodes = this.topoData.nodes;
+        this.links = this.topoData.links;
       },
       nodeClick() {},
       linkClick() {},

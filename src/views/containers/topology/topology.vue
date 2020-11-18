@@ -1,6 +1,6 @@
 <template>
   <div class="rk-topo">
-    <TopoView :topoDataFiltered="topoDataFiltered" :topoData="topoData" />
+    <TopoView :topoData="topoData" />
     <TopoSideNavigation :topoData="topoData" />
     <TopoToolSet :topoDataFiltered="topoDataFiltered" />
   </div>
@@ -26,6 +26,10 @@
         topoDataFiltered: {
           nodes: [],
           links: []
+        },
+        elemsAroundPreCurNode: {
+          nodes: [],
+          links: []
         }
       }
     },
@@ -48,6 +52,12 @@
       },
       showEdgeTypeFilter() { // 右上角显示边类型过滤
         return this.$store.state.rocketTopo.showEdgeTypeFilter;
+      },
+      relativeNodeType() { // 右上角关联点类型过滤
+        return this.$store.state.rocketTopo.relativeNodeType;
+      },
+      currentNode() { // 当前选中节点
+        return this.$store.state.rocketTopo.currentNode;
       },
     },
 
@@ -72,13 +82,19 @@
       showEdgeTypeFilter(newVal, oldVal) {
         this.filterTopo();
       },
+      relativeNodeType(newVal) {
+        this.lightAroundCurrentNode(this.currentNode, newVal);
+      },
+      currentNode(newVal, oldVal) {
+        this.lightAroundCurrentNode(newVal, this.relativeNodeType);
+      },
     },
 
     created() {
       this.initTopoData();
     },
 
-    methods: {
+    methods: { // dark：置暗；light：高亮；normal：正常
       initTopoData() {
         setTimeout(() => {
           // query
@@ -86,12 +102,102 @@
             nodes: NODES,
             links: LINKS
           };
-          this.topoDataFiltered = this.topoData; // 浅拷贝
+          this.topoDataFiltered = this.topoData;
         }, 2000);
+        // 处理轮询的逻辑
       },
-      filterTopo() { // 注意过滤时不应改变原数组元素对象的引用，使用浅拷贝
-        // let topoDataFilteredTmp = JSON.parse(JSON.stringify(this.topoData));
-        let topoDataFilteredTmp = this.topoData;
+      normalAroundPreCurNode() {
+        this.elemsAroundPreCurNode.nodes.forEach(node => {
+          node.isBright = false;
+          node.showLabel = false;
+          node.isRelatedToCurNode = false;
+        });
+        this.elemsAroundPreCurNode.links.forEach(link => {
+          link.isBright = false;
+          link.isRelatedToCurNode = false;
+        });
+      },
+      // 关联节点高亮
+      lightAroundCurrentNode(curNode, relativeNodeType) {
+        this.normalAroundPreCurNode();
+        if (curNode.id === undefined) {
+          return;
+        }
+        let elemsAround = {
+          nodes: [],
+          links: []
+        };
+        switch (relativeNodeType) {
+          case 'Single Hop': elemsAround = this.getAcnSingleHop(curNode); break;
+          case 'All Streams': elemsAround = this.getAcnAllStreams(curNode); break;
+          case 'Up Stream': elemsAround = this.getAcnUpStream(curNode); break;
+          case 'Down Stream': elemsAround = this.getAcnDownStream(curNode); break;
+          default: break;
+        }
+        elemsAround.nodes.forEach(node => {
+          node.isBright = true;
+          node.showLabel = true;
+          node.isRelatedToCurNode = true;
+        });
+        elemsAround.links.forEach(link => {
+          link.isBright = true;
+          link.isRelatedToCurNode = true;
+        });
+        // 注意，这里记录的上一个选中节点被light后的周边元素集合，浅拷贝
+        this.elemsAroundPreCurNode = elemsAround;
+      },
+      getAcnSingleHop(curNode) {
+        let elemsAround = {
+          nodes: [],
+          links: []
+        };
+        elemsAround.nodes.push(curNode);
+        this.topoDataFiltered.links.forEach((link) => {
+          if (link.sid === curNode.id) {
+            elemsAround.nodes.push(link.target);
+            elemsAround.links.push(link);
+          } else if (link.tid === curNode.id) {
+            elemsAround.nodes.push(link.source);
+            elemsAround.links.push(link);
+          }
+        });
+        return elemsAround;
+      },
+      getAcnAllStreams(curNode) {
+        // query
+      },
+      getAcnUpStream(curNode) {
+        // query
+      },
+      getAcnDownStream(curNode) {
+        // query
+      },
+
+      darkTopoAll() {
+        this.topoData.nodes.forEach((node) => {
+          node.isDark = true;
+          node.isBright = false;
+          node.showLabel = false;
+        });
+        this.topoData.links.forEach((link) => {
+          link.isDark = true;
+          link.isBright = false;
+        });
+      },
+      normalTopoFiltered() { // 遍历耗时
+        this.darkTopoAll();
+        this.topoDataFiltered.nodes.forEach(node => {
+          node.isDark = false;
+          node.isBright = false;
+          node.showLabel = false;
+        });
+        this.topoDataFiltered.links.forEach(link => {
+          link.isDark = false;
+          link.isBright = false;
+        });
+      },
+      filterTopo() {
+        let topoDataFilteredTmp = this.topoData; // 注意过滤时不应改变原数组元素对象的引用，使用浅拷贝
         if (this.showNodeTypeFilter === 'All') {
           topoDataFilteredTmp = this.filterTopoOnHideNodeType(this.hideNodeTypeFilter, topoDataFilteredTmp);
         }
@@ -99,6 +205,7 @@
         topoDataFilteredTmp = this.filterTopoOnNodeStateType(this.nodeStateTypeFilter, topoDataFilteredTmp);
         topoDataFilteredTmp = this.filterTopoOnShowEdgeType(this.showEdgeTypeFilter, topoDataFilteredTmp);
         this.topoDataFiltered = topoDataFilteredTmp;
+        this.normalTopoFiltered();
       },
       filterTopoOnShowNodeType(nodeType, topoDataFiltered) {
         if (nodeType === 'All') {

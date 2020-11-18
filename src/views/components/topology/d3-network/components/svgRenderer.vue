@@ -1,7 +1,13 @@
 <template>
   <div class="net-content" id="netContent">
     <!-- link text -->
-    <div class="linkText" :style="linkTextPosition" v-show="linkTextVisible" v-text="linkTextContent"></div>
+    <div
+      v-show="linkTextVisible"
+      class="linkText"
+      :class="{ 'dark-linkText': isLinkTextDark }"
+      :style="linkTextStyle"
+      v-text="linkTextContent"
+    ></div>
 
     <!-- topo svg -->
     <svg
@@ -100,16 +106,16 @@
 
             <!-- warn icon -->
             <svg
-              v-if="node.state === 'Event'"
-              :x="node.x - (getNodeSize(node) - 4) / 2"
-              :y="node.y - (getNodeSize(node) - 4) / 2"
+              v-if="node.state === 'Abnormal'"
+              :x="node.x + (getNodeSize(node) - 4) / 2"
+              :y="node.y - (getNodeSize(node) - 4)"
               :width="getNodeSize(node) - 4"
               :height="getNodeSize(node) - 4"
-              class="event-node-main-topo"
+              :class="warnClass(node, [node.isDark ? 'dark-warn-icon' : '', node.isBright ? 'bright-warn-icon' : ''])"
               :key="'event' + key"
               aria-hidden="true"
             >
-              <use xlink:href="#icon-jingbaoxinxi-"></use>
+              <use xlink:href="#icon-tanhao"></use>
             </svg>
           </template>
         </g>
@@ -117,14 +123,15 @@
         <!-- Node Labels -->
         <g class="labels" id="node-labels" v-if="nodeLabels">
           <text
-            class="node-label"
             v-for="(node, index) in nodes"
             v-show="node.showLabel"
             :key="index"
             :x="node.x + getNodeSize(node) / 2 + fontSize / 2"
             :y="node.y + labelOffset.y"
             :font-size="fontSize"
-            :class="node._labelClass ? node._labelClass : ''"
+            :class="
+              nodeLabelClass(node, [node.isDark ? 'dark-node-label' : '', node.isBright ? 'bright-node-label' : ''])
+            "
             :stroke-width="fontSize / 8"
           >
             {{ node.name }}
@@ -159,7 +166,8 @@
       'linkLabels',
       'labelOffset',
       'nodeSym',
-      'linkTextPosition',
+      'linkTextStyle',
+      'isLinkTextDark',
       'linkTextVisible',
       'linkTextContent',
       'defaultNodeSize',
@@ -168,10 +176,6 @@
     data() {
       return {
         zoom: d3.zoom(),
-        linkTextPositionIn: {
-          left: 0,
-          top: 0,
-        },
       };
     },
 
@@ -274,6 +278,18 @@
         let style = {};
         if (link._color) style.stroke = link._color;
         return style;
+      },
+      warnClass(node, classes = []) {
+        let cssClass = ['warn-icon-in-main-topo'];
+        classes.forEach((c) => cssClass.push(c));
+        return cssClass;
+      },
+      nodeLabelClass(node, classes = []) {
+        let cssClass = node._labelClass ? node._labelClass : [];
+        if (!Array.isArray(cssClass)) cssClass = [cssClass];
+        cssClass.push('node-label');
+        classes.forEach((c) => cssClass.push(c));
+        return cssClass;
       },
       nodeClass(node, classes = []) {
         let cssClass = node._cssClass ? node._cssClass : [];

@@ -126,7 +126,7 @@
             {key: 1, label: 'App'},
             {key: 2, label: 'Middleware'},
             {key: 3, label: 'Process'},
-            {key: 4, label: 'Deployment'},
+            {key: 4, label: 'Workload'},
             {key: 5, label: 'Pod'},
             {key: 6, label: 'Node'}
           ],
@@ -137,7 +137,7 @@
           data: [
             {key: 0, label: 'All'},
             {key: 1, label: 'Normal'},
-            {key: 2, label: 'Event'}
+            {key: 2, label: 'Abnormal'}
           ],
           select: {key: 0, label: 'All'}
         },
@@ -184,7 +184,7 @@
 
     watch: {
       topoDataFiltered(newVal, oldVal) {
-        console.log('topo-tool-set knows');
+
       },
       currentNode(newVal) {
         if (newVal.id !== undefined) {
