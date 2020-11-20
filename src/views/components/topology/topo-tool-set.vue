@@ -20,6 +20,10 @@
         </svg>
       </span>
     </div>
+    <div class="global-search-ctrl">
+      <input id="gscCheckbox" type="checkbox" v-model="isGlobalSearch" @click="handleClickCheckbox($event)" />
+      <label for="gscCheckbox">全局</label>
+    </div>
     <!-- 缩放控制 -->
     <div class="size-controller">
       <svg class="topo-icon larger" aria-hidden="true" @click="handleEnlargeTopo">
@@ -31,8 +35,8 @@
       <svg
         class="topo-icon restore"
         aria-hidden="true"
-        @click.stop.prevent="handleRestoreTopo(false)"
-        @dblclick.stop.prevent="handleRestoreTopo(true)"
+        @click.stop.prevent="handleRestoreTopo"
+        @dblclick.stop.prevent="handleRestoreTopoToOrigin"
       >
         <use xlink:href="#icon-huanyuan"></use>
       </svg>
@@ -104,6 +108,15 @@
 
   export default {
     props: {
+      topoData: {
+        type: Object,
+        default() {
+          return {
+            nodes: [],
+            links: [],
+          };
+        },
+      },
       topoDataFiltered: {
         type: Object,
         default() {
@@ -118,6 +131,7 @@
     data() {
       return {
         inputId: '',
+        isGlobalSearch: false, // 仅用于控制勾选框的状态样式
         moreToolState: false,
         hideTypeOption: {
           title: '隐藏节点类型',
@@ -160,6 +174,7 @@
           ],
           select: {key: 0, label: 'All'}
         },
+        nodeSingleClickTimer: null,
       }
     },
 
@@ -168,6 +183,12 @@
     },
 
     computed: {
+      hasSearchedGlobally() {
+        return this.$store.state.rocketTopo.hasSearchedGlobally;
+      },
+      isGlobalMode() {
+        return this.$store.state.rocketTopo.isGlobalMode;
+      },
       topoScaleFix() {
         return this.$store.state.rocketTopo.topoScaleFix;
       },
@@ -183,6 +204,9 @@
     },
 
     watch: {
+      isGlobalMode(newVal) {
+        this.isGlobalSearch = newVal;
+      },
       topoDataFiltered(newVal, oldVal) {
 
       },
@@ -199,6 +223,27 @@
     },
 
     methods: {
+      setCurNodeStably(curNode) {
+        let lastX = curNode.x;
+        let lastY = curNode.y;
+        let staticNum = 0;
+        let tickTimer = setInterval(() => {
+          if (parseInt(curNode.x) === parseInt(lastX) && parseInt(curNode.y) === parseInt(lastY)) { // 可放宽限制，加快速度
+            staticNum++;
+          } else {
+            lastX = curNode.x;
+            lastY = curNode.y;
+            staticNum = 0;
+          }
+          if (staticNum > 10) {
+            clearTimeout(tickTimer);
+            this.$store.commit('rocketTopo/SET_NODE', curNode);
+          }
+        }, 10);
+      },
+      handleClickCheckbox(e) {
+        this.$store.commit('rocketTopo/SET_IS_GLOBAL_MODE', e.target.checked);
+      },
       handleMouseUp() {
         this.handleSearchOnId();
       },
@@ -206,36 +251,62 @@
         if (this.inputId === '') {
           return;
         }
-        let result = this.topoDataFiltered.nodes.find(node => String(node.id) === this.inputId);
-        if (result === undefined) {
-          console.log('Not Match');
-        } else {
-          if (result.type !== this.showNodeTypeFilter) {
-            this.$store.commit('rocketTopo/SET_SHOW_NODE_TYPE_FILTER', result.type);
-            let lastX = result.x;
-            let lastY = result.y;
-            let staticNum = 0;
-            let tickTimer = setInterval(() => {
-              if (parseInt(result.x) === parseInt(lastX) && parseInt(result.y) === parseInt(lastY)) { // 可放宽限制，加快速度
-                staticNum++;
+        let result = {};
+        if (this.isGlobalMode) { // 搜索全拓扑
+          result = this.topoData.nodes.find(node => String(node.id) === this.inputId);
+          if (result === undefined) {
+            this.$emit('onSearchResult', false);
+          } else {
+            // 已在全局模式下搜索到结果
+            this.$store.commit('rocketTopo/SET_HAS_SEARCHED_GLOBALLY', true);
+
+            // 查询目标节点的全部上下游节点，每个节点都不一样，每次都需要重新布局
+            let topoViewData = {
+              nodes: [],
+              links: []
+            };
+            topoViewData.nodes = this.topoData.nodes.filter(node => node.type === result.type);
+            topoViewData.links = this.topoData.links.filter(link =>
+              link.source.type === result.type && link.target.type === result.type
+            );
+            this.$emit('changeTopoViewData', topoViewData);
+            if (result.type !== this.showNodeTypeFilter) {
+              this.$store.commit('rocketTopo/SET_SHOW_NODE_TYPE_FILTER', result.type);
+            }
+            this.setCurNodeStably(result);
+          }
+        } else { // 搜索当前拓扑
+          result = this.topoDataFiltered.nodes.find(node => String(node.id) === this.inputId);
+          if (result === undefined) {
+            this.$emit('onSearchResult', false);
+          } else {
+            this.$emit('onSearchResult', true);
+            if (this.hasSearchedGlobally) {
+              this.$store.commit('rocketTopo/SET_IS_GLOBAL_MODE', false);
+              this.$store.commit('rocketTopo/SET_HAS_SEARCHED_GLOBALLY', false);
+              // this.$store.commit('rocketTopo/SET_IS_FROM_GLOBAL_TO_NORMAL', true);
+              // 重置topoViewData
+              let topoViewData = this.topoData;
+              this.$emit('changeTopoViewData', topoViewData);
+              // 重置过滤器
+              this.$emit('restoreFilters');
+              this.$store.commit('rocketTopo/SET_SHOW_NODE_TYPE_FILTER', result.type);
+              this.setCurNodeStably(result);
+            } else {
+              if (result.type !== this.showNodeTypeFilter) {
+                this.$store.commit('rocketTopo/SET_SHOW_NODE_TYPE_FILTER', result.type);
+                this.setCurNodeStably(result);
               } else {
-                lastX = result.x;
-                lastY = result.y;
-                staticNum = 0;
-              }
-              if (staticNum > 10) {
-                clearTimeout(tickTimer);
                 this.$store.commit('rocketTopo/SET_NODE', result);
               }
-            }, 10);
-          } else {
-            this.$store.commit('rocketTopo/SET_NODE', result);
+            }
           }
         }
       },
 
       handleClearInputId() {
         this.inputId = '';
+        this.$emit('onSearchResult', true);
       },
 
       handleEnlargeTopo() {
@@ -278,28 +349,10 @@
         this.$store.commit('rocketTopo/SET_RELATIVE_NODE_TYPE', 'Single Hop');
       },
 
-      handleRestoreTopo(isBackToAll) {
-        this.inputId = '';
-        this.currentNode.fx = null;
-        this.currentNode.fy = null;
-        this.$store.commit('rocketTopo/SET_NODE', {});
-        if (isBackToAll) {
-          this.$store.commit('rocketTopo/SET_SHOW_NODE_TYPE_FILTER', 'All');
-          this.restoreFilters();
-        }
-        // d3.select('#netSvg')
-        //   .transition().duration(750)
-        //   .call(this.zoomController.transform, d3.zoomIdentity);
+      restoreTopoViewPort() {
         let centerX = $jq('#netSvg').width() / 2;
         let centerY = $jq('#netSvg').height() / 2;
         let zoomK = d3.zoomTransform(d3.select('#zoomContainer').node()).k;
-
-        // 莫名偏上？
-        // let transform = d3.zoomIdentity.translate(centerX / 2, centerY / 2).scale(this.topoScaleFix);
-        // d3.select('#netSvg')
-        //   .transition().duration(750)
-        //   .call(this.zoomController.transform, transform);
-
         if (zoomK > this.topoScaleFix) {
           this.zoomController.scaleTo(
             d3
@@ -348,6 +401,42 @@
         }
       },
 
+      handleRestoreTopo() {
+        if (this.nodeSingleClickTimer !== null) {
+          clearTimeout(this.nodeSingleClickTimer);
+          this.nodeSingleClickTimer = null;
+          return;
+        }
+        this.nodeSingleClickTimer = setTimeout(() => {
+          this.nodeSingleClickTimer = null;
+          this.inputId = '';
+          this.currentNode.fx = null;
+          this.currentNode.fy = null;
+          this.$store.commit('rocketTopo/SET_NODE', {});
+          this.restoreTopoViewPort();
+        }, 300);
+      },
+
+      handleRestoreTopoToOrigin() {
+        this.inputId = '';
+        this.currentNode.fx = null;
+        this.currentNode.fy = null;
+        this.$store.commit('rocketTopo/SET_NODE', {});
+
+        this.$store.commit('rocketTopo/SET_IS_GLOBAL_MODE', false);
+        if (this.hasSearchedGlobally) {
+          this.$store.commit('rocketTopo/SET_HAS_SEARCHED_GLOBALLY', false);
+          // 重置topoViewData
+          let topoViewData = this.topoData;
+          this.$emit('changeTopoViewData', topoViewData);
+        }
+        // 隐藏问题：双击还原怎么保证视图布局好之后再重置过滤器
+        this.$store.commit('rocketTopo/SET_SHOW_NODE_TYPE_FILTER', 'All');
+        this.restoreFilters();
+
+        this.restoreTopoViewPort();
+      },
+
       handleToggleMoreTool() {
         this.moreToolState = !this.moreToolState;
       },
@@ -390,7 +479,8 @@
 
     .search-wrapper,
     .size-controller,
-    .more-tool-btn {
+    .more-tool-btn,
+    .global-search-ctrl {
       margin-right: 12px;
       height: 100%;
       display: flex;
@@ -416,6 +506,7 @@
 
     .search-wrapper {
       position: relative;
+      margin-right: -5px;
 
       .sw-input {
         width: calc(100% - 4px);
@@ -456,6 +547,14 @@
 
       .sw-clear {
         right: 10px;
+      }
+    }
+
+    .global-search-ctrl {
+      label {
+        color: #ccc;
+        font-weight: normal;
+        font-size: 12px;
       }
     }
 

@@ -126,6 +126,7 @@
 
     methods: {
       restoreTopoViewport() {
+        console.log('restoreTopoViewport');
         let centerX = $jq('#netSvg').width() / 2;
         let centerY = $jq('#netSvg').height() / 2;
         let zoomK = d3.zoomTransform(d3.select('#zoomContainer').node()).k;

@@ -73,7 +73,14 @@
               :y="node.y - getNodeSize(node, 'height') / 2"
               :style="nodeStyle(node)"
               :title="node.name"
-              :class="nodeClass(node, ['node-svg', node.isDark ? 'dark-node' : '', node.isBright ? 'bright-node' : ''])"
+              :class="
+                nodeClass(node, [
+                  'node-svg',
+                  node.isDark ? 'dark-node' : '',
+                  node.isBright ? 'bright-node' : '',
+                  node.id === currentNode.id ? 'pinned' : '',
+                ])
+              "
               v-html="svgIcon(node).data"
               v-bind="node._svgAttrs"
               @mousedown.stop.prevent="emit('dragNodeStart', [$event, key, node])"
@@ -94,7 +101,13 @@
               :style="nodeStyle(node)"
               :stroke-width="fontSize / 8"
               :title="node.name"
-              :class="nodeClass(node, [node.isDark ? 'dark-node' : '', node.isBright ? 'bright-node' : ''])"
+              :class="
+                nodeClass(node, [
+                  node.isDark ? 'dark-node' : '',
+                  node.isBright ? 'bright-node' : '',
+                  node.id === currentNode.id ? 'pinned' : '',
+                ])
+              "
               v-bind="node._svgAttrs"
               @mousedown.stop.prevent="emit('dragNodeStart', [$event, key, node])"
               @mouseup.stop.prevent="emit('dragNodeEnd', [$event, key, node])"
@@ -184,6 +197,9 @@
     },
 
     computed: {
+      currentNode() {
+        return this.$store.state.rocketTopo.currentNode;
+      },
       nodeSvg() {
         if (this.nodeSym) {
           return svgExport.toObject(this.nodeSym);
@@ -296,8 +312,8 @@
         if (!Array.isArray(cssClass)) cssClass = [cssClass];
         cssClass.push('node');
         classes.forEach((c) => cssClass.push(c));
-        if (this.selected[node.id]) cssClass.push('selected');
-        if (node.fx || node.fy) cssClass.push('pinned');
+        // if (this.selected[node.id]) cssClass.push('selected');
+        // if (node.fx || node.fy) cssClass.push('pinned');
         return cssClass;
       },
       searchBackground() {

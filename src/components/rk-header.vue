@@ -1,54 +1,16 @@
-<!-- Licensed to the Apache Software Foundation (ASF) under one or more
-contributor license agreements.  See the NOTICE file distributed with
-this work for additional information regarding copyright ownership.
-The ASF licenses this file to You under the Apache License, Version 2.0
-(the "License"); you may not use this file except in compliance with
-the License.  You may obtain a copy of the License at
-
-  http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License. -->
 <template>
   <header class="rk-header flex-h">
-    <div class="flex-h">
-      <svg class="svg-logo icon" style="margin-right:35px;margin-top:-5px">
-        <use xlink:href="#logo-sw"></use>
+    <div class="flex-h hcs-header">
+      <svg class="icon hcs-logo">
+        <use xlink:href="#huawei"></use>
       </svg>
-      <span class="grey rocketbot">Rocketbot</span>
-      <!-- <router-link class="nav-link mr-20" to="/dashboard" exact>
-        <svg class="icon sm vm">
-          <use xlink:href="#chart"></use>
-        </svg>
-        <span class="vm hide-xs ml-5">{{ this.$t('dashboard') }}</span>
-      </router-link> -->
+      <span class="grey hcs-title">HCS全息排查</span>
       <router-link class="nav-link mr-20" to="/topology">
         <svg class="icon sm vm">
           <use xlink:href="#issues"></use>
         </svg>
         <span class="vm hide-xs ml-5">{{ this.$t('topology') }}</span>
       </router-link>
-      <!-- <router-link class="nav-link mr-20" to="/trace">
-        <svg class="icon sm vm">
-          <use xlink:href="#merge"></use>
-        </svg>
-        <span class="vm hide-xs ml-5">{{ this.$t('trace') }}</span>
-      </router-link> -->
-      <!-- <router-link class="nav-link mr-20" to="/profile">
-        <svg class="icon sm vm">
-          <use xlink:href="#timeline"></use>
-        </svg>
-        <span class="vm hide-xs ml-5">{{ this.$t('profile') }}</span>
-      </router-link> -->
-      <!-- <router-link class="nav-link mr-20" to="/alarm">
-        <svg class="icon sm vm">
-          <use xlink:href="#spam"></use>
-        </svg>
-        <span class="vm hide-xs ml-5">{{ this.$t('alarm') }}</span>
-      </router-link> -->
     </div>
     <div class="flex-h">
       <a class="rk-btn mr-5 sm" :class="auto ? 'blue' : 'ghost'" @click="handleAuto">
@@ -137,21 +99,19 @@ limitations under the License. -->
     color: #efefef;
     background-color: #252a2f;
     box-shadow: 0 1px 2px 0 rgba(26, 24, 29, 0.24);
-    .svg-logo {
-      width: 90px;
-      height: 22px;
+
+    .hcs-logo {
+      width: 28px;
+      height: 28px;
+      margin-right: 2px;
     }
-    .rocketbot {
-      padding-top: 27px;
-      position: absolute;
-      font-size: 11px;
+
+    .hcs-title {
+      font-size: 14px;
+      margin-right: 10px;
+      color: #ccc;
     }
-    .logo {
-      font-family: 'Avenir', Helvetica, Arial, sans-serif;
-      font-size: 18px;
-      padding-top: 2px;
-      margin-right: 50px;
-    }
+
     .nav-link {
       padding: 4px 10px;
       border-radius: 4px;

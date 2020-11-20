@@ -8,6 +8,7 @@
           :foldTopoDetail="foldTopoDetail"
           :topoDetailData="topoDetailData"
           :topoData="topoData"
+          @changeTopoViewData="changeTopoViewData"
         />
         <div class="tvcl-close" v-if="currentNode && currentNode.id !== undefined">
           <span
@@ -19,8 +20,34 @@
       </div>
       <!-- 主拓扑图 -->
       <div class="tvc-r" id="tvcrId" ref="tvcr">
+        <div class="main-topo-title" v-show="topoViewData.nodes.length > 0 && isMatch">
+          <div class="mtt-item current-node" v-show="currentNode.id !== undefined">
+            <span class="title">选中节点的名称：</span>
+            <span class="content">{{ currentNode.name }}</span>
+          </div>
+          <div class="mtt-item relative-node-type" v-show="currentNode.id !== undefined">
+            <span class="title">选中节点的关联节点类型：</span>
+            <span class="content">{{ relativeNodeType }}</span>
+          </div>
+          <div class="mtt-item show-node-type" v-show="showNodeTypeFilter !== 'All'">
+            <span class="title">显示的节点类型：</span>
+            <span class="content">{{ showNodeTypeFilter }}</span>
+          </div>
+          <div class="mtt-item hide-node-tydepe" v-show="showNodeTypeFilter === 'All'">
+            <span class="title">隐藏的节点类型：</span>
+            <span class="content">{{ hideNodeTypeFilter }}</span>
+          </div>
+          <div class="mtt-item node-state-type">
+            <span class="title">显示的节点状态：</span>
+            <span class="content">{{ nodeStateTypeFilter }}</span>
+          </div>
+          <div class="mtt-item show-edge-type">
+            <span class="title">显示的边类型：</span>
+            <span class="content">{{ showEdgeTypeFilter }}</span>
+          </div>
+        </div>
         <d3-network
-          v-show="topoData.nodes.length > 0"
+          v-show="topoViewData.nodes.length > 0 && isMatch"
           ref="net"
           :net-nodes="nodes"
           :net-links="links"
@@ -29,11 +56,12 @@
           @node-click="nodeClick"
           @link-click="linkClick"
         />
-        <div class="main-topo-loading" v-show="topoData.nodes.length === 0">
+        <div class="main-topo-loading" v-show="topoViewData.nodes.length === 0">
           <svg class="icon loading">
             <use xlink:href="#spinner-light"></use>
           </svg>
         </div>
+        <div class="main-topo-not-match" v-show="!isMatch">Not Match !</div>
       </div>
     </div>
   </div>
@@ -65,6 +93,19 @@
           };
         },
       },
+      topoViewData: {
+        type: Object,
+        default() {
+          return {
+            nodes: [],
+            links: [],
+          };
+        },
+      },
+      isMatch: {
+        type: Boolean,
+        default: true
+      }
     },
 
     data() {
@@ -112,13 +153,34 @@
     },
 
     computed: {
-      currentNode() {
+      hasSearchedGlobally() {
+        return this.$store.state.rocketTopo.hasSearchedGlobally;
+      },
+      showNodeTypeFilter() { // 左侧栏显示点类型过滤
+        return this.$store.state.rocketTopo.showNodeTypeFilter;
+      },
+      hideNodeTypeFilter() { // 右上角隐藏点类型过滤
+        return this.$store.state.rocketTopo.hideNodeTypeFilter;
+      },
+      nodeStateTypeFilter() { // 右上角点状态类型过滤
+        return this.$store.state.rocketTopo.nodeStateTypeFilter;
+      },
+      showEdgeTypeFilter() { // 右上角显示边类型过滤
+        return this.$store.state.rocketTopo.showEdgeTypeFilter;
+      },
+      relativeNodeType() { // 右上角关联点类型过滤
+        return this.$store.state.rocketTopo.relativeNodeType;
+      },
+      currentNode() { // 当前选中节点
         return this.$store.state.rocketTopo.currentNode;
       },
     },
 
     watch: {
       topoData(newVal, oldVal) {
+        // 重绘纵向关系
+      },
+      topoViewData(newVal, oldVal) {
         this.initNetTopoData();
       },
       currentNode(newVal, oldVal) {
@@ -142,6 +204,27 @@
     },
 
     methods: {
+      changeTopoViewData(newTopoViewData) {
+        this.$emit('changeTopoViewData', newTopoViewData);
+      },
+      setCurNodeStably(curNode) {
+        let lastX = curNode.x;
+        let lastY = curNode.y;
+        let staticNum = 0;
+        let tickTimer = setInterval(() => {
+          if (parseInt(curNode.x) === parseInt(lastX) && parseInt(curNode.y) === parseInt(lastY)) { // 可放宽限制，加快速度
+            staticNum++;
+          } else {
+            lastX = curNode.x;
+            lastY = curNode.y;
+            staticNum = 0;
+          }
+          if (staticNum > 10) {
+            clearTimeout(tickTimer);
+            this.$store.commit('rocketTopo/SET_NODE', curNode);
+          }
+        }, 10);
+      },
       resetTopoDetailData(curNode) {
         // query
         const nodesTmp = new Set();
@@ -171,10 +254,35 @@
         this.options.size.h = this.$refs.tvcr.clientHeight;
       },
       initNetTopoData() {  // 浅拷贝
-        this.nodes = this.topoData.nodes;
-        this.links = this.topoData.links;
+        this.nodes = this.topoViewData.nodes;
+        this.links = this.topoViewData.links;
       },
-      nodeClick() {},
+      nodeClick(event, node) {
+        if (node && this.currentNode && node.id === this.currentNode.id) {
+          return;
+        }
+        if (event && node) {
+          if (this.hasSearchedGlobally) {
+            this.$store.commit('rocketTopo/SET_IS_GLOBAL_MODE', false);
+            this.$store.commit('rocketTopo/SET_HAS_SEARCHED_GLOBALLY', false);
+            this.$store.commit('rocketTopo/SET_IS_FROM_GLOBAL_TO_NORMAL', true);
+            // 重置topoViewData
+            let topoViewData = this.topoData;
+            this.$emit('changeTopoViewData', topoViewData);
+            // 重置过滤器
+            this.$emit('restoreFilters');
+            this.$store.commit('rocketTopo/SET_SHOW_NODE_TYPE_FILTER', node.type);
+            this.setCurNodeStably(node);
+          } else {
+            if (node.type !== this.showNodeTypeFilter) {
+              this.$store.commit('rocketTopo/SET_SHOW_NODE_TYPE_FILTER', node.type);
+              this.setCurNodeStably(node);
+            } else {
+              this.$store.commit('rocketTopo/SET_NODE', node);
+            }
+          }
+        }
+      },
       linkClick() {},
       toggleTopoDetail() {
         this.foldTopoDetail = !this.foldTopoDetail;
@@ -247,9 +355,28 @@
         -webkit-transition: 0.1s width;
         transition: 0.1s width;
         height: 100%;
+        position: relative;
+
+        .main-topo-title {
+          position: absolute;
+          left: 2px;
+          padding: 5px 5px;
+          border-radius: 2px;
+          background-color: #242424;
+          display: flex;
+          flex-direction: column;
+          color: #ccc;
+          z-index: 8888;
+          background: transparent;
+          opacity: 0.8;
+
+          .mtt-item {
+            padding: 2px 0px;
+            text-align: left;
+          }
+        }
 
         .main-topo-loading {
-          position: absolute;
           width: 100%;
           height: 100%;
           display: flex;
@@ -260,6 +387,15 @@
             width: 50px;
             height: 50px;
           }
+        }
+        .main-topo-not-match {
+          width: 100%;
+          height: 100%;
+          display: flex;
+          justify-content: center;
+          align-items: center;
+          color: #ccc;
+          font-size: 25px;
         }
       }
     }

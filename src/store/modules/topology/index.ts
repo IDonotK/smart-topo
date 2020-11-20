@@ -90,6 +90,11 @@ export interface State {
   };
   topoScaleFix: number;
   isFirstTick: boolean;
+  isGlobalMode: boolean;
+  hasSearchedGlobally: boolean;
+  isFromGlobalToNormal: boolean;
+  isTopoNodesUpdated: boolean;
+  isTopoLinksUpdated: boolean;
 }
 
 const PercentileItem: string[] = ['p50', 'p75', 'p90', 'p95', 'p99'];
@@ -149,6 +154,11 @@ const initState: State = {
   },
   topoScaleFix: -1,
   isFirstTick: true,
+  isGlobalMode: false,
+  hasSearchedGlobally: false,
+  isFromGlobalToNormal: false,
+  isTopoNodesUpdated: false,
+  isTopoLinksUpdated: false,
 };
 
 // getters
@@ -195,6 +205,21 @@ const mutations = {
   },
   [types.SET_TOPO_SCALE_FIX](state: State, data: any) {
     state.topoScaleFix = data;
+  },
+  [types.SET_IS_GLOBAL_MODE](state: State, data: any) {
+    state.isGlobalMode = data;
+  },
+  [types.SET_HAS_SEARCHED_GLOBALLY](state: State, data: any) {
+    state.hasSearchedGlobally = data;
+  },
+  [types.SET_IS_FROM_GLOBAL_TO_NORMAL](state: State, data: any) {
+    state.isFromGlobalToNormal = data;
+  },
+  [types.SET_IS_TOPO_NODES_UPDATED](state: State, data: any) {
+    state.isTopoNodesUpdated = data;
+  },
+  [types.SET_IS_TOPO_LINKS_UPDATED](state: State, data: any) {
+    state.isTopoLinksUpdated = data;
   },
   [types.SET_IS_FIRST_TICK](state: State, data: any) {
     state.isFirstTick = data;

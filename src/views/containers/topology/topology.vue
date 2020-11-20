@@ -1,8 +1,20 @@
 <template>
   <div class="rk-topo">
-    <TopoView :topoData="topoData" />
+    <TopoView
+      :topoData="topoData"
+      :topoViewData="topoViewData"
+      :isMatch="isMatch"
+      @changeTopoViewData="changeTopoViewData"
+      @restoreFilters="restoreFilters"
+    />
     <TopoSideNavigation :topoData="topoData" />
-    <TopoToolSet :topoDataFiltered="topoDataFiltered" />
+    <TopoToolSet
+      ref="topotoolset"
+      :topoData="topoData"
+      :topoDataFiltered="topoDataFiltered"
+      @onSearchResult="onSearchResult"
+      @changeTopoViewData="changeTopoViewData"
+    />
   </div>
 </template>
 <script lang="js">
@@ -19,18 +31,23 @@
   export default {
     data() {
       return {
-        topoData: {
+        topoData: { // 获取的全部数据
           nodes: [],
           links: []
         },
-        topoDataFiltered: {
+        topoViewData: { // 展示的拓扑数据
+          nodes: [],
+          links: []
+        },
+        topoDataFiltered: { // 明暗的拓扑数据
           nodes: [],
           links: []
         },
         elemsAroundPreCurNode: {
           nodes: [],
           links: []
-        }
+        },
+        isMatch: true,
       }
     },
 
@@ -62,13 +79,17 @@
     },
 
     watch: {
-      topoData(newVal) {
+      topoViewData(newVal) {
         if (newVal.length === 1) {
           this.$store.commit('rocketTopo/SET_TOPO_SCALE_FIX', 1);
         } else {
           this.$store.commit('rocketTopo/SET_TOPO_SCALE_FIX', -1);
         }
         this.$store.commit('rocketTopo/SET_IS_FIRST_TICK', true);
+      },
+      topoData(newVal) {
+        this.topoViewData = newVal;
+        this.topoDataFiltered = newVal;
       },
       showNodeTypeFilter(newVal, oldVal) { // 性能优化，降低过滤频率
         this.filterTopo();
@@ -95,6 +116,15 @@
     },
 
     methods: { // dark：置暗；light：高亮；normal：正常
+      restoreFilters() {
+        this.$refs.topotoolset.restoreFilters();
+      },
+      changeTopoViewData(newTopoViewData) {
+       this.topoViewData = newTopoViewData;
+      },
+      onSearchResult(isMatch) {
+        this.isMatch = isMatch;
+      },
       initTopoData() {
         setTimeout(() => {
           // query
@@ -102,6 +132,13 @@
             nodes: NODES,
             links: LINKS
           };
+          // 如何局部更新topo？
+          this.$store.commit('rocketTopo/SET_IS_TOPO_NODES_UPDATED', true);
+          this.$store.commit('rocketTopo/SET_IS_TOPO_LINKS_UPDATED', true);
+
+          // 若把vue-d3-network里的buildNodes、buildLinks的逻辑部分抽出到这里，则会导致多处需要手动强制刷新topo组件视图？
+
+          this.topoViewData = this.topoData;
           this.topoDataFiltered = this.topoData;
         }, 2000);
         // 处理轮询的逻辑
@@ -152,7 +189,8 @@
           links: []
         };
         elemsAround.nodes.push(curNode);
-        this.topoDataFiltered.links.forEach((link) => {
+        // this.topoDataFiltered.links.forEach((link) => {
+        this.topoData.links.forEach((link) => { // 这里需要和mouseEnter保持一致吗？基于全局数据，而非过滤后的数据
           if (link.sid === curNode.id) {
             elemsAround.nodes.push(link.target);
             elemsAround.links.push(link);
@@ -205,6 +243,7 @@
         topoDataFilteredTmp = this.filterTopoOnNodeStateType(this.nodeStateTypeFilter, topoDataFilteredTmp);
         topoDataFilteredTmp = this.filterTopoOnShowEdgeType(this.showEdgeTypeFilter, topoDataFilteredTmp);
         this.topoDataFiltered = topoDataFilteredTmp;
+        console.log('topoDataFilteredTmp: ', topoDataFilteredTmp);
         this.normalTopoFiltered();
       },
       filterTopoOnShowNodeType(nodeType, topoDataFiltered) {

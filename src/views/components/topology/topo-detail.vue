@@ -146,6 +146,9 @@
     },
 
     computed: {
+      hasSearchedGlobally() {
+        return this.$store.state.rocketTopo.hasSearchedGlobally;
+      },
       selectNav() {
         return this.$store.state.rocketTopo.showNodeTypeFilter;
       },
@@ -171,6 +174,24 @@
     },
 
     methods: {
+      setCurNodeStably(curNode) {
+        let lastX = curNode.x;
+        let lastY = curNode.y;
+        let staticNum = 0;
+        let tickTimer = setInterval(() => {
+          if (parseInt(curNode.x) === parseInt(lastX) && parseInt(curNode.y) === parseInt(lastY)) { // 可放宽限制，加快速度
+            staticNum++;
+          } else {
+            lastX = curNode.x;
+            lastY = curNode.y;
+            staticNum = 0;
+          }
+          if (staticNum > 10) {
+            clearTimeout(tickTimer);
+            this.$store.commit('rocketTopo/SET_NODE', curNode);
+          }
+        }, 10);
+      },
       setSmallTopoOption() {
         // const color1 = '#006acc';
         // const color2 = '#ff7d18';
@@ -372,7 +393,6 @@
         this.$store.commit('rocketTopo/SET_SHOW_NODE_TYPE_FILTER', itemId);
       },
       drawDetailTopoCrossLayer() {
-        console.log('drawDetailTopoCrossLayer', this);
         if (this.topoDetailData.nodes.length <= 0) {
           return;
         }
@@ -654,27 +674,24 @@
           return;
         }
         let node = this.topoData.nodes.find(node => node.id === nodeTmp.id); // 对应主拓扑的节点对象
-        if (node.type !== this.showNodeTypeFilter) {
+        if (this.hasSearchedGlobally) {
+          this.$store.commit('rocketTopo/SET_IS_GLOBAL_MODE', false);
+          this.$store.commit('rocketTopo/SET_HAS_SEARCHED_GLOBALLY', false);
+          // this.$store.commit('rocketTopo/SET_IS_FROM_GLOBAL_TO_NORMAL', true);
+          // 重置topoViewData
+          let topoViewData = this.topoData;
+          this.$emit('changeTopoViewData', topoViewData);
+          // 重置过滤器
+          this.$emit('restoreFilters');
           this.$store.commit('rocketTopo/SET_SHOW_NODE_TYPE_FILTER', node.type);
-          let lastX = node.x;
-          let lastY = node.y;
-          let staticNum = 0;
-          let tickTimer = setInterval(() => {
-            if (parseInt(node.x) === parseInt(lastX) && parseInt(node.y) === parseInt(lastY)) {
-              // 可放宽限制，加快速度
-              staticNum++;
-            } else {
-              lastX = node.x;
-              lastY = node.y;
-              staticNum = 0;
-            }
-            if (staticNum > 10) {
-              clearTimeout(tickTimer);
-              this.$store.commit('rocketTopo/SET_NODE', node);
-            }
-          }, 10);
+          this.setCurNodeStably(node);
         } else {
-          this.$store.commit('rocketTopo/SET_NODE', node);
+          if (node.type !== this.showNodeTypeFilter) {
+            this.$store.commit('rocketTopo/SET_SHOW_NODE_TYPE_FILTER', node.type);
+            this.setCurNodeStably(node);
+          } else {
+            this.$store.commit('rocketTopo/SET_NODE', node);
+          }
         }
       },
       handleGoNodeDetail() {
@@ -786,7 +803,7 @@
         bottom: 0;
         width: 600px;
         background-color: #252a2f;
-        z-index: 999;
+        z-index: 9000;
         -webkit-transition: 0.5s width;
         transition: 0.5s width;
 

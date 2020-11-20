@@ -200,6 +200,15 @@
       if (this.resizeListener) window.removeEventListener('resize', this.onResize);
     },
     computed: {
+      isTopoNodesUpdated() {
+        return this.$store.state.rocketTopo.isTopoNodesUpdated;
+      },
+      isTopoLinksUpdated() {
+        return this.$store.state.rocketTopo.isTopoLinksUpdated;
+      },
+      isFromGlobalToNormal() {
+        return this.$store.state.rocketTopo.isFromGlobalToNormal;
+      },
       isFirstTick() {
         return this.$store.state.rocketTopo.isFirstTick;
       },
@@ -239,7 +248,6 @@
         this.setTopoViewport(newVal, oldVal);
       },
       netNodes(newValue) {
-        console.log('vue-d3-network knows');
         this.buildNodes(newValue);
         this.reset();
       },
@@ -330,23 +338,29 @@
         );
       },
       handleClickNet(event) {
-        // 提前终止仿真？
-        this.simulation.stop();
-        if (this.isFirstTick) {
-          this.$store.commit('rocketTopo/SET_IS_FIRST_TICK', false);
+        if (!this.isFromGlobalToNormal) {
+          // 提前终止仿真
+          this.simulation.stop();
+          if (this.isFirstTick) {
+            this.$store.commit('rocketTopo/SET_IS_FIRST_TICK', false);
+          }
         }
+        this.$store.commit('rocketTopo/SET_IS_FROM_GLOBAL_TO_NORMAL', false);
         if (!this.isMouseDwonNet) {
           this.isMouseDwonNet = true;
           return;
         }
         if (event.target.tagName === 'circle' || event.target.tagName === 'path') {
+          // 如果是点击节点或边则直接返回，避免和nodeClick、linkClick事件冲突
           return;
         }
+        this.$refs.svg.$forceUpdate();
         this.currentNode.fx = null;
         this.currentNode.fy = null;
         // this.simulation.restart();
         // this.simulation.alpha(0.5);
         this.$store.commit('rocketTopo/SET_NODE', {});
+        this.$refs.svg.$forceUpdate();
       },
       normalAroundHoveredNode() {
         this.elemsAroundPreHovNodeShallow.nodes.forEach((node) => {
@@ -389,12 +403,15 @@
         if (this.currentNode.id !== undefined) {
           return;
         }
+        // 强制更新svgRenderer组件，防止mouseEnterNode后视图样式无法更新
+        this.$refs.svg.$forceUpdate();
         this.lightAroundHoveredNode(hoveredNode);
       },
       mouseLeaveNode(event, elem) {
         if (this.currentNode.id !== undefined) {
           return;
         }
+        this.$refs.svg.$forceUpdate();
         this.normalAroundHoveredNode();
         this.elemsAroundPreHovNodeShallow = null;
         this.elemsAroundPreHovNodeShallow = {
@@ -457,6 +474,7 @@
           }
           return;
         }
+        this.$refs.svg.$forceUpdate();
         let offsetX = $jq('#netContent').offset().left;
         let offsetY = $jq('#netContent').offset().top;
         this.linkTextStyle = {
@@ -469,6 +487,7 @@
         this.lightAroundHoveredLink(event, hoveredLink);
       },
       mouseLeaveLink(event, hoveredLink) {
+        this.$refs.svg.$forceUpdate();
         this.linkTextVisible = false;
         this.linkTextContent = '';
         this.linkTextStyle = {
@@ -526,7 +545,6 @@
         this.defaultFontSize = this.fontSize;
       },
       buildNodes(nodes) {
-        console.log('buildNodes');
         let vm = this;
         this.nodes = nodes.map((node, index) => {
           // node formatter option
@@ -542,39 +560,42 @@
             node.svgIcon = svgExport.svgElFromString(node.svgSym);
             if (node.svgIcon && !node.svgObj) node.svgObj = svgExport.toObject(node.svgIcon);
           }
-          vm.$set(node, 'showLabel', false);
-          vm.$set(node, 'isDark', false);
-          vm.$set(node, 'isBright', false);
-          vm.$set(node, 'isRelatedToCurNode', false);
-
-          let nodeColor = '';
-          switch (
-            node.type // 调色板如何解耦？
-          ) {
-            case 'App':
-              nodeColor = this.pallet[0];
-              break;
-            case 'Middleware':
-              nodeColor = this.pallet[1];
-              break;
-            case 'Process':
-              nodeColor = this.pallet[2];
-              break;
-            case 'Workload':
-              nodeColor = this.pallet[3];
-              break;
-            case 'Pod':
-              nodeColor = this.pallet[4];
-              break;
-            case 'Node':
-              nodeColor = this.pallet[5];
-              break;
-            default:
-              nodeColor = '#dcfaf3';
-              break;
+          if (this.isTopoNodesUpdated) {
+            vm.$set(node, 'showLabel', false);
+            vm.$set(node, 'isDark', false);
+            vm.$set(node, 'isBright', false);
+            vm.$set(node, 'isRelatedToCurNode', false);
+            let nodeColor = '';
+            switch (
+              node.type // 调色板如何解耦？
+            ) {
+              case 'App':
+                nodeColor = this.pallet[0];
+                break;
+              case 'Middleware':
+                nodeColor = this.pallet[1];
+                break;
+              case 'Process':
+                nodeColor = this.pallet[2];
+                break;
+              case 'Workload':
+                nodeColor = this.pallet[3];
+                break;
+              case 'Pod':
+                nodeColor = this.pallet[4];
+                break;
+              case 'Node':
+                nodeColor = this.pallet[5];
+                break;
+              default:
+                nodeColor = '#dcfaf3';
+                break;
+            }
+            vm.$set(node, '_color', nodeColor);
           }
-          vm.$set(node, '_color', nodeColor);
-
+          if (this.isTopoNodesUpdated && index === nodes.length - 1) {
+            this.$store.commit('rocketTopo/SET_IS_TOPO_NODES_UPDATED', false);
+          }
           return node;
         });
       },
@@ -587,14 +608,16 @@
           link.source = link.sid;
           link.target = link.tid;
           if (!link.id) vm.$set(link, 'id', 'link-' + index);
-          vm.$set(link, 'showLabel', false);
-          vm.$set(link, 'isDark', false);
-          vm.$set(link, 'isBright', false);
-          vm.$set(link, 'isRelatedToCurNode', false);
-
-          // let linkColor = link.type === 'tracingto' ? this.pallet[8] : this.pallet[9];
-          vm.$set(link, '_color', 'rgba(33, 126, 242, 0.373)');
-
+          if (this.isTopoLinksUpdated) {
+            vm.$set(link, 'showLabel', false);
+            vm.$set(link, 'isDark', false);
+            vm.$set(link, 'isBright', false);
+            vm.$set(link, 'isRelatedToCurNode', false);
+            vm.$set(link, '_color', 'rgba(33, 126, 242, 0.373)');
+          }
+          if (this.isTopoLinksUpdated && index === links.length - 1) {
+            this.$store.commit('rocketTopo/SET_IS_TOPO_LINKS_UPDATED', false);
+          }
           return link;
         });
       },
@@ -781,6 +804,7 @@
         if (curNode && curNode.id === undefined) {
           return;
         }
+        this.$refs.svg.$forceUpdate();
         let centerX = $jq('#netSvg').width() / 2;
         let centerY = $jq('#netSvg').height() / 2;
         let offsetX = $jq('#netSvg').offset().left;
@@ -789,6 +813,8 @@
         let zoomX = d3.zoomTransform(d3.select('#zoomContainer').node()).x;
         let zoomY = d3.zoomTransform(d3.select('#zoomContainer').node()).y;
 
+        // 控制topo时要终止仿真
+        this.simulation.stop();
         // 选中节点回到视口中心
         this.zoomController.translateTo(
           d3
@@ -804,9 +830,11 @@
           if (preNode && preNode.id !== undefined) {
             preNode.fx = null;
             preNode.fy = null;
+            this.$refs.svg.$forceUpdate();
           }
           curNode.fx = curNode.x;
           curNode.fy = curNode.y;
+          this.$refs.svg.$forceUpdate();
 
           // 单跳视口，查询耗时？
           let nodesTmp = [];
@@ -831,34 +859,7 @@
         }, 501);
       },
       nodeClick(event, node) {
-        if (node && this.currentNode && node.id === this.currentNode.id) {
-          return;
-        }
         this.$emit('node-click', event, node);
-        if (event && node) {
-          if (node.type !== this.showNodeTypeFilter) {
-            this.$store.commit('rocketTopo/SET_SHOW_NODE_TYPE_FILTER', node.type);
-            let lastX = node.x;
-            let lastY = node.y;
-            let staticNum = 0;
-            let tickTimer = setInterval(() => {
-              if (parseInt(node.x) === parseInt(lastX) && parseInt(node.y) === parseInt(lastY)) {
-                // 可放宽限制，加快速度
-                staticNum++;
-              } else {
-                lastX = node.x;
-                lastY = node.y;
-                staticNum = 0;
-              }
-              if (staticNum > 10) {
-                clearTimeout(tickTimer);
-                this.$store.commit('rocketTopo/SET_NODE', node);
-              }
-            }, 10);
-          } else {
-            this.$store.commit('rocketTopo/SET_NODE', node);
-          }
-        }
       },
       linkClick(event, link) {
         this.$emit('link-click', event, link);
