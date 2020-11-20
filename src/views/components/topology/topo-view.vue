@@ -230,13 +230,28 @@
         const nodesTmp = new Set();
         const linksTmp = new Set();
         nodesTmp.add(curNode);
-        this.deepSearchTopo(curNode, nodesTmp, linksTmp);
+        this.deepSearchTopoUp(curNode, nodesTmp, linksTmp);
+        this.deepSearchTopoDown(curNode, nodesTmp, linksTmp);
+
         this.topoDetailData = {
           nodes: Array.from(nodesTmp),
           links: Array.from(linksTmp)
         };
       },
-      deepSearchTopo(curNode, nodeSet, linkSet) {
+       deepSearchTopoUp(curNode, nodeSet, linkSet) {
+        for (let i = 0; i < this.topoData.links.length; i++) { // 基于全局的拓扑数据
+          let link = this.topoData.links[i];
+          if (link.tid === curNode.id) {
+            if (link.source.type === curNode.type) {
+              continue;
+            }
+            linkSet.add(link);
+            nodeSet.add(link.source);
+            this.deepSearchTopoUp(link.source, nodeSet, linkSet);
+          }
+        }
+      },
+      deepSearchTopoDown(curNode, nodeSet, linkSet) {
         for (let i = 0; i < this.topoData.links.length; i++) { // 基于全局的拓扑数据
           let link = this.topoData.links[i];
           if (link.sid === curNode.id) {
@@ -245,7 +260,7 @@
             }
             linkSet.add(link);
             nodeSet.add(link.target);
-            this.deepSearchTopo(link.target, nodeSet, linkSet);
+            this.deepSearchTopoDown(link.target, nodeSet, linkSet);
           }
         }
       },
