@@ -243,7 +243,6 @@
         topoDataFilteredTmp = this.filterTopoOnNodeStateType(this.nodeStateTypeFilter, topoDataFilteredTmp);
         topoDataFilteredTmp = this.filterTopoOnShowEdgeType(this.showEdgeTypeFilter, topoDataFilteredTmp);
         this.topoDataFiltered = topoDataFilteredTmp;
-        console.log('topoDataFilteredTmp: ', topoDataFilteredTmp);
         this.normalTopoFiltered();
       },
       filterTopoOnShowNodeType(nodeType, topoDataFiltered) {

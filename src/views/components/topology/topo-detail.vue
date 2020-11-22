@@ -424,18 +424,28 @@
             default: break;
           }
         });
+        switch (this.currentNode.type) {
+          case 'App': appNum++; break;
+          case 'Middleware': middlewareNum++; break;
+          case 'Process': processNum++; break;
+          case 'Workload': workloadNum++; break;
+          case 'Pod': podNum++; break;
+          case 'Node': nodeNum++; break;
+          default: break;
+        }
         let maxNum = Math.max(appNum, middlewareNum, processNum, workloadNum, podNum, nodeNum);
+        // width: max(maxNodesLayer, curNodeLayer)
         let topoWidth = 20 + maxNum * deltaw + 30 > topoWidthMax ? topoWidthMax : 20 + maxNum * deltaw + 30;
         // 设置拓扑容器宽度 overflow:scroll-x？
         this.$refs.tdDom.style.width = topoWidth + 'px';
 
         // 计算节点间横向距离
-        let appDeltaX =  (topoWidth - 20) / appNum;
-        let middlewareDeltaX =  (topoWidth - 20) / middlewareNum;
-        let processDeltaX =  (topoWidth - 20) / processNum;
-        let workloadDeltaX =  (topoWidth - 20) / workloadNum;
-        let podDeltaX =  (topoWidth - 20) / podNum;
-        let nodeDeltaX =  (topoWidth - 20) / nodeNum;
+        let appDeltaX =  (topoWidth - 20 - 30) / appNum;
+        let middlewareDeltaX =  (topoWidth - 20 - 30) / middlewareNum;
+        let processDeltaX =  (topoWidth - 20 - 30) / processNum;
+        let workloadDeltaX =  (topoWidth - 20 - 30) / workloadNum;
+        let podDeltaX =  (topoWidth - 20 - 30) / podNum;
+        let nodeDeltaX =  (topoWidth - 20 - 30) / nodeNum;
 
         // 调整曲线
         let isAppLine2Src = appNum >= middlewareNum ? true : false;
@@ -707,7 +717,6 @@
         this.showNodeDetail = false;
       },
       resize() {
-        console.log('resize', this);
         this.drawDetailTopoCrossLayer();
       },
     }

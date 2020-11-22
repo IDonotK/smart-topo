@@ -232,13 +232,38 @@
         nodesTmp.add(curNode);
         this.deepSearchTopoUp(curNode, nodesTmp, linksTmp);
         this.deepSearchTopoDown(curNode, nodesTmp, linksTmp);
+        this.searchStreamOnSingleHop(curNode, nodesTmp, linksTmp);
 
         this.topoDetailData = {
           nodes: Array.from(nodesTmp),
           links: Array.from(linksTmp)
         };
       },
-       deepSearchTopoUp(curNode, nodeSet, linkSet) {
+      searchStreamOnSingleHop(curNode, nodeSet, linkSet) {
+        const nodesTmpUp = new Set();
+        const linksTmpUp = new Set();
+        const nodesTmpDown = new Set();
+        const linksTmpDown = new Set();
+        this.topoData.links.forEach(link => {
+          if (link.tid === curNode.id && link.source.type === curNode.type) {
+            linksTmpUp.add(link);
+            nodesTmpUp.add(link.source);
+
+            linkSet.add(link);
+            nodeSet.add(link.source);
+          }
+          if (link.sid === curNode.id && link.target.type === curNode.type) {
+            linksTmpDown.add(link);
+            nodesTmpDown.add(link.target);
+
+            linkSet.add(link);
+            nodeSet.add(link.target);
+          }
+        });
+        const nodesTmp = new Set([...nodesTmpUp, ...nodesTmpDown]);
+        const linksTmp = new Set([...linksTmpUp, ...linksTmpDown]);
+      },
+      deepSearchTopoUp(curNode, nodeSet, linkSet) {
         for (let i = 0; i < this.topoData.links.length; i++) { // 基于全局的拓扑数据
           let link = this.topoData.links[i];
           if (link.tid === curNode.id) {
