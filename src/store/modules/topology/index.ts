@@ -51,6 +51,7 @@ export interface State {
   detectPoints: string[];
   selectedServiceCall: Call | null;
   currentNode: any;
+  viewNode: any;
   currentLink: any;
   current: Option;
   mode: boolean;
@@ -78,23 +79,17 @@ export interface State {
   serviceApdexScore: { ApdexScore: number[] };
   topoEndpoints: any[];
   topoInstances: any[];
-  showNodeTypeFilter: string;
-  hideNodeTypeFilter: string;
-  nodeStateTypeFilter: string;
-  showEdgeTypeFilter: string;
+  showNodeTypes: any[];
+  showStateTypes: any[];
+  showEdgeTypes: any[];
   zoomController: any;
-  relativeNodeType: string;
-  topoBasicData: {
-    nodes: any[];
-    links: any[];
-  };
+  showRelativeTypes: any[];
   topoScaleFix: number;
   isFirstTick: boolean;
-  isGlobalMode: boolean;
-  hasSearchedGlobally: boolean;
-  isFromGlobalToNormal: boolean;
   isTopoNodesUpdated: boolean;
   isTopoLinksUpdated: boolean;
+  topoMode: string;
+  exploreNode: any;
 }
 
 const PercentileItem: string[] = ['p50', 'p75', 'p90', 'p95', 'p99'];
@@ -107,6 +102,7 @@ const initState: State = {
   calls: [],
   nodes: [],
   currentNode: {},
+  viewNode: {},
   currentLink: {},
   current: {
     key: 'default',
@@ -142,23 +138,17 @@ const initState: State = {
   serviceApdexScore: { ApdexScore: [] },
   topoEndpoints: [],
   topoInstances: [],
-  showNodeTypeFilter: 'All',
-  hideNodeTypeFilter: 'None',
-  nodeStateTypeFilter: 'All',
-  showEdgeTypeFilter: 'All',
+  showNodeTypes: [],
+  showStateTypes: [],
+  showEdgeTypes: [],
   zoomController: null,
-  relativeNodeType: 'Single Hop',
-  topoBasicData: {
-    nodes: [],
-    links: [],
-  },
+  showRelativeTypes: [],
   topoScaleFix: -1,
   isFirstTick: true,
-  isGlobalMode: false,
-  hasSearchedGlobally: false,
-  isFromGlobalToNormal: false,
   isTopoNodesUpdated: false,
   isTopoLinksUpdated: false,
+  topoMode: 'global',
+  exploreNode: {},
 };
 
 // getters
@@ -182,38 +172,26 @@ const mutations = {
   [types.SET_NODE](state: State, data: any) {
     state.currentNode = data;
   },
-  [types.SET_SHOW_NODE_TYPE_FILTER](state: State, data: any) {
-    state.showNodeTypeFilter = data;
+  [types.SET_VIEW_NODE](state: State, data: any) {
+    state.viewNode = data;
   },
-  [types.SET_HIDE_NODE_TYPE_FILTER](state: State, data: any) {
-    state.hideNodeTypeFilter = data;
+  [types.SET_SHOW_NODE_TYPES](state: State, data: any) {
+    state.showNodeTypes = data;
   },
-  [types.SET_NODE_STATE_TYPE_FILTER](state: State, data: any) {
-    state.nodeStateTypeFilter = data;
+  [types.SET_SHOW_STATE_TYPES](state: State, data: any) {
+    state.showStateTypes = data;
   },
-  [types.SET_SHOW_EDGE_TYPE_FILTER](state: State, data: any) {
-    state.showEdgeTypeFilter = data;
+  [types.SET_SHOW_EDGE_TYPES](state: State, data: any) {
+    state.showEdgeTypes = data;
   },
   [types.SET_ZOOM_CONTROLLER](state: State, data: any) {
     state.zoomController = data;
   },
-  [types.SET_RELATIVE_NODE_TYPE](state: State, data: any) {
-    state.relativeNodeType = data;
-  },
-  [types.SET_TOPO_BASIC_DATA](state: State, data: any) {
-    state.topoBasicData = data;
+  [types.SET_SHOW_RELATIVE_TYPES](state: State, data: any) {
+    state.showRelativeTypes = data;
   },
   [types.SET_TOPO_SCALE_FIX](state: State, data: any) {
     state.topoScaleFix = data;
-  },
-  [types.SET_IS_GLOBAL_MODE](state: State, data: any) {
-    state.isGlobalMode = data;
-  },
-  [types.SET_HAS_SEARCHED_GLOBALLY](state: State, data: any) {
-    state.hasSearchedGlobally = data;
-  },
-  [types.SET_IS_FROM_GLOBAL_TO_NORMAL](state: State, data: any) {
-    state.isFromGlobalToNormal = data;
   },
   [types.SET_IS_TOPO_NODES_UPDATED](state: State, data: any) {
     state.isTopoNodesUpdated = data;
@@ -223,6 +201,12 @@ const mutations = {
   },
   [types.SET_IS_FIRST_TICK](state: State, data: any) {
     state.isFirstTick = data;
+  },
+  [types.SET_TOPO_MODE](state: State, data: any) {
+    state.topoMode = data;
+  },
+  [types.SET_EXPLORE_NODE](state: State, data: any) {
+    state.exploreNode = data;
   },
   [types.SET_LINK](state: State, data: any) {
     state.currentLink = data;

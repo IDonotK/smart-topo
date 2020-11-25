@@ -83,10 +83,9 @@
               "
               v-html="svgIcon(node).data"
               v-bind="node._svgAttrs"
+              @dblclick.stop.prevent="emit('nodeDblClick', [$event, node])"
               @mousedown.stop.prevent="emit('dragNodeStart', [$event, key, node])"
               @mouseup.stop.prevent="emit('dragNodeEnd', [$event, key, node])"
-              @touchstart.stop.prevent="emit('dragNodeStart', [$event, key, node])"
-              @touchend.stop.passive="emit('dragNodeEnd', [$event, key, node])"
               @mouseenter.stop.prevent="emit('mouseEnterNode', [$event, node])"
               @mouseleave.stop.prevent="emit('mouseLeaveNode', [$event, node])"
             ></svg>
@@ -109,10 +108,9 @@
                 ])
               "
               v-bind="node._svgAttrs"
+              @dblclick.stop.prevent="emit('nodeDblClick', [$event, node])"
               @mousedown.stop.prevent="emit('dragNodeStart', [$event, key, node])"
               @mouseup.stop.prevent="emit('dragNodeEnd', [$event, key, node])"
-              @touchstart.stop.prevent="emit('dragNodeStart', [$event, key, node])"
-              @touchend.stop.passive="emit('dragNodeEnd', [$event, key, node])"
               @mouseenter.stop.prevent="emit('mouseEnterNode', [$event, node])"
               @mouseleave.stop.prevent="emit('mouseLeaveNode', [$event, node])"
             />
@@ -120,10 +118,10 @@
             <!-- warn icon -->
             <svg
               v-if="node.state === 'Abnormal'"
-              :x="node.x + (getNodeSize(node) - 4) / 2"
-              :y="node.y - (getNodeSize(node) - 4)"
-              :width="getNodeSize(node) - 4"
-              :height="getNodeSize(node) - 4"
+              :x="node.x + (getNodeSize(node) - 4 / topoScaleFix) / 2"
+              :y="node.y - (getNodeSize(node) - 4 / topoScaleFix)"
+              :width="getNodeSize(node) - 4 / topoScaleFix"
+              :height="getNodeSize(node) - 4 / topoScaleFix"
               :class="warnClass(node, [node.isDark ? 'dark-warn-icon' : '', node.isBright ? 'bright-warn-icon' : ''])"
               :key="'event' + key"
               aria-hidden="true"
@@ -197,6 +195,9 @@
     },
 
     computed: {
+      topoScaleFix() {
+        return this.$store.state.rocketTopo.topoScaleFix;
+      },
       currentNode() {
         return this.$store.state.rocketTopo.currentNode;
       },

@@ -100,7 +100,7 @@
         isLinkTextDark: false,
         linkTextVisible: false,
         linkTextContent: '',
-        nodeClicked: true,
+        nodeSingleClicked: true,
         clickNodeTimer: null,
         isMouseDwonNet: true,
         pallet: [
@@ -169,7 +169,6 @@
         {
           attrs: { class: 'net' },
           on: {
-            '&touchmove': this.mouseMoveNet,
             mousemove: this.mouseMoveNet,
             click: this.handleClickNet,
           },
@@ -206,17 +205,14 @@
       isTopoLinksUpdated() {
         return this.$store.state.rocketTopo.isTopoLinksUpdated;
       },
-      isFromGlobalToNormal() {
-        return this.$store.state.rocketTopo.isFromGlobalToNormal;
-      },
       isFirstTick() {
         return this.$store.state.rocketTopo.isFirstTick;
       },
       topoScaleFix() {
         return this.$store.state.rocketTopo.topoScaleFix;
       },
-      showNodeTypeFilter() {
-        return this.$store.state.rocketTopo.showNodeTypeFilter;
+      showNodeTypes() {
+        return this.$store.state.rocketTopo.showNodeTypes;
       },
       currentNode() {
         return this.$store.state.rocketTopo.currentNode;
@@ -337,202 +333,12 @@
           scaleFix,
         );
       },
-      handleClickNet(event) {
-        if (!this.isFromGlobalToNormal) {
-          // 提前终止仿真
-          this.simulation.stop();
-          if (this.isFirstTick) {
-            this.$store.commit('rocketTopo/SET_IS_FIRST_TICK', false);
-          }
-        }
-        this.$store.commit('rocketTopo/SET_IS_FROM_GLOBAL_TO_NORMAL', false);
-        if (!this.isMouseDwonNet) {
-          this.isMouseDwonNet = true;
-          return;
-        }
-        if (event.target.tagName === 'circle' || event.target.tagName === 'path') {
-          // 如果是点击节点或边则直接返回，避免和nodeClick、linkClick事件冲突
-          return;
-        }
-        this.$refs.svg.$forceUpdate();
-        this.currentNode.fx = null;
-        this.currentNode.fy = null;
-        // this.simulation.restart();
-        // this.simulation.alpha(0.5);
-        this.$store.commit('rocketTopo/SET_NODE', {});
-        this.$refs.svg.$forceUpdate();
-      },
-      normalAroundHoveredNode() {
-        this.elemsAroundPreHovNodeShallow.nodes.forEach((node) => {
-          node.isBright = false;
-          node.showLabel = false;
-        });
-        this.elemsAroundPreHovNodeShallow.links.forEach((link) => {
-          link.isBright = false;
-        });
-      },
-      lightAroundHoveredNode(hoveredNode) {
-        this.normalAroundHoveredNode();
-        let elemsAround = {
-          nodes: [],
-          links: [],
-        };
-        elemsAround.nodes.push(hoveredNode);
-        this.links.forEach((link) => {
-          if (link.sid === hoveredNode.id) {
-            elemsAround.nodes.push(link.target);
-            elemsAround.links.push(link);
-          } else if (link.tid === hoveredNode.id) {
-            elemsAround.nodes.push(link.source);
-            elemsAround.links.push(link);
-          }
-        });
-        // 注意，这里记录的上一个hover节点被light前的周边元素集合，深拷贝
-        this.elemsAroundPreHovNodeDeep = JSON.parse(JSON.stringify(elemsAround));
-        elemsAround.nodes.forEach((node) => {
-          node.isBright = true;
-          node.showLabel = true;
-        });
-        elemsAround.links.forEach((link) => {
-          link.isBright = true;
-        });
-        // 注意，这里记录的上一个hover节点被light后的周边元素集合，浅拷贝
-        this.elemsAroundPreHovNodeShallow = elemsAround;
-      },
-      mouseEnterNode(event, hoveredNode) {
-        if (this.currentNode.id !== undefined) {
-          return;
-        }
-        // 强制更新svgRenderer组件，防止mouseEnterNode后视图样式无法更新
-        this.$refs.svg.$forceUpdate();
-        this.lightAroundHoveredNode(hoveredNode);
-      },
-      mouseLeaveNode(event, elem) {
-        if (this.currentNode.id !== undefined) {
-          return;
-        }
-        this.$refs.svg.$forceUpdate();
-        this.normalAroundHoveredNode();
-        this.elemsAroundPreHovNodeShallow = null;
-        this.elemsAroundPreHovNodeShallow = {
-          nodes: [],
-          links: [],
-        };
-        this.elemsAroundPreHovNodeDeep = null;
-        this.elemsAroundPreHovNodeDeep = {
-          nodes: [],
-          links: [],
-        };
-      },
-      normalAroundHoveredLink() {
-        this.elemsAroundPreHovLinkShallow.nodes.forEach((node) => {
-          if (!node.isRelatedToCurNode) {
-            node.isBright = false;
-            node.showLabel = false;
-          }
-        });
-        this.elemsAroundPreHovLinkShallow.links.forEach((link) => {
-          if (!link.isRelatedToCurNode) {
-            link.isBright = false;
-            link.showLabel = false;
-          }
-        });
-      },
-      lightAroundHoveredLink(event, hoveredLink) {
-        this.normalAroundHoveredLink();
-
-        let elemsAround = {
-          nodes: [],
-          links: [],
-        };
-        elemsAround.links.push(hoveredLink);
-        elemsAround.nodes.push(hoveredLink.source);
-        elemsAround.nodes.push(hoveredLink.target);
-
-        elemsAround.links.forEach((link) => {
-          link.isBright = true;
-          link.showLabel = true;
-        });
-        elemsAround.nodes.forEach((node) => {
-          node.isBright = true;
-          node.showLabel = true;
-        });
-        this.elemsAroundPreHovLinkShallow = elemsAround;
-      },
-      mouseEnterLink(event, hoveredLink) {
-        if (this.currentNode.id !== undefined) {
-          if (hoveredLink.isRelatedToCurNode) {
-            let offsetX = $jq('#netContent').offset().left;
-            let offsetY = $jq('#netContent').offset().top;
-            this.linkTextStyle = {
-              left: event.clientX - offsetX + 10 + 'px',
-              top: event.clientY - offsetY - 25 + 'px',
-            };
-            this.isLinkTextDark = hoveredLink.isDark;
-            this.linkTextContent = hoveredLink.type;
-            this.linkTextVisible = true;
-          }
-          return;
-        }
-        this.$refs.svg.$forceUpdate();
-        let offsetX = $jq('#netContent').offset().left;
-        let offsetY = $jq('#netContent').offset().top;
-        this.linkTextStyle = {
-          left: event.clientX - offsetX + 10 + 'px',
-          top: event.clientY - offsetY - 25 + 'px',
-        };
-        this.isLinkTextDark = hoveredLink.isDark;
-        this.linkTextContent = hoveredLink.type;
-        this.linkTextVisible = true;
-        this.lightAroundHoveredLink(event, hoveredLink);
-      },
-      mouseLeaveLink(event, hoveredLink) {
-        this.$refs.svg.$forceUpdate();
-        this.linkTextVisible = false;
-        this.linkTextContent = '';
-        this.linkTextStyle = {
-          left: 0 + 'px',
-          top: 0 + 'px',
-        };
-        this.isLinkTextDark = hoveredLink.isDark;
-        if (this.currentNode.id !== undefined) {
-          return;
-        }
-        this.normalAroundHoveredLink();
-        this.elemsAroundPreHovLinkShallow = null;
-        this.elemsAroundPreHovLinkShallow = {
-          nodes: [],
-          links: [],
-        };
-      },
-      updateNodeSvg() {
-        let svg = null;
-        if (this.nodeSym) {
-          svg = svgExport.svgElFromString(this.nodeSym);
-        }
-        this.nodeSvg = svg;
-      },
       methodCall(action, args) {
         let method = this[action];
         if (method && typeof method === 'function') {
           if (args) method(...args);
           else method();
         }
-      },
-      onResize() {
-        let size = this.options.size;
-        if (!size || !size.w) this.size.w = this.$el.clientWidth;
-        if (!size || !size.h) this.size.h = this.$el.clientHeight;
-        this.padding.x = 0;
-        this.padding.y = 0;
-        // serach offsets of parents
-        let vm = this;
-        while (vm.$parent) {
-          this.padding.x += vm.$el.offsetLeft || 0;
-          this.padding.y += vm.$el.offsetTop || 0;
-          vm = vm.$parent;
-        }
-        this.animate();
       },
       // -- Data
       updateOptions(options) {
@@ -624,6 +430,13 @@
       itemCb(cb, item) {
         if (cb && typeof cb === 'function') item = cb(item);
         return item;
+      },
+      updateNodeSvg() {
+        let svg = null;
+        if (this.nodeSym) {
+          svg = svgExport.svgElFromString(this.nodeSym);
+        }
+        this.nodeSvg = svg;
       },
       // -- Animation
       simulate(nodes, links) {
@@ -728,7 +541,168 @@
         this.nodes = this.simulation.nodes();
         if (this.forces.links) this.links = this.simulation.force('link').links();
       },
+      onResize() {
+        let size = this.options.size;
+        if (!size || !size.w) this.size.w = this.$el.clientWidth;
+        if (!size || !size.h) this.size.h = this.$el.clientHeight;
+        this.padding.x = 0;
+        this.padding.y = 0;
+        // serach offsets of parents
+        let vm = this;
+        while (vm.$parent) {
+          this.padding.x += vm.$el.offsetLeft || 0;
+          this.padding.y += vm.$el.offsetTop || 0;
+          vm = vm.$parent;
+        }
+        // this.animate();
+      },
       // -- Mouse Interaction
+      normalAroundHoveredNode() {
+        this.elemsAroundPreHovNodeShallow.nodes.forEach((node) => {
+          node.isBright = false;
+          if (!node.isRelatedToCurNode) {
+            node.showLabel = false;
+          }
+        });
+        this.elemsAroundPreHovNodeShallow.links.forEach((link) => {
+          link.isBright = false;
+        });
+      },
+      lightAroundHoveredNode(hoveredNode) {
+        this.normalAroundHoveredNode();
+        let elemsAround = {
+          nodes: [],
+          links: [],
+        };
+        elemsAround.nodes.push(hoveredNode);
+        this.links.forEach((link) => {
+          if (link.sid === hoveredNode.id) {
+            elemsAround.nodes.push(link.target);
+            elemsAround.links.push(link);
+          } else if (link.tid === hoveredNode.id) {
+            elemsAround.nodes.push(link.source);
+            elemsAround.links.push(link);
+          }
+        });
+        // 注意，这里记录的上一个hover节点被light前的周边元素集合，深拷贝
+        this.elemsAroundPreHovNodeDeep = JSON.parse(JSON.stringify(elemsAround));
+        elemsAround.nodes.forEach((node) => {
+          node.isBright = true;
+          node.showLabel = true;
+        });
+        elemsAround.links.forEach((link) => {
+          link.isBright = true;
+        });
+        // 注意，这里记录的上一个hover节点被light后的周边元素集合，浅拷贝
+        this.elemsAroundPreHovNodeShallow = elemsAround;
+      },
+      mouseEnterNode(event, hoveredNode) {
+        // 强制更新svgRenderer组件，防止mouseEnterNode后视图样式无法更新
+        this.$refs.svg.$forceUpdate();
+        this.lightAroundHoveredNode(hoveredNode);
+      },
+      mouseLeaveNode(event, elem) {
+        this.$refs.svg.$forceUpdate();
+        this.normalAroundHoveredNode();
+        this.elemsAroundPreHovNodeShallow = null;
+        this.elemsAroundPreHovNodeShallow = {
+          nodes: [],
+          links: [],
+        };
+        this.elemsAroundPreHovNodeDeep = null;
+        this.elemsAroundPreHovNodeDeep = {
+          nodes: [],
+          links: [],
+        };
+      },
+      normalAroundHoveredLink() {
+        this.elemsAroundPreHovLinkShallow.nodes.forEach((node) => {
+          node.isBright = false;
+          if (!node.isRelatedToCurNode) {
+            node.showLabel = false;
+          }
+        });
+        this.elemsAroundPreHovLinkShallow.links.forEach((link) => {
+          link.isBright = false;
+          link.showLabel = false;
+        });
+      },
+      lightAroundHoveredLink(event, hoveredLink) {
+        this.normalAroundHoveredLink();
+        let elemsAround = {
+          nodes: [],
+          links: [],
+        };
+        elemsAround.links.push(hoveredLink);
+        elemsAround.nodes.push(hoveredLink.source);
+        elemsAround.nodes.push(hoveredLink.target);
+
+        elemsAround.links.forEach((link) => {
+          link.isBright = true;
+          link.showLabel = true;
+        });
+        elemsAround.nodes.forEach((node) => {
+          node.isBright = true;
+          node.showLabel = true;
+        });
+        this.elemsAroundPreHovLinkShallow = elemsAround;
+      },
+      mouseEnterLink(event, hoveredLink) {
+        this.$refs.svg.$forceUpdate();
+        let offsetX = $jq('#netContent').offset().left;
+        let offsetY = $jq('#netContent').offset().top;
+        this.linkTextStyle = {
+          left: event.clientX - offsetX + 10 + 'px',
+          top: event.clientY - offsetY - 25 + 'px',
+        };
+        this.isLinkTextDark = hoveredLink.isDark;
+        this.linkTextContent = hoveredLink.type;
+        this.linkTextVisible = true;
+        this.lightAroundHoveredLink(event, hoveredLink);
+      },
+      mouseLeaveLink(event, hoveredLink) {
+        this.$refs.svg.$forceUpdate();
+        this.linkTextVisible = false;
+        this.linkTextContent = '';
+        this.linkTextStyle = {
+          left: 0 + 'px',
+          top: 0 + 'px',
+        };
+        this.isLinkTextDark = hoveredLink.isDark;
+        this.normalAroundHoveredLink();
+        this.elemsAroundPreHovLinkShallow = null;
+        this.elemsAroundPreHovLinkShallow = {
+          nodes: [],
+          links: [],
+        };
+      },
+      clientPos(event) {
+        let x = event.clientX;
+        let y = event.clientY;
+        x = x || 0;
+        y = y || 0;
+        return { x, y };
+      },
+      handleClickNet(event) {
+        this.simulation.stop();
+        if (this.isFirstTick) {
+          this.$store.commit('rocketTopo/SET_IS_FIRST_TICK', false);
+        }
+        this.dragging = false; // 防止快速拖拽释放后,无法触发dragNodeEnd
+        if (!this.isMouseDwonNet) {
+          // 阻止选中节点被拖拽
+          this.isMouseDwonNet = true;
+          return;
+        }
+        if (event.target.className.baseVal.includes('node')) {
+          return;
+        }
+        this.currentNode.fx = null;
+        this.currentNode.fy = null;
+        this.$refs.svg.$forceUpdate();
+        this.$store.commit('rocketTopo/SET_NODE', {});
+        this.$store.commit('rocketTopo/SET_VIEW_NODE', {});
+      },
       mouseMoveNet(event) {
         if (this.dragging !== false) {
           if (this.nodes[this.dragging]) {
@@ -753,51 +727,38 @@
           }
         }
       },
-      clientPos(event) {
-        let x = event.touches ? event.touches[0].clientX : event.clientX;
-        let y = event.touches ? event.touches[0].clientY : event.clientY;
-        x = x || 0;
-        y = y || 0;
-        return { x, y };
-      },
       dragNodeStart(event, nodeKey, node) {
-        // 区分net拖拽和点击
         this.isMouseDwonNet = false;
 
+        // 区分拖拽 单击节点
+        this.nodeSingleClicked = true;
+        this.clickNodeTimer = setTimeout(() => {
+          this.nodeSingleClicked = false;
+        }, 100);
+
+        // 拖拽 双击被选中节点无效
         if (node && this.currentNode && node.id === this.currentNode.id) {
           return;
         }
-
-        // 区分节点拖拽和点击
-        this.nodeClicked = true;
-        this.clickNodeTimer = setTimeout(() => {
-          this.nodeClicked = false;
-        }, 200);
-
-        this.dragging = nodeKey === false ? false : nodeKey;
+        this.dragging = nodeKey;
         this.setMouseOffset(event, this.nodes[nodeKey]);
-        if (this.dragging === false) {
-          this.simulation.alpha(0.1);
-          this.simulation.restart();
-          this.setMouseOffset();
-        }
       },
       dragNodeEnd(event, nodeKey, node) {
-        if (node && this.currentNode && node.id === this.currentNode.id) {
-          return;
-        }
-
-        if (this.nodeClicked) {
+        if (this.nodeSingleClicked) {
           clearTimeout(this.clickNodeTimer);
           this.nodeClick(event, node);
         }
 
-        let nodeDragging = this.nodes[this.dragging];
-        if (nodeDragging && !nodeDragging.pinned) {
-          nodeDragging.fx = null;
-          nodeDragging.fy = null;
+        // 拖拽 双击被选中节点无效
+        if (node && this.currentNode && node.id === this.currentNode.id) {
+          return;
         }
-        this.dragNodeStart(event, false);
+        this.nodes[this.dragging].fx = null;
+        this.nodes[this.dragging].fy = null;
+        this.dragging = false;
+        this.simulation.alpha(0.1);
+        this.simulation.restart();
+        this.setMouseOffset();
       },
       // -- Render helpers
       setTopoViewport(curNode, preNode, event = null) {
@@ -857,6 +818,9 @@
             newZoomK,
           );
         }, 501);
+      },
+      nodeDblClick(event, node) {
+        this.$emit('node-dblclick', event, node);
       },
       nodeClick(event, node) {
         this.$emit('node-click', event, node);

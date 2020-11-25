@@ -2,13 +2,12 @@
   <div class="topo-view-chart">
     <div id="tvccId" class="tvc-c">
       <!-- 拓扑详情 -->
-      <div class="tvc-l" id="tvcl">
+      <div class="tvc-l" id="tvclId">
         <TopoDetail
           v-if="currentNode && currentNode.id !== undefined"
           :foldTopoDetail="foldTopoDetail"
           :topoDetailData="topoDetailData"
-          :topoData="topoData"
-          @changeTopoViewData="changeTopoViewData"
+          :topoViewData="topoViewData"
         />
         <div class="tvcl-close" v-if="currentNode && currentNode.id !== undefined">
           <span
@@ -20,32 +19,51 @@
       </div>
       <!-- 主拓扑图 -->
       <div class="tvc-r" id="tvcrId" ref="tvcr">
-        <div class="main-topo-title" v-show="topoViewData.nodes.length > 0 && isMatch">
-          <div class="mtt-item current-node" v-show="currentNode.id !== undefined">
+        <!-- 拓扑标题 -->
+        <div class="main-topo-info" v-show="topoViewData.nodes.length > 0 && isMatch">
+          <div class="mti-item topo-mode">
+            <span class="title">拓扑探索模式：</span>
+            <span class="content" v-show="topoMode === 'global'">全部节点</span>
+            <span class="content" v-show="topoMode === 'specific'">目标节点({{ exploreNode.id }})</span>
+          </div>
+          <div class="mti-item show-node-type">
+            <span class="title">显示的节点类型：</span>
+            <span class="content">{{ showNodeTypes.join(', ') }}</span>
+          </div>
+          <div class="mti-item node-state-type">
+            <span class="title">显示的节点状态：</span>
+            <span class="content">{{ showStateTypes.join(', ') }}</span>
+          </div>
+          <div class="mti-item current-node" v-show="currentNode.id !== undefined">
             <span class="title">选中节点的名称：</span>
             <span class="content">{{ currentNode.name }}</span>
           </div>
-          <div class="mtt-item relative-node-type" v-show="currentNode.id !== undefined">
+          <div class="mti-item relative-node-type" v-show="currentNode.id !== undefined">
             <span class="title">选中节点的关联节点类型：</span>
-            <span class="content">{{ relativeNodeType }}</span>
+            <span class="content">{{ showRelativeTypes.join(', ') }}</span>
           </div>
-          <div class="mtt-item show-node-type" v-show="showNodeTypeFilter !== 'All'">
-            <span class="title">显示的节点类型：</span>
-            <span class="content">{{ showNodeTypeFilter }}</span>
-          </div>
-          <div class="mtt-item hide-node-tydepe" v-show="showNodeTypeFilter === 'All'">
-            <span class="title">隐藏的节点类型：</span>
-            <span class="content">{{ hideNodeTypeFilter }}</span>
-          </div>
-          <div class="mtt-item node-state-type">
-            <span class="title">显示的节点状态：</span>
-            <span class="content">{{ nodeStateTypeFilter }}</span>
-          </div>
-          <div class="mtt-item show-edge-type">
-            <span class="title">显示的边类型：</span>
-            <span class="content">{{ showEdgeTypeFilter }}</span>
+          <!-- 查看节点详情 -->
+          <div class="mti-item view-node-info" v-show="viewNode.id !== undefined">
+            <div class="info-title">当前查看的节点信息:</div>
+            <div class="info-item">
+              <span class="item-title" title="id">id :</span>
+              <span class="item-content" :title="viewNode.id">{{ viewNode.id }}</span>
+            </div>
+            <div class="info-item">
+              <span class="item-title" title="name">name :</span>
+              <span class="item-content" :title="viewNode.name">{{ viewNode.name }}</span>
+            </div>
+            <div class="info-item">
+              <span class="item-title" title="label">label :</span>
+              <span class="item-content" :title="viewNode.type">{{ viewNode.type }}</span>
+            </div>
+            <div class="info-item">
+              <span class="item-title" title="state">state :</span>
+              <span class="item-content" :title="viewNode.state">{{ viewNode.state }}</span>
+            </div>
           </div>
         </div>
+        <!-- 拓扑图 -->
         <d3-network
           v-show="topoViewData.nodes.length > 0 && isMatch"
           ref="net"
@@ -53,14 +71,17 @@
           :net-links="links"
           :options="options"
           :node-sym="nodeSym"
+          @node-dblclick="nodeDblClick"
           @node-click="nodeClick"
           @link-click="linkClick"
         />
+        <!-- 加载样式 -->
         <div class="main-topo-loading" v-show="topoViewData.nodes.length === 0">
           <svg class="icon loading">
             <use xlink:href="#spinner-light"></use>
           </svg>
         </div>
+        <!-- 搜索无匹配结果样式 -->
         <div class="main-topo-not-match" v-show="!isMatch">Not Match !</div>
       </div>
     </div>
@@ -153,33 +174,33 @@
     },
 
     computed: {
-      hasSearchedGlobally() {
-        return this.$store.state.rocketTopo.hasSearchedGlobally;
+      exploreNode() {
+        return this.$store.state.rocketTopo.exploreNode;
       },
-      showNodeTypeFilter() { // 左侧栏显示点类型过滤
-        return this.$store.state.rocketTopo.showNodeTypeFilter;
+      topoMode() {
+        return this.$store.state.rocketTopo.topoMode;
       },
-      hideNodeTypeFilter() { // 右上角隐藏点类型过滤
-        return this.$store.state.rocketTopo.hideNodeTypeFilter;
+      showNodeTypes() { // 左侧栏显示点类型过滤
+        return this.$store.state.rocketTopo.showNodeTypes;
       },
-      nodeStateTypeFilter() { // 右上角点状态类型过滤
-        return this.$store.state.rocketTopo.nodeStateTypeFilter;
+      showStateTypes() { // 右上角点状态类型过滤
+        return this.$store.state.rocketTopo.showStateTypes;
       },
-      showEdgeTypeFilter() { // 右上角显示边类型过滤
-        return this.$store.state.rocketTopo.showEdgeTypeFilter;
+      showEdgeTypes() { // 右上角显示边类型过滤
+        return this.$store.state.rocketTopo.showEdgeTypes;
       },
-      relativeNodeType() { // 右上角关联点类型过滤
-        return this.$store.state.rocketTopo.relativeNodeType;
+      showRelativeTypes() { // 右上角关联点类型过滤
+        return this.$store.state.rocketTopo.showRelativeTypes;
       },
       currentNode() { // 当前选中节点
         return this.$store.state.rocketTopo.currentNode;
       },
+      viewNode() { // 当前查看节点
+        return this.$store.state.rocketTopo.viewNode;
+      }
     },
 
     watch: {
-      topoData(newVal, oldVal) {
-        // 重绘纵向关系
-      },
       topoViewData(newVal, oldVal) {
         this.initNetTopoData();
       },
@@ -229,22 +250,24 @@
         // query
         const nodesTmp = new Set();
         const linksTmp = new Set();
+        this.deepSearchTopoUp(curNode, this.topoViewData, nodesTmp, linksTmp);
+        this.deepSearchTopoDown(curNode, this.topoViewData, nodesTmp, linksTmp);
+        // 注意顺序: 选中节点 => 上游节点 => 下游节点,集中在topoDetailData的尾部
         nodesTmp.add(curNode);
-        this.deepSearchTopoUp(curNode, nodesTmp, linksTmp);
-        this.deepSearchTopoDown(curNode, nodesTmp, linksTmp);
-        this.searchStreamOnSingleHop(curNode, nodesTmp, linksTmp);
+        this.searchStreamOnSingleHop(curNode, this.topoViewData, nodesTmp, linksTmp);
 
         this.topoDetailData = {
           nodes: Array.from(nodesTmp),
           links: Array.from(linksTmp)
         };
       },
-      searchStreamOnSingleHop(curNode, nodeSet, linkSet) {
+      searchStreamOnSingleHop(curNode, topoData, nodeSet, linkSet) {
+        // query
         const nodesTmpUp = new Set();
         const linksTmpUp = new Set();
         const nodesTmpDown = new Set();
         const linksTmpDown = new Set();
-        this.topoData.links.forEach(link => {
+        topoData.links.forEach(link => {
           if (link.tid === curNode.id && link.source.type === curNode.type) {
             linksTmpUp.add(link);
             nodesTmpUp.add(link.source);
@@ -263,29 +286,29 @@
         const nodesTmp = new Set([...nodesTmpUp, ...nodesTmpDown]);
         const linksTmp = new Set([...linksTmpUp, ...linksTmpDown]);
       },
-      deepSearchTopoUp(curNode, nodeSet, linkSet) {
-        for (let i = 0; i < this.topoData.links.length; i++) { // 基于全局的拓扑数据
-          let link = this.topoData.links[i];
+      deepSearchTopoUp(curNode, topoData, nodeSet, linkSet) {
+        for (let i = 0; i < topoData.links.length; i++) { // 基于全局的拓扑数据
+          let link = topoData.links[i];
           if (link.tid === curNode.id) {
             if (link.source.type === curNode.type) {
               continue;
             }
             linkSet.add(link);
             nodeSet.add(link.source);
-            this.deepSearchTopoUp(link.source, nodeSet, linkSet);
+            this.deepSearchTopoUp(link.source, topoData, nodeSet, linkSet);
           }
         }
       },
-      deepSearchTopoDown(curNode, nodeSet, linkSet) {
-        for (let i = 0; i < this.topoData.links.length; i++) { // 基于全局的拓扑数据
-          let link = this.topoData.links[i];
+      deepSearchTopoDown(curNode, topoData, nodeSet, linkSet) {
+        for (let i = 0; i < topoData.links.length; i++) { // 基于全局的拓扑数据
+          let link = topoData.links[i];
           if (link.sid === curNode.id) {
             if (link.target.type === curNode.type) {
               continue;
             }
             linkSet.add(link);
             nodeSet.add(link.target);
-            this.deepSearchTopoDown(link.target, nodeSet, linkSet);
+            this.deepSearchTopoDown(link.target, topoData, nodeSet, linkSet);
           }
         }
       },
@@ -297,31 +320,17 @@
         this.nodes = this.topoViewData.nodes;
         this.links = this.topoViewData.links;
       },
-      nodeClick(event, node) {
+      nodeDblClick(event, node) {
         if (node && this.currentNode && node.id === this.currentNode.id) {
           return;
         }
         if (event && node) {
-          if (this.hasSearchedGlobally) {
-            this.$store.commit('rocketTopo/SET_IS_GLOBAL_MODE', false);
-            this.$store.commit('rocketTopo/SET_HAS_SEARCHED_GLOBALLY', false);
-            this.$store.commit('rocketTopo/SET_IS_FROM_GLOBAL_TO_NORMAL', true);
-            // 重置topoViewData
-            let topoViewData = this.topoData;
-            this.$emit('changeTopoViewData', topoViewData);
-            // 重置过滤器
-            this.$emit('restoreFilters');
-            this.$store.commit('rocketTopo/SET_SHOW_NODE_TYPE_FILTER', node.type);
-            this.setCurNodeStably(node);
-          } else {
-            if (node.type !== this.showNodeTypeFilter) {
-              this.$store.commit('rocketTopo/SET_SHOW_NODE_TYPE_FILTER', node.type);
-              this.setCurNodeStably(node);
-            } else {
-              this.$store.commit('rocketTopo/SET_NODE', node);
-            }
-          }
+          this.setCurNodeStably(node);
+          // this.$store.commit('rocketTopo/SET_NODE', node);
         }
+      },
+      nodeClick(event, node) {
+        this.$store.commit('rocketTopo/SET_VIEW_NODE', node);
       },
       linkClick() {},
       toggleTopoDetail() {
@@ -397,7 +406,7 @@
         height: 100%;
         position: relative;
 
-        .main-topo-title {
+        .main-topo-info {
           position: absolute;
           left: 2px;
           padding: 5px 5px;
@@ -406,13 +415,39 @@
           display: flex;
           flex-direction: column;
           color: #ccc;
-          z-index: 8888;
           background: transparent;
           opacity: 0.8;
 
-          .mtt-item {
+          .mti-item {
             padding: 2px 0px;
             text-align: left;
+          }
+
+          .view-node-info {
+            margin-top: 20px;
+            .info-item {
+              height: 20px;
+              display: flex;
+              justify-content: flex-start;
+              align-items: center;
+              color: #ccc;
+
+              .item-title {
+                margin-right: 8px;
+                text-align: left;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                white-space: nowrap;
+              }
+
+              .item-content {
+                flex-grow: 1;
+                text-align: left;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                white-space: nowrap;
+              }
+            }
           }
         }
 

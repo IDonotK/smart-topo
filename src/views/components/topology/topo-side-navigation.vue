@@ -4,8 +4,7 @@
       class="tsn-item"
       v-for="(item, index) in navList"
       :key="index"
-      :class="{ 'tsni-odd': index % 2 != 0, 'tsni-even': index % 2 == 0, 'tsni-select': item.id == showNodeTypeFilter }"
-      @click="handleSelectNav(item.id)"
+      :class="{ 'tsni-odd': index % 2 != 0, 'tsni-even': index % 2 == 0, 'tsni-select': item.id == currentNode.type }"
     >
       <div class="tsni-h">
         <img :src="item.imgUrl" alt="" width="20" height="20" />
@@ -26,9 +25,6 @@
 </template>
 
 <script lang="js">
-  import * as d3 from 'd3';
-  import $jq from 'jquery';
-
   import appIcon from './assets/APP.png';
   import middlewareIcon from './assets/MIDDLEWARE.png';
   import processIcon from './assets/PROCESS.png';
@@ -38,7 +34,7 @@
 
   export default {
     props: {
-      topoData: {
+      topoViewData: {
         type: Object,
         default() {
           return {
@@ -99,23 +95,13 @@
     },
 
     computed: {
-      topoScaleFix() {
-        return this.$store.state.rocketTopo.topoScaleFix;
-      },
-      showNodeTypeFilter() {
-        return this.$store.state.rocketTopo.showNodeTypeFilter;
-      },
       currentNode() {
         return this.$store.state.rocketTopo.currentNode;
       },
-      zoomController() {
-        return this.$store.state.rocketTopo.zoomController;
-      },
-
     },
 
     watch: {
-      topoData() {
+      topoViewData() {
         this.initNavList();
       }
     },
@@ -125,71 +111,12 @@
     },
 
     methods: {
-      restoreTopoViewport() {
-        console.log('restoreTopoViewport');
-        let centerX = $jq('#netSvg').width() / 2;
-        let centerY = $jq('#netSvg').height() / 2;
-        let zoomK = d3.zoomTransform(d3.select('#zoomContainer').node()).k;
-
-        if (zoomK > this.topoScaleFix) {
-          this.zoomController.scaleTo(
-            d3
-              .select('.net-svg')
-              .transition()
-              .duration(500),
-            this.topoScaleFix,
-          );
-          setTimeout(() => {
-            this.zoomController.translateTo(
-              d3
-                .select('.net-svg')
-                .transition()
-                .duration(500),
-              centerX,
-              centerY,
-            );
-          }, 500);
-        } else if (zoomK === this.topoScaleFix) {
-          this.zoomController.translateTo(
-            d3
-              .select('.net-svg')
-              .transition()
-              .duration(500),
-            centerX,
-            centerY,
-          );
-        } else {
-          this.zoomController.translateTo(
-            d3
-              .select('.net-svg')
-              .transition()
-              .duration(500),
-            centerX,
-            centerY,
-          );
-          setTimeout(() => {
-            this.zoomController.scaleTo(
-              d3
-                .select('.net-svg')
-                .transition()
-                .duration(500),
-              this.topoScaleFix,
-            );
-          }, 500);
-        }
-      },
-      handleSelectNav(itemId) {
-        if (itemId === this.showNodeTypeFilter) {
-          return;
-        }
-        this.currentNode.fx = null;
-        this.currentNode.fy = null;
-        this.$store.commit('rocketTopo/SET_NODE', {});
-        this.$store.commit('rocketTopo/SET_SHOW_NODE_TYPE_FILTER', itemId);
-        this.restoreTopoViewport();
-      },
       initNavList() {
-        this.topoData.nodes.forEach(node => {
+        this.navList.forEach(nav => {
+          nav.total = 0;
+          nav.abnormal = 0;
+        });
+        this.topoViewData.nodes.forEach(node => {
           let navItem = this.navList.find(item => item.id === node.type);
           if (navItem) {
             navItem.total++;
@@ -200,7 +127,6 @@
         });
       }
     },
-
   }
 </script>
 
@@ -221,7 +147,6 @@
       flex-direction: column;
       justify-content: center;
       padding: 0 48px 0 30px;
-      cursor: pointer;
 
       &.tsni-odd {
         background-color: #252a2f;

@@ -1,5 +1,27 @@
 <template>
   <div class="topo-tool-set">
+    <!-- 拓扑探索 -->
+    <div class="explore-topo-wrapper">
+      <svg class="icon topo-icon" @click="handleClickExploreBtn">
+        <use xlink:href="#explore"></use>
+        <title>探索拓扑</title>
+      </svg>
+      <el-dialog class="explore-dialog" title="探索拓扑" :visible.sync="isShowExplore" width="30%">
+        <div class="modes-wrapper">
+          <div class="mw-item">
+            <el-radio v-model="exploreMode" label="specific">目标节点</el-radio>
+            <el-input v-model="specificId" placeholder="请输入节点ID" :disabled="exploreMode === 'global'"></el-input>
+          </div>
+          <div class="mw-item">
+            <el-radio v-model="exploreMode" label="global">全部节点</el-radio>
+          </div>
+        </div>
+        <span slot="footer" class="dialog-footer">
+          <el-button @click="isShowExplore = false">取 消</el-button>
+          <el-button type="primary" @click="handleConfirmExplore">确 定</el-button>
+        </span>
+      </el-dialog>
+    </div>
     <!-- 搜索节点 -->
     <div class="search-wrapper">
       <input
@@ -20,17 +42,15 @@
         </svg>
       </span>
     </div>
-    <div class="global-search-ctrl">
-      <input id="gscCheckbox" type="checkbox" v-model="isGlobalSearch" @click="handleClickCheckbox($event)" />
-      <label for="gscCheckbox">全局</label>
-    </div>
     <!-- 缩放控制 -->
     <div class="size-controller">
       <svg class="topo-icon larger" aria-hidden="true" @click="handleEnlargeTopo">
         <use xlink:href="#icon-fangdajingfangda"></use>
+        <title>放大拓扑</title>
       </svg>
       <svg class="topo-icon smaller" aria-hidden="true" @click="handleNarrowTopo">
         <use xlink:href="#icon-fangdajingsuoxiao"></use>
+        <title>缩小拓扑</title>
       </svg>
       <svg
         class="topo-icon restore"
@@ -39,61 +59,63 @@
         @dblclick.stop.prevent="handleRestoreTopoToOrigin"
       >
         <use xlink:href="#icon-huanyuan"></use>
+        <title>还原拓扑</title>
       </svg>
     </div>
     <!-- 更多按钮 -->
-    <div class="more-tool-btn">
+    <!-- <div class="more-tool-btn">
       <svg class="topo-icon more" aria-hidden="true" @click="handleToggleMoreTool">
         <use xlink:href="#icon-gengduo"></use>
       </svg>
-    </div>
+    </div> -->
     <!-- 工具集合 -->
-    <div class="more-tool-wrapper" v-show="moreToolState">
-      <!-- 隐藏节点类型 -->
-      <div id="hideType" class="fw-item hide-type" v-show="showNodeTypeFilter === 'All'">
-        <TopoSelect
-          :wrapper="'hideType'"
-          :hasSearch="false"
-          :current="hideTypeOption.select"
-          :data="hideTypeOption.data"
-          :title="hideTypeOption.title"
-          @onChoose="handleChangeHideType"
-        />
+    <!-- <div class="more-tool-wrapper" v-show="moreToolState"></div> -->
+    <!-- 工具栏 -->
+    <div class="tool-bar">
+      <div class="tb-item node-types-filter">
+        <div
+          class="ntf-item"
+          v-for="(item, index) in nodeTypesOption.data"
+          :key="index"
+          :class="{ unchecked: !item.checked }"
+        >
+          <span class="item-title">{{ item.label }}</span>
+          <span
+            class="item-btn"
+            :style="'background-color:' + pallet[item.label]"
+            @click="toggleNodeTypeChecked(item)"
+          ></span>
+        </div>
       </div>
-      <!-- 节点状态类型：非选中节点 -->
-      <div id="stateType" class="fw-item state-type" v-show="currentNode.id === undefined">
-        <TopoSelect
-          :wrapper="'stateType'"
-          :hasSearch="false"
-          :current="stateTypeOption.select"
-          :data="stateTypeOption.data"
-          :title="stateTypeOption.title"
-          @onChoose="handleChangeStateType"
-        />
+      <div class="tb-item state-types-filter">
+        <div
+          class="stf-item"
+          v-for="(item, index) in stateTypesOption.data"
+          :key="index"
+          :class="{ unchecked: !item.checked }"
+        >
+          <span class="item-title">{{ item.label }}</span>
+          <span
+            class="item-btn"
+            :style="'background-color:' + pallet['State']"
+            @click="toggleStateTypeChecked(item)"
+          ></span>
+        </div>
       </div>
-      <!-- 显示边的类型 -->
-      <div id="edgeType" class="fw-item edge-type" v-show="currentNode.id === undefined">
-        <TopoSelect
-          :wrapper="'edgeType'"
-          :hasSearch="false"
-          :current="edgeTypeOption.select"
-          :data="edgeTypeOption.data"
-          :title="edgeTypeOption.title"
-          @onChoose="handleChangeEdgeType"
-        />
-      </div>
-      <!-- 节点状态类型：已选中节点？ -->
-
-      <!-- 关联节点类型 -->
-      <div id="relativeType" class="fw-item relative-type" v-show="currentNode.id !== undefined">
-        <TopoSelect
-          :wrapper="'relativeType'"
-          :hasSearch="false"
-          :current="relativeTypeOption.select"
-          :data="relativeTypeOption.data"
-          :title="relativeTypeOption.title"
-          @onChoose="handleChangeRelativeType"
-        />
+      <div class="tb-item relative-types-filter" v-show="currentNode.id !== undefined">
+        <div
+          class="rtf-item"
+          v-for="(item, index) in relativeTypesOption.data"
+          :key="index"
+          :class="{ unchecked: !item.checked }"
+        >
+          <span class="item-title">{{ item.label }}</span>
+          <span
+            class="item-btn"
+            :style="'background-color:' + pallet['Relative']"
+            @click="toggleRelativeTypeChecked(item)"
+          ></span>
+        </div>
       </div>
     </div>
   </div>
@@ -117,7 +139,7 @@
           };
         },
       },
-      topoDataFiltered: {
+      topoViewData: {
         type: Object,
         default() {
           return {
@@ -130,52 +152,83 @@
 
     data() {
       return {
+        isShowExplore: false,
+        exploreMode: 'specific',
+        specificId: '',
         inputId: '',
-        isGlobalSearch: false, // 仅用于控制勾选框的状态样式
         moreToolState: false,
-        hideTypeOption: {
-          title: '隐藏节点类型',
-          data: [
-            {key: 0, label: 'None'},
-            {key: 1, label: 'App'},
-            {key: 2, label: 'Middleware'},
-            {key: 3, label: 'Process'},
-            {key: 4, label: 'Workload'},
-            {key: 5, label: 'Pod'},
-            {key: 6, label: 'Node'}
-          ],
-          select: {key: 0, label: 'None'},
+        pallet: {
+          App: '#3fb1e3',
+          Middleware: '#a0a7e6',
+          Process: '#96dee8',
+          Workload: '#3f96e3',
+          Pod: '#6be6c1',
+          Node: '#6be6c1',
+          State: '#626c91',
+          Relative: '#a0a7e6',
+          other2: '#c4ebad',
+          other1: '#96dee8',
         },
-        stateTypeOption: {
+        nodeTypesOption: {
+          title: '显示节点类型',
+          data: [
+            {key: 0, label: 'App', checked: true},
+            {key: 1, label: 'Middleware', checked: true},
+            {key: 2, label: 'Process', checked: true},
+            {key: 3, label: 'Workload', checked: true},
+            {key: 4, label: 'Pod', checked: true},
+            {key: 5, label: 'Node', checked: true},
+          ],
+        },
+        stateTypesOption: {
           title: '节点状态类型',
           data: [
-            {key: 0, label: 'All'},
-            {key: 1, label: 'Normal'},
-            {key: 2, label: 'Abnormal'}
+            {key: 0, label: 'Normal', checked: true},
+            {key: 1, label: 'Abnormal', checked: true},
           ],
-          select: {key: 0, label: 'All'}
         },
-        relativeTypeOption: {
+        relativeTypesOption: {
           title: '关联节点类型',
           data: [
-            {key: 0, label: 'Single Hop'},
-            {key: 1, label: 'All Streams'},
-            {key: 2, label: 'Up Stream'},
-            {key: 3, label: 'Down Stream'},
+            {key: 0, label: '上游节点', checked: true},
+            {key: 1, label: '下游节点', checked: true},
           ],
-          select: {key: 0, label: 'Single Hop'}
-        },
-        edgeTypeOption: {
-          title: '显示边的类型',
-          data: [
-            {key: 0, label: 'All'},
-            {key: 1, label: 'Tracing To'},
-            {key: 2, label: 'Create On'},
-          ],
-          select: {key: 0, label: 'All'}
         },
         nodeSingleClickTimer: null,
+        elemIdsRTCAll: {
+          nodeIds: [],
+          linkIds: []
+        },
+        elemIdsRTCUp: {
+          nodeIds: [],
+          linkIds: []
+        },
+        elemIdsRTCDown: {
+          nodeIds: [],
+          linkIds: []
+        },
+        elemsRTCAll: {
+          nodes: [],
+          links: []
+        },
+        elemsRTCUp: {
+          nodes: [],
+          links: []
+        },
+        elemsRTCDown: {
+          nodes: [],
+          links: []
+        },
       }
+    },
+
+    mounted() {
+      let nodeTypes = this.nodeTypesOption.data.filter(type => type.checked).map(type => type.label);
+      let stateTypes = this.stateTypesOption.data.filter(type => type.checked).map(type => type.label);
+      let relativeTypes = this.relativeTypesOption.data.filter(type => type.checked).map(type => type.label);
+      this.$store.commit('rocketTopo/SET_SHOW_NODE_TYPES', nodeTypes);
+      this.$store.commit('rocketTopo/SET_SHOW_STATE_TYPES', stateTypes);
+      this.$store.commit('rocketTopo/SET_SHOW_RELATIVE_TYPES', relativeTypes);
     },
 
     components: {
@@ -183,11 +236,8 @@
     },
 
     computed: {
-      hasSearchedGlobally() {
-        return this.$store.state.rocketTopo.hasSearchedGlobally;
-      },
-      isGlobalMode() {
-        return this.$store.state.rocketTopo.isGlobalMode;
+      topoMode() {
+        return this.$store.state.rocketTopo.topoMode;
       },
       topoScaleFix() {
         return this.$store.state.rocketTopo.topoScaleFix;
@@ -198,31 +248,239 @@
       currentNode() {
         return this.$store.state.rocketTopo.currentNode;
       },
-      showNodeTypeFilter() {
-        return this.$store.state.rocketTopo.showNodeTypeFilter;
-      },
     },
 
     watch: {
-      isGlobalMode(newVal) {
-        this.isGlobalSearch = newVal;
-      },
-      topoDataFiltered(newVal, oldVal) {
-
+      inputId(newVal) {
+        if (newVal === '') {
+          this.$emit('onSearchResult', true);
+        }
       },
       currentNode(newVal) {
         if (newVal.id !== undefined) {
-          this.moreToolState = true;
+          // 注意:这里是基于视图数据topoViewData进行查询上下游节点
+          this.getRelativeElems(this.currentNode, this.topoViewData, this.filterTopo);
         } else {
-          this.moreToolState = false;
+          this.elemIdsRTCUp = {
+            nodeIds: [],
+            linkIds: []
+          };
+          this.elemIdsRTCDown = {
+            nodeIds: [],
+            linkIds: []
+          };
+          this.elemIdsRTCAll = {
+            nodeIds: [],
+            linkIds: []
+          };
+
+          this.elemsRTCUp = {
+            nodes: [],
+            links: []
+          };
+          this.elemsRTCDown = {
+            nodes: [],
+            links: []
+          };
+          this.elemsRTCAll = {
+            nodes: [],
+            links: []
+          };
+          this.filterTopo();
         }
       },
-      showNodeTypeFilter(newVal) {
-        this.restoreFilters();
-      }
     },
 
     methods: {
+      getRelativeElems(curNode, topoData, cb) {
+        // query上下游节点,数据模拟:单跳数据
+        let elemIdsRTCUpTmp = {
+          nodeIds: [],
+          linkIds: []
+        };
+        let elemIdsRTCDownTmp = {
+          nodeIds: [],
+          linkIds: []
+        };
+
+        let elemsRTCUpTmp = {
+          nodes: [],
+          links: []
+        };
+        let elemsRTCDownTmp = {
+          nodes: [],
+          links: []
+        };
+        topoData.links.forEach((link) => {
+          if (link.sid === curNode.id) { // 模拟下游节点
+            elemIdsRTCDownTmp.nodeIds.push(link.target.id);
+            elemIdsRTCDownTmp.linkIds.push(link.id);
+
+            elemsRTCDownTmp.nodes.push(link.target);
+            elemsRTCDownTmp.links.push(link);
+          } else if (link.tid === curNode.id) { // 模拟上游节点
+            elemIdsRTCUpTmp.nodeIds.push(link.source.id);
+            elemIdsRTCUpTmp.linkIds.push(link.id);
+
+            elemsRTCUpTmp.nodes.push(link.source);
+            elemsRTCUpTmp.links.push(link);
+          }
+        });
+        this.elemIdsRTCUp = elemIdsRTCUpTmp;
+        this.elemIdsRTCDown = elemIdsRTCDownTmp;
+        this.elemIdsRTCAll = {
+          nodeIds: [...elemIdsRTCUpTmp.nodeIds, ...elemIdsRTCDownTmp.nodeIds],
+          linkIds: [...elemIdsRTCUpTmp.linkIds, ...elemIdsRTCDownTmp.linkIds]
+        };
+
+        this.elemsRTCUp = elemsRTCUpTmp;
+        this.elemsRTCDown = elemsRTCDownTmp;
+        this.elemsRTCAll = {
+          nodes: [curNode, ...elemsRTCUpTmp.nodes, ...elemsRTCDownTmp.nodes],
+          links: [...elemsRTCUpTmp.links, ...elemsRTCDownTmp.links]
+        };
+        // 获取到数据后执行回调函数
+        if (cb) {
+          cb();
+        }
+      },
+
+      // 探索
+      handleConfirmExplore(done) {
+        if (this.exploreMode === 'specific') {
+          if (this.specificId === '') {
+            return;
+          }
+
+          // 查询目标节点
+          let result = {};
+          result = this.topoData.nodes.find(node => String(node.id) === this.specificId);
+          if (result === undefined) {
+            return;
+          }
+          this.isShowExplore = false;
+          this.$store.commit('rocketTopo/SET_TOPO_MODE', this.exploreMode);
+          this.getRelativeElems(result, this.topoData, () => { // 注意:这里是基于全局数据topoData进行查询上下游节点
+            // 查询目标节点的上下游topo,替换topoViewData
+            this.$store.commit('rocketTopo/SET_VIEW_NODE', {});
+            this.$store.commit('rocketTopo/SET_NODE', {});
+            this.$emit('changeTopoViewData', this.elemsRTCAll);
+
+            // 待拓扑布局稳定后,手动选中目标节点
+            this.$store.commit('rocketTopo/SET_VIEW_NODE', result);
+            this.$store.commit('rocketTopo/SET_EXPLORE_NODE', result);
+            this.setCurNodeStably(result);
+          });
+        } else if (this.exploreMode === 'global') {
+          this.isShowExplore = false;
+          this.restoreTopoViewPort(0);
+          this.$store.commit('rocketTopo/SET_TOPO_MODE', this.exploreMode);
+          this.$emit('changeTopoViewData', this.topoData);
+          this.$store.commit('rocketTopo/SET_VIEW_NODE', {});
+          this.$store.commit('rocketTopo/SET_NODE', {});
+        }
+      },
+      handleClickExploreBtn() {
+        this.exploreMode = 'specific';
+        this.specificId = '';
+        this.isShowExplore = true;
+      },
+
+      // 过滤
+      filterTopo() {
+        let nodeTypes = this.nodeTypesOption.data.filter(type => type.checked).map(type => type.label);
+        let stateTypes = this.stateTypesOption.data.filter(type => type.checked).map(type => type.label);
+        let relativeTypes = this.relativeTypesOption.data.filter(type => type.checked).map(type => type.label);
+        let nodeTypesSet = new Set();
+        let stateTypesSet = new Set();
+        let relativeTypesSet = new Set();
+        let elemIdsRTC = { // 暂存关联元素id
+          nodeIds: [],
+          linkIds: []
+        };
+        let targetNodeIds = [];
+
+        if (this.currentNode.id !== undefined) { // 已选中节点过滤
+          if (relativeTypes.includes('上游节点')) {
+            elemIdsRTC.nodeIds.push.apply(elemIdsRTC.nodeIds, this.elemIdsRTCUp.nodeIds);
+            elemIdsRTC.linkIds.push.apply(elemIdsRTC.linkIds, this.elemIdsRTCUp.linkIds);
+            if (this.elemIdsRTCUp.nodeIds.length > 0) {
+              relativeTypesSet.add('上游节点');
+            }
+          }
+          if (relativeTypes.includes('下游节点')) {
+            elemIdsRTC.nodeIds.push.apply(elemIdsRTC.nodeIds, this.elemIdsRTCDown.nodeIds);
+            elemIdsRTC.linkIds.push.apply(elemIdsRTC.linkIds, this.elemIdsRTCDown.linkIds);
+            if (this.elemIdsRTCDown.nodeIds.length > 0) {
+              relativeTypesSet.add('下游节点');
+            }
+          }
+          this.topoViewData.nodes.forEach(node => {
+            if ((nodeTypes.includes(node.type) && stateTypes.includes(node.state) && elemIdsRTC.nodeIds.includes(node.id))
+              || node.id === this.currentNode.id) {
+              targetNodeIds.push(node.id);
+              node.isDark = false;
+              node.showLabel = true;
+              node.isRelatedToCurNode = true;
+              nodeTypesSet.add(node.type);
+              stateTypesSet.add(node.state);
+            } else {
+              node.isDark = true;
+              node.showLabel = false;
+              node.isRelatedToCurNode = false;
+            }
+          });
+          this.topoViewData.links.forEach(link => {
+            if (targetNodeIds.includes(link.sid) && targetNodeIds.includes(link.tid) && elemIdsRTC.linkIds.includes(link.id)) {
+              link.isDark = false;
+            } else {
+              link.isDark = true;
+            }
+          });
+        } else { // 未选中节点过滤
+          this.topoViewData.nodes.forEach(node => {
+            if (node.showLabel) { // 选中样式还原
+              node.showLabel = false;
+            }
+            if (node.isRelatedToCurNode) {
+              node.isRelatedToCurNode = false;
+            }
+            if (nodeTypes.includes(node.type) && stateTypes.includes(node.state)) {
+              targetNodeIds.push(node.id);
+              node.isDark = false;
+              nodeTypesSet.add(node.type);
+              stateTypesSet.add(node.state);
+            } else {
+              node.isDark = true;
+            }
+          });
+          this.topoViewData.links.forEach(link => {
+            if (targetNodeIds.includes(link.sid) && targetNodeIds.includes(link.tid)) {
+              link.isDark = false;
+            } else {
+              link.isDark = true;
+            }
+          });
+        }
+
+        this.$store.commit('rocketTopo/SET_SHOW_NODE_TYPES', [...nodeTypesSet]);
+        this.$store.commit('rocketTopo/SET_SHOW_STATE_TYPES', [...stateTypesSet]);
+        this.$store.commit('rocketTopo/SET_SHOW_RELATIVE_TYPES', [...relativeTypesSet]);
+      },
+      toggleStateTypeChecked(stateType) {
+        stateType.checked = !stateType.checked;
+        this.filterTopo();
+      },
+      toggleNodeTypeChecked(nodeType) {
+        nodeType.checked = !nodeType.checked;
+        this.filterTopo();
+      },
+      toggleRelativeTypeChecked(relativeType) {
+        relativeType.checked = !relativeType.checked;
+        this.filterTopo();
+      },
+
+      // 搜索
       setCurNodeStably(curNode) {
         let lastX = curNode.x;
         let lastY = curNode.y;
@@ -241,9 +499,6 @@
           }
         }, 10);
       },
-      handleClickCheckbox(e) {
-        this.$store.commit('rocketTopo/SET_IS_GLOBAL_MODE', e.target.checked);
-      },
       handleMouseUp() {
         this.handleSearchOnId();
       },
@@ -252,63 +507,22 @@
           return;
         }
         let result = {};
-        if (this.isGlobalMode) { // 搜索全拓扑
-          result = this.topoData.nodes.find(node => String(node.id) === this.inputId);
-          if (result === undefined) {
-            this.$emit('onSearchResult', false);
-          } else {
-            // 已在全局模式下搜索到结果
-            this.$store.commit('rocketTopo/SET_HAS_SEARCHED_GLOBALLY', true);
-
-            // 查询目标节点的全部上下游节点，每个节点都不一样，每次都需要重新布局
-            let topoViewData = {
-              nodes: [],
-              links: []
-            };
-            topoViewData.nodes = this.topoData.nodes.filter(node => node.type === result.type);
-            topoViewData.links = this.topoData.links.filter(link =>
-              link.source.type === result.type && link.target.type === result.type
-            );
-            this.$emit('changeTopoViewData', topoViewData);
-            if (result.type !== this.showNodeTypeFilter) {
-              this.$store.commit('rocketTopo/SET_SHOW_NODE_TYPE_FILTER', result.type);
-            }
-            this.setCurNodeStably(result);
-          }
-        } else { // 搜索当前拓扑
-          result = this.topoDataFiltered.nodes.find(node => String(node.id) === this.inputId);
-          if (result === undefined) {
-            this.$emit('onSearchResult', false);
-          } else {
-            this.$emit('onSearchResult', true);
-            if (this.hasSearchedGlobally) {
-              this.$store.commit('rocketTopo/SET_IS_GLOBAL_MODE', false);
-              this.$store.commit('rocketTopo/SET_HAS_SEARCHED_GLOBALLY', false);
-              // this.$store.commit('rocketTopo/SET_IS_FROM_GLOBAL_TO_NORMAL', true);
-              // 重置topoViewData
-              let topoViewData = this.topoData;
-              this.$emit('changeTopoViewData', topoViewData);
-              // 重置过滤器
-              this.$emit('restoreFilters');
-              this.$store.commit('rocketTopo/SET_SHOW_NODE_TYPE_FILTER', result.type);
-              this.setCurNodeStably(result);
-            } else {
-              if (result.type !== this.showNodeTypeFilter) {
-                this.$store.commit('rocketTopo/SET_SHOW_NODE_TYPE_FILTER', result.type);
-                this.setCurNodeStably(result);
-              } else {
-                this.$store.commit('rocketTopo/SET_NODE', result);
-              }
-            }
-          }
+        result = this.topoViewData.nodes.find(node => String(node.id) === this.inputId);
+        if (result === undefined) {
+          this.$emit('onSearchResult', false);
+        } else {
+          this.$emit('onSearchResult', true);
+          this.$store.commit('rocketTopo/SET_VIEW_NODE', result);
+          this.setCurNodeStably(result);
+          // this.$store.commit('rocketTopo/SET_NODE', result);
         }
       },
-
       handleClearInputId() {
         this.inputId = '';
         this.$emit('onSearchResult', true);
       },
 
+      // 控制
       handleEnlargeTopo() {
         let zoomTimes = d3.zoomTransform(d3.select('#zoomContainer').node()).k;
         if (zoomTimes < 1) {
@@ -322,7 +536,6 @@
         }
         this.zoomController.scaleTo(d3.select('.net-svg').transition().duration(750), zoomTimes);
       },
-
       handleNarrowTopo() {
         let zoomTimes = d3.zoomTransform(d3.select('#zoomContainer').node()).k;
         if (zoomTimes <= 1) {
@@ -336,20 +549,19 @@
         }
         this.zoomController.scaleTo(d3.select('.net-svg').transition().duration(750), zoomTimes);
       },
-
       restoreFilters() {
         this.moreToolState = false;
-        this.hideTypeOption.select = this.hideTypeOption.data[0];
-        this.stateTypeOption.select = this.stateTypeOption.data[0];
-        this.edgeTypeOption.select = this.edgeTypeOption.data[0];
-        this.relativeTypeOption.select = this.relativeTypeOption.data[0];
-        this.$store.commit('rocketTopo/SET_HIDE_NODE_TYPE_FILTER', 'None');
-        this.$store.commit('rocketTopo/SET_NODE_STATE_TYPE_FILTER', 'All');
-        this.$store.commit('rocketTopo/SET_SHOW_EDGE_TYPE_FILTER', 'All');
-        this.$store.commit('rocketTopo/SET_RELATIVE_NODE_TYPE', 'Single Hop');
+        this.nodeTypesOption.data.forEach(item => {
+          item.checked = true;
+        });
+        this.stateTypesOption.data.forEach(item => {
+          item.checked = true;
+        });
+        this.relativeTypesOption.data.forEach(item => {
+          item.checked = true;
+        });
       },
-
-      restoreTopoViewPort() {
+      restoreTopoViewPort(duration) {
         let centerX = $jq('#netSvg').width() / 2;
         let centerY = $jq('#netSvg').height() / 2;
         let zoomK = d3.zoomTransform(d3.select('#zoomContainer').node()).k;
@@ -358,7 +570,7 @@
             d3
               .select('.net-svg')
               .transition()
-              .duration(500),
+              .duration(duration),
             this.topoScaleFix,
           );
           setTimeout(() => {
@@ -366,17 +578,17 @@
               d3
                 .select('.net-svg')
                 .transition()
-                .duration(500),
+                .duration(duration),
               centerX,
               centerY,
             );
-          }, 500);
+          }, duration);
         } else if (zoomK === this.topoScaleFix) {
           this.zoomController.translateTo(
             d3
               .select('.net-svg')
               .transition()
-              .duration(500),
+              .duration(duration),
             centerX,
             centerY,
           );
@@ -385,7 +597,7 @@
             d3
               .select('.net-svg')
               .transition()
-              .duration(500),
+              .duration(duration),
             centerX,
             centerY,
           );
@@ -394,13 +606,12 @@
               d3
                 .select('.net-svg')
                 .transition()
-                .duration(500),
+                .duration(duration),
               this.topoScaleFix,
             );
-          }, 500);
+          }, duration);
         }
       },
-
       handleRestoreTopo() {
         if (this.nodeSingleClickTimer !== null) {
           clearTimeout(this.nodeSingleClickTimer);
@@ -410,56 +621,29 @@
         this.nodeSingleClickTimer = setTimeout(() => {
           this.nodeSingleClickTimer = null;
           this.inputId = '';
+          this.$emit('onSearchResult', true);
           this.currentNode.fx = null;
           this.currentNode.fy = null;
           this.$store.commit('rocketTopo/SET_NODE', {});
-          this.restoreTopoViewPort();
+          this.$store.commit('rocketTopo/SET_VIEW_NODE', {});
+          this.restoreTopoViewPort(500);
         }, 300);
       },
-
       handleRestoreTopoToOrigin() {
         this.inputId = '';
+        this.$emit('onSearchResult', true);
         this.currentNode.fx = null;
         this.currentNode.fy = null;
         this.$store.commit('rocketTopo/SET_NODE', {});
-
-        this.$store.commit('rocketTopo/SET_IS_GLOBAL_MODE', false);
-        if (this.hasSearchedGlobally) {
-          this.$store.commit('rocketTopo/SET_HAS_SEARCHED_GLOBALLY', false);
-          // 重置topoViewData
-          let topoViewData = this.topoData;
-          this.$emit('changeTopoViewData', topoViewData);
-        }
-        // 隐藏问题：双击还原怎么保证视图布局好之后再重置过滤器
-        this.$store.commit('rocketTopo/SET_SHOW_NODE_TYPE_FILTER', 'All');
+        this.$store.commit('rocketTopo/SET_VIEW_NODE', {});
         this.restoreFilters();
-
-        this.restoreTopoViewPort();
+        this.restoreTopoViewPort(500);
       },
 
+      // 更多
       handleToggleMoreTool() {
         this.moreToolState = !this.moreToolState;
       },
-
-      handleChangeHideType(select) {
-        this.hideTypeOption.select = select;
-        this.$store.commit('rocketTopo/SET_HIDE_NODE_TYPE_FILTER', select.label);
-      },
-
-      handleChangeStateType(select) {
-        this.stateTypeOption.select = select;
-        this.$store.commit('rocketTopo/SET_NODE_STATE_TYPE_FILTER', select.label);
-      },
-
-      handleChangeRelativeType(select) {
-        this.relativeTypeOption.select = select;
-        this.$store.commit('rocketTopo/SET_RELATIVE_NODE_TYPE', select.label);
-      },
-
-      handleChangeEdgeType(select) {
-        this.edgeTypeOption.select = select;
-        this.$store.commit('rocketTopo/SET_SHOW_EDGE_TYPE_FILTER', select.label);
-      }
     }
   }
 </script>
@@ -477,10 +661,10 @@
     justify-content: flex-end;
     align-items: center;
 
+    .explore-topo-wrapper,
     .search-wrapper,
     .size-controller,
-    .more-tool-btn,
-    .global-search-ctrl {
+    .more-tool-btn {
       margin-right: 12px;
       height: 100%;
       display: flex;
@@ -504,9 +688,64 @@
       }
     }
 
+    .explore-topo-wrapper {
+      .explore-dialog {
+        .el-dialog {
+          background-color: #333840;
+
+          .el-dialog__header .el-dialog__title {
+            color: #ccc;
+          }
+
+          .el-dialog__body {
+            .modes-wrapper {
+              .mw-item {
+                display: flex;
+                align-items: center;
+                justify-content: flex-start;
+
+                .el-radio {
+                  color: #ccc;
+                  margin-right: 10px;
+                }
+
+                .el-input {
+                  &.is-disabled {
+                    opacity: 0.5;
+                  }
+                }
+
+                .el-input__inner {
+                  background-color: #ddd;
+
+                  &::-webkit-input-placeholder {
+                    color: #252a2f;
+                    opacity: 0.5;
+                  }
+                }
+              }
+            }
+          }
+
+          .el-dialog__footer .dialog-footer {
+            .el-button {
+              border: none;
+            }
+
+            .el-button--default {
+              background-color: #ccc;
+            }
+
+            .el-button--primary {
+              color: #ccc;
+            }
+          }
+        }
+      }
+    }
+
     .search-wrapper {
       position: relative;
-      margin-right: -5px;
 
       .sw-input {
         width: calc(100% - 4px);
@@ -514,8 +753,6 @@
         line-height: 32px;
         border: 0;
         background-color: #333840;
-        // border: 1px solid  #eee;
-        // background-color: transparent;
         color: #eee;
         outline: 0;
         padding: 4px 25px;
@@ -549,18 +786,6 @@
         right: 10px;
       }
     }
-
-    .global-search-ctrl {
-      label {
-        color: #ccc;
-        font-weight: normal;
-        font-size: 12px;
-      }
-    }
-
-    // .size-controller {
-
-    // }
 
     .more-tool-btn {
       margin-right: 10px;
@@ -598,6 +823,48 @@
         color: #ddd;
         position: relative;
         z-index: 9998;
+      }
+    }
+
+    .tool-bar {
+      position: absolute;
+      top: 100%;
+      right: 0;
+      padding: 8px 10px;
+      margin-top: 8px;
+      background-color: transparent;
+
+      .tb-item {
+        width: 100%;
+        position: relative;
+        z-index: 2000;
+        margin-bottom: 20px;
+
+        .ntf-item,
+        .stf-item,
+        .rtf-item {
+          margin-bottom: 8px;
+          display: flex;
+          align-items: center;
+          justify-content: flex-end;
+
+          &.unchecked {
+            opacity: 0.2;
+          }
+
+          .item-title {
+            color: #ddd;
+            margin-right: 10px;
+          }
+
+          .item-btn {
+            display: inline-block;
+            width: 30px;
+            height: 20px;
+            border-radius: 5px;
+            cursor: pointer;
+          }
+        }
       }
     }
   }

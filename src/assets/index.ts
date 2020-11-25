@@ -63,3 +63,4 @@ import './svg/unlink.svg';
 import './svg/user.svg';
 import './svg/warning.svg';
 import './svg/huawei.svg';
+import './svg/explore.svg';

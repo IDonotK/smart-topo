@@ -5,7 +5,7 @@
       class="td-item"
       v-for="(item, index) in navList"
       :key="index"
-      :class="{ 'tdi-odd': index % 2 != 0, 'tdi-even': index % 2 == 0, 'tdi-select': item.id == selectNav }"
+      :class="{ 'tdi-odd': index % 2 != 0, 'tdi-even': index % 2 == 0, 'tdi-select': item.id == currentNode.type }"
     >
       <div class="tdi-c"></div>
     </div>
@@ -68,7 +68,7 @@
 
   export default {
     props: {
-      topoData: {
+      topoViewData: {
         type: Object,
         default() {
           return {
@@ -146,17 +146,8 @@
     },
 
     computed: {
-      hasSearchedGlobally() {
-        return this.$store.state.rocketTopo.hasSearchedGlobally;
-      },
-      selectNav() {
-        return this.$store.state.rocketTopo.showNodeTypeFilter;
-      },
       currentNode() {
         return this.$store.state.rocketTopo.currentNode;
-      },
-      showNodeTypeFilter() {
-        return this.$store.state.rocketTopo.showNodeTypeFilter;
       },
     },
 
@@ -213,7 +204,7 @@
           state: this.curNodeCrossLayer.state,
           category: 0
         });
-        this.topoData.links.forEach(link => {
+        this.topoViewData.links.forEach(link => {
           if (link.sid === this.curNodeCrossLayer.id) {
             links.push({
               id: link.id,
@@ -390,9 +381,25 @@
         };
       },
       handleSelectNav(itemId) {
-        this.$store.commit('rocketTopo/SET_SHOW_NODE_TYPE_FILTER', itemId);
+        this.$store.commit('rocketTopo/SET_SHOW_NODE_TYPES', itemId);
       },
       drawDetailTopoCrossLayer() {
+        // 提示概率性不消失?
+        if (this.tip) {
+          this.tip.hide(this);
+          this.tip = null;
+        }
+        if (this.usedTool) {
+          this.usedTool.attr('style', 'display: none');
+          this.usedTool = null;
+        }
+        this.linkTextVisible = false;
+        this.linkTextContent = '';
+        this.linkTextPosition = {
+          left: 0 + 'px',
+          top: 0 + 'px',
+        };
+
         if (this.topoDetailData.nodes.length <= 0) {
           return;
         }
@@ -403,7 +410,8 @@
 
         const topoHeight = this.$refs.tdTopo.clientHeight;
         const deltah = topoHeight / 6;
-        const topoWidthMax = document.getElementById('tvccId').clientWidth;
+        // #tvcl最大宽度为主拓扑视口#tvcc的一半
+        const tvclWidthMax = document.getElementById('tvccId').clientWidth * 0.5;
         let deltaw = 50;
 
         // 计算拓扑宽度
@@ -424,19 +432,23 @@
             default: break;
           }
         });
+        // 选中节点类型 偶补成奇
+        let curTypeNum = 0;
         switch (this.currentNode.type) {
-          case 'App': appNum++; break;
-          case 'Middleware': middlewareNum++; break;
-          case 'Process': processNum++; break;
-          case 'Workload': workloadNum++; break;
-          case 'Pod': podNum++; break;
-          case 'Node': nodeNum++; break;
+          case 'App': appNum = (appNum % 2 === 0 ? appNum + 1 : appNum); curTypeNum = appNum; break;
+          case 'Middleware': middlewareNum = (middlewareNum % 2 === 0 ? middlewareNum + 1 : middlewareNum); curTypeNum = middlewareNum; break;
+          case 'Process': processNum = (processNum % 2 === 0 ? processNum + 1 : processNum); curTypeNum = processNum; break;
+          case 'Workload': workloadNum = (workloadNum % 2 === 0 ? workloadNum + 1 : workloadNum); curTypeNum = workloadNum; break;
+          case 'Pod': podNum = (podNum % 2 === 0 ? podNum + 1 : podNum); curTypeNum = podNum; break;
+          case 'Node': nodeNum = (nodeNum % 2 === 0 ? nodeNum + 1 : nodeNum); curTypeNum = nodeNum; break;
           default: break;
         }
         let maxNum = Math.max(appNum, middlewareNum, processNum, workloadNum, podNum, nodeNum);
-        // width: max(maxNodesLayer, curNodeLayer)
-        let topoWidth = 20 + maxNum * deltaw + 30 > topoWidthMax ? topoWidthMax : 20 + maxNum * deltaw + 30;
-        // 设置拓扑容器宽度 overflow:scroll-x？
+        let topoWidth = 20 + maxNum * deltaw + 30;
+        let tvclWidth = topoWidth > tvclWidthMax ? tvclWidthMax : topoWidth;
+        // 设置tvcl宽度
+        $jq('#tvclId').width(tvclWidth);
+        // 设置topoDetail宽度
         this.$refs.tdDom.style.width = topoWidth + 'px';
 
         // 计算节点间横向距离
@@ -447,7 +459,7 @@
         let podDeltaX =  (topoWidth - 20 - 30) / podNum;
         let nodeDeltaX =  (topoWidth - 20 - 30) / nodeNum;
 
-        // 调整曲线
+        // 调整曲线 ?
         let isAppLine2Src = appNum >= middlewareNum ? true : false;
         let isMiddlewareLine2Src = middlewareNum >= processNum ? true : false;
         let isProcessLine2Src = processNum >= workloadNum ? true : false;
@@ -463,6 +475,24 @@
 
         const nodesOption = [];
         const linksOption = [];
+        // 计算节点坐标
+        function setNodePositonNormalLayer(nNum, nObj, deltaX, factorY, nIcon, nSize) {
+          nObj.x = (10 + deltaX / 2) + (nNum - 1) * deltaX;
+          nObj.y = factorY * deltah;
+          nObj.fx = nObj.x;
+          nObj.fy = nObj.y;
+          nObj.symbol = 'image://' + nIcon + '';
+          nObj.symbolSize = nSize;
+        }
+        function setNodePositonCurNodeLayer(nNum, cNum, nObj, deltaX, factorY, nIcon, nSize) {
+          if (nNum === 1) { // 选中节点居中
+            setNodePositonNormalLayer((cNum + 1) / 2, nObj, deltaX, factorY, nIcon, nSize);
+          } else if (nNum > 1 && nNum <= (cNum + 1) / 2) {
+            setNodePositonNormalLayer(nNum - 1, nObj, deltaX, factorY, nIcon, nSize - 8);
+          } else if (nNum > (cNum + 1) / 2) {
+            setNodePositonNormalLayer(nNum, nObj, deltaX, factorY, nIcon, nSize - 8);
+          }
+        }
         graph.nodes.forEach(node => {
           let itemTmp = {
             id: node.id,
@@ -473,51 +503,51 @@
           switch (node.type) {
             case 'App': {
                 appNum++;
-                itemTmp.x = (10 + appDeltaX / 2) + (appNum - 1) * appDeltaX;
-                itemTmp.y = 0.5 * deltah;
-                itemTmp.fx = itemTmp.x;
-                itemTmp.fy = itemTmp.y;
-                itemTmp.symbol = 'image://' + appIcon + '';
+                if (this.currentNode.type === 'App') {
+                  setNodePositonCurNodeLayer(appNum, curTypeNum, itemTmp, appDeltaX, 0.5, appIcon, 28);
+                } else {
+                  setNodePositonNormalLayer(appNum, itemTmp, appDeltaX, 0.5, appIcon, 28);
+                }
               } break;
             case 'Middleware': {
                 middlewareNum++;
-                itemTmp.x = (10 + middlewareDeltaX / 2) + (middlewareNum - 1) * middlewareDeltaX;
-                itemTmp.y = 1.5 * deltah;
-                itemTmp.fx = itemTmp.x;
-                itemTmp.fy = itemTmp.y;
-                itemTmp.symbol = 'image://' + middlewareIcon + '';
+                if (this.currentNode.type === 'Middleware') {
+                  setNodePositonCurNodeLayer(middlewareNum, curTypeNum, itemTmp, middlewareDeltaX, 1.5, middlewareIcon, 28);
+                } else {
+                  setNodePositonNormalLayer(middlewareNum, itemTmp, middlewareDeltaX, 1.5, middlewareIcon, 28);
+                }
               } break;
             case 'Process': {
                 processNum++;
-                itemTmp.x = (10 + processDeltaX / 2) + (processNum - 1) * processDeltaX;
-                itemTmp.y = 2.5 * deltah;
-                itemTmp.fx = itemTmp.x;
-                itemTmp.fy = itemTmp.y;
-                itemTmp.symbol = 'image://' + processIcon + '';
+                if (this.currentNode.type === 'Process') {
+                  setNodePositonCurNodeLayer(processNum, curTypeNum, itemTmp, processDeltaX, 2.5, processIcon, 28);
+                } else {
+                  setNodePositonNormalLayer(processNum, itemTmp, processDeltaX, 2.5, processIcon, 28);
+                }
               } break;
             case 'Workload': {
                 workloadNum++;
-                itemTmp.x = (10 + workloadDeltaX / 2) + (workloadNum - 1) * workloadDeltaX;
-                itemTmp.y = 3.5 * deltah;
-                itemTmp.fx = itemTmp.x;
-                itemTmp.fy = itemTmp.y;
-                itemTmp.symbol = 'image://' + workloadIcon + '';
+                if (this.currentNode.type === 'Workload') {
+                  setNodePositonCurNodeLayer(workloadNum, curTypeNum, itemTmp, workloadDeltaX, 3.5, workloadIcon, 28);
+                } else {
+                  setNodePositonNormalLayer(workloadNum, itemTmp, workloadDeltaX, 3.5, workloadIcon, 28);
+                }
               } break;
             case 'Pod': {
                 podNum++;
-                itemTmp.x = (10 + podDeltaX / 2) + (podNum - 1) * podDeltaX;
-                itemTmp.y = 4.5 * deltah;
-                itemTmp.fx = itemTmp.x;
-                itemTmp.fy = itemTmp.y;
-                itemTmp.symbol = 'image://' + podIcon + '';
+                if (this.currentNode.type === 'Pod') {
+                  setNodePositonCurNodeLayer(podNum, curTypeNum, itemTmp, podDeltaX, 4.5, podIcon, 28);
+                } else {
+                  setNodePositonNormalLayer(podNum, itemTmp, podDeltaX, 4.5, podIcon, 28);
+                }
               } break;
             case 'Node': {
                 nodeNum++;
-                itemTmp.x = (10 + nodeDeltaX / 2) + (nodeNum - 1) * nodeDeltaX;
-                itemTmp.y = 5.5 * deltah;
-                itemTmp.fx = itemTmp.x;
-                itemTmp.fy = itemTmp.y;
-                itemTmp.symbol = 'image://' + nodeIcon + '';
+                if (this.currentNode.type === 'Node') {
+                  setNodePositonCurNodeLayer(nodeNum, curTypeNum, itemTmp, nodeDeltaX, 5.5, nodeIcon, 28);
+                } else {
+                  setNodePositonNormalLayer(nodeNum, itemTmp, nodeDeltaX, 5.5, nodeIcon, 28);
+                }
               } break;
             default: break;
           }
@@ -528,7 +558,8 @@
             id: link.id,
             source: link.sid,
             target: link.tid,
-            type: link.type
+            type: link.type,
+            isTracingTo: link.type === 'tracingto' ? true : false,
           };
           switch (link.source.type) {
             case 'App': itemTmp.isLine2Src = isAppLine2Src; break;
@@ -541,6 +572,9 @@
           linksOption.push(itemTmp);
         });
 
+        console.log('nodesOption: ', nodesOption);
+        console.log('linksOption: ', linksOption);
+
         const svg = d3
           .select('#tdt-view-cross-layer')
           .append('svg')
@@ -548,10 +582,10 @@
           .attr('height', this.$refs.tdTopo.clientHeight);
 
         // 设置提示
-        let tip = d3tip()
+        this.tip = d3tip()
           .attr('class', 'd3-tip')
           .offset([-8, 0]);
-        svg.call(tip);
+        svg.call(this.tip);
 
         function tick() {
           nodeEles.attr('transform', d => `translate(${d.fx}, ${d.fy})`);
@@ -588,10 +622,10 @@
           .enter().append("g")
           .attr("class", "topo-node");
         nodeEles.append('image')
-          .attr('width', 28)
-          .attr('height', 28)
-          .attr('x', -14)
-          .attr('y', -14)
+          .attr('width', d => d.symbolSize)
+          .attr('height', d => d.symbolSize)
+          .attr('x', d => -d.symbolSize / 2)
+          .attr('y', d => -d.symbolSize / 2)
           .attr('style', 'cursor: pointer;')
           .attr('xlink:href', d => icons[d.type.toUpperCase()])
           .on('mouseenter', (data, index, element) => {
@@ -601,15 +635,13 @@
             // 处理点边重叠的情况
             $jq('.topo-line').addClass('tl-static');
 
-            tip.html((data) => `<div>${data.name}</div>`).show(data, element[index]);
+            this.tip.html((data) => `<div>${data.name}</div>`).show(data, element[index]);
           })
           .on('mouseleave', d => {
             d3.event.stopPropagation();
             d3.event.preventDefault();
-
             $jq('.topo-line').removeClass('tl-static');
-
-            tip.hide(this);
+            this.tip.hide(this);
           })
           .on('click', d => {
             d3.event.stopPropagation();
@@ -631,22 +663,23 @@
             d3.event.stopPropagation();
             d3.event.preventDefault();
             $jq('.topo-line').removeClass('tl-static');
-            tip.hide(this);
+            this.tip.hide(this);
             this.usedTool.attr('style', 'display: none');
             this.handleNodeDblclicked(d);
           });
         nodeEles.append('svg')
           .attr("class", "event-node-cross-topo")
-          .attr('width', 18)
-          .attr('height', 18)
-          .attr('x', 5)
-          .attr('y', -25)
+          .attr('width', d => d.symbolSize === 28 ? 18 : 12)
+          .attr('height', d => d.symbolSize === 28 ? 18 : 12)
+          .attr('x', d => d.symbolSize === 28 ? 5 : 3)
+          .attr('y', d => d.symbolSize === 28 ? -25 : -18)
           .append('use')
           .attr('xlink:href', d => d.state === 'Abnormal' ? '#icon-tanhao' : '');
 
         linkEles = linkEles.data(linksOption)
           .enter().append("path")
           .attr("class", "topo-line")
+          .attr("stroke-dasharray", d => d.isTracingTo ? '13 7' : 'none')
           .on('mouseover', d => {
             d3.event.stopPropagation();
             d3.event.preventDefault();
@@ -683,26 +716,10 @@
         if (nodeTmp.id === this.currentNode.id) {
           return;
         }
-        let node = this.topoData.nodes.find(node => node.id === nodeTmp.id); // 对应主拓扑的节点对象
-        if (this.hasSearchedGlobally) {
-          this.$store.commit('rocketTopo/SET_IS_GLOBAL_MODE', false);
-          this.$store.commit('rocketTopo/SET_HAS_SEARCHED_GLOBALLY', false);
-          // this.$store.commit('rocketTopo/SET_IS_FROM_GLOBAL_TO_NORMAL', true);
-          // 重置topoViewData
-          let topoViewData = this.topoData;
-          this.$emit('changeTopoViewData', topoViewData);
-          // 重置过滤器
-          this.$emit('restoreFilters');
-          this.$store.commit('rocketTopo/SET_SHOW_NODE_TYPE_FILTER', node.type);
-          this.setCurNodeStably(node);
-        } else {
-          if (node.type !== this.showNodeTypeFilter) {
-            this.$store.commit('rocketTopo/SET_SHOW_NODE_TYPE_FILTER', node.type);
-            this.setCurNodeStably(node);
-          } else {
-            this.$store.commit('rocketTopo/SET_NODE', node);
-          }
-        }
+        let node = this.topoViewData.nodes.find(node => node.id === nodeTmp.id); // 对应主拓扑的节点对象
+        this.$store.commit('rocketTopo/SET_VIEW_NODE', node);
+        this.setCurNodeStably(node);
+        // this.$store.commit('rocketTopo/SET_NODE', node);
       },
       handleGoNodeDetail() {
         event.stopPropagation();
@@ -728,6 +745,7 @@
     height: 100%;
     -webkit-transition: all 0.5s;
     transition: all 0.5s;
+    position: relative;
 
     .td-item {
       width: 100%;
