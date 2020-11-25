@@ -3,12 +3,13 @@
     <div id="tvccId" class="tvc-c">
       <!-- 拓扑详情 -->
       <div class="tvc-l" id="tvclId">
-        <TopoDetail
-          v-if="currentNode && currentNode.id !== undefined"
-          :foldTopoDetail="foldTopoDetail"
-          :topoDetailData="topoDetailData"
-          :topoViewData="topoViewData"
-        />
+        <div class="topo-detail-wrapper" id="tdwId" v-show="!foldTopoDetail">
+          <TopoDetail
+            v-if="currentNode && currentNode.id !== undefined"
+            :topoDetailData="topoDetailData"
+            :topoViewData="topoViewData"
+          />
+        </div>
         <div class="tvcl-close" v-if="currentNode && currentNode.id !== undefined">
           <span
             class="tvclc-icon"
@@ -368,6 +369,15 @@
         transition: 0.1s width;
         height: 100%;
         position: relative;
+
+        .topo-detail-wrapper {
+          -webkit-transition: 0.1s width;
+          transition: 0.1s width;
+          height: 100%;
+          position: relative;
+
+          overflow-x: scroll;
+        }
 
         .tvcl-close {
           position: absolute;

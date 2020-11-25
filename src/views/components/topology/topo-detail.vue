@@ -1,5 +1,5 @@
 <template>
-  <div class="topo-detail" ref="tdDom" v-show="!foldTopoDetail">
+  <div class="topo-detail" ref="tdDom">
     <!-- 背景调色 -->
     <div
       class="td-item"
@@ -76,10 +76,6 @@
             links: [],
           };
         },
-      },
-      foldTopoDetail: {
-        type: Boolean,
-        default: false
       },
       topoDetailData: {
         type: Object,
@@ -410,9 +406,9 @@
 
         const topoHeight = this.$refs.tdTopo.clientHeight;
         const deltah = topoHeight / 6;
-        // #tvcl最大宽度为主拓扑视口#tvcc的一半
-        const tvclWidthMax = document.getElementById('tvccId').clientWidth * 0.5;
-        let deltaw = 50;
+        // #tdw最大宽度为主拓扑视口#tvcc的一半
+        const tdwWidthMax = document.getElementById('tvccId').clientWidth * 0.6;
+        const deltaw = 50;
 
         // 计算拓扑宽度
         let appNum = 0;
@@ -444,20 +440,20 @@
           default: break;
         }
         let maxNum = Math.max(appNum, middlewareNum, processNum, workloadNum, podNum, nodeNum);
-        let topoWidth = 20 + maxNum * deltaw + 30;
-        let tvclWidth = topoWidth > tvclWidthMax ? tvclWidthMax : topoWidth;
+        let topoWidth = 50 + maxNum * deltaw + 50;
+        let tdwWidth = topoWidth > tdwWidthMax ? tdwWidthMax : topoWidth;
         // 设置tvcl宽度
-        $jq('#tvclId').width(tvclWidth);
+        $jq('#tdwId').width(tdwWidth);
         // 设置topoDetail宽度
         this.$refs.tdDom.style.width = topoWidth + 'px';
 
-        // 计算节点间横向距离
-        let appDeltaX =  (topoWidth - 20 - 30) / appNum;
-        let middlewareDeltaX =  (topoWidth - 20 - 30) / middlewareNum;
-        let processDeltaX =  (topoWidth - 20 - 30) / processNum;
-        let workloadDeltaX =  (topoWidth - 20 - 30) / workloadNum;
-        let podDeltaX =  (topoWidth - 20 - 30) / podNum;
-        let nodeDeltaX =  (topoWidth - 20 - 30) / nodeNum;
+        // 计算起点坐标
+        let appStartX = 50 + (maxNum - appNum) / 2 * 50;
+        let middlewareStartX = 50 + (maxNum - middlewareNum) / 2 * 50;
+        let processStartX = 50 + (maxNum - processNum) / 2 * 50;
+        let workloadStartX = 50 + (maxNum - workloadNum) / 2 * 50;
+        let podStartX = 50 + (maxNum - podNum) / 2 * 50;
+        let nodeStartX = 50 + (maxNum - nodeNum) / 2 * 50;
 
         // 调整曲线 ?
         let isAppLine2Src = appNum >= middlewareNum ? true : false;
@@ -476,21 +472,21 @@
         const nodesOption = [];
         const linksOption = [];
         // 计算节点坐标
-        function setNodePositonNormalLayer(nNum, nObj, deltaX, factorY, nIcon, nSize) {
-          nObj.x = (10 + deltaX / 2) + (nNum - 1) * deltaX;
+        function setNodePositonNormalLayer(nNum, nObj, startX, factorY, nIcon, nSize) {
+          nObj.x = startX + (nNum - 1) * deltaw;
           nObj.y = factorY * deltah;
           nObj.fx = nObj.x;
           nObj.fy = nObj.y;
           nObj.symbol = 'image://' + nIcon + '';
           nObj.symbolSize = nSize;
         }
-        function setNodePositonCurNodeLayer(nNum, cNum, nObj, deltaX, factorY, nIcon, nSize) {
+        function setNodePositonCurNodeLayer(nNum, cNum, nObj, startX, factorY, nIcon, nSize) {
           if (nNum === 1) { // 选中节点居中
-            setNodePositonNormalLayer((cNum + 1) / 2, nObj, deltaX, factorY, nIcon, nSize);
+            setNodePositonNormalLayer((cNum + 1) / 2, nObj, startX, factorY, nIcon, nSize);
           } else if (nNum > 1 && nNum <= (cNum + 1) / 2) {
-            setNodePositonNormalLayer(nNum - 1, nObj, deltaX, factorY, nIcon, nSize - 8);
+            setNodePositonNormalLayer(nNum - 1, nObj, startX, factorY, nIcon, nSize - 8);
           } else if (nNum > (cNum + 1) / 2) {
-            setNodePositonNormalLayer(nNum, nObj, deltaX, factorY, nIcon, nSize - 8);
+            setNodePositonNormalLayer(nNum, nObj, startX, factorY, nIcon, nSize - 8);
           }
         }
         graph.nodes.forEach(node => {
@@ -504,49 +500,49 @@
             case 'App': {
                 appNum++;
                 if (this.currentNode.type === 'App') {
-                  setNodePositonCurNodeLayer(appNum, curTypeNum, itemTmp, appDeltaX, 0.5, appIcon, 28);
+                  setNodePositonCurNodeLayer(appNum, curTypeNum, itemTmp, appStartX, 0.5, appIcon, 28);
                 } else {
-                  setNodePositonNormalLayer(appNum, itemTmp, appDeltaX, 0.5, appIcon, 28);
+                  setNodePositonNormalLayer(appNum, itemTmp, appStartX, 0.5, appIcon, 28);
                 }
               } break;
             case 'Middleware': {
                 middlewareNum++;
                 if (this.currentNode.type === 'Middleware') {
-                  setNodePositonCurNodeLayer(middlewareNum, curTypeNum, itemTmp, middlewareDeltaX, 1.5, middlewareIcon, 28);
+                  setNodePositonCurNodeLayer(middlewareNum, curTypeNum, itemTmp, middlewareStartX, 1.5, middlewareIcon, 28);
                 } else {
-                  setNodePositonNormalLayer(middlewareNum, itemTmp, middlewareDeltaX, 1.5, middlewareIcon, 28);
+                  setNodePositonNormalLayer(middlewareNum, itemTmp, middlewareStartX, 1.5, middlewareIcon, 28);
                 }
               } break;
             case 'Process': {
                 processNum++;
                 if (this.currentNode.type === 'Process') {
-                  setNodePositonCurNodeLayer(processNum, curTypeNum, itemTmp, processDeltaX, 2.5, processIcon, 28);
+                  setNodePositonCurNodeLayer(processNum, curTypeNum, itemTmp, processStartX, 2.5, processIcon, 28);
                 } else {
-                  setNodePositonNormalLayer(processNum, itemTmp, processDeltaX, 2.5, processIcon, 28);
+                  setNodePositonNormalLayer(processNum, itemTmp, processStartX, 2.5, processIcon, 28);
                 }
               } break;
             case 'Workload': {
                 workloadNum++;
                 if (this.currentNode.type === 'Workload') {
-                  setNodePositonCurNodeLayer(workloadNum, curTypeNum, itemTmp, workloadDeltaX, 3.5, workloadIcon, 28);
+                  setNodePositonCurNodeLayer(workloadNum, curTypeNum, itemTmp, workloadStartX, 3.5, workloadIcon, 28);
                 } else {
-                  setNodePositonNormalLayer(workloadNum, itemTmp, workloadDeltaX, 3.5, workloadIcon, 28);
+                  setNodePositonNormalLayer(workloadNum, itemTmp, workloadStartX, 3.5, workloadIcon, 28);
                 }
               } break;
             case 'Pod': {
                 podNum++;
                 if (this.currentNode.type === 'Pod') {
-                  setNodePositonCurNodeLayer(podNum, curTypeNum, itemTmp, podDeltaX, 4.5, podIcon, 28);
+                  setNodePositonCurNodeLayer(podNum, curTypeNum, itemTmp, podStartX, 4.5, podIcon, 28);
                 } else {
-                  setNodePositonNormalLayer(podNum, itemTmp, podDeltaX, 4.5, podIcon, 28);
+                  setNodePositonNormalLayer(podNum, itemTmp, podStartX, 4.5, podIcon, 28);
                 }
               } break;
             case 'Node': {
                 nodeNum++;
                 if (this.currentNode.type === 'Node') {
-                  setNodePositonCurNodeLayer(nodeNum, curTypeNum, itemTmp, nodeDeltaX, 5.5, nodeIcon, 28);
+                  setNodePositonCurNodeLayer(nodeNum, curTypeNum, itemTmp, nodeStartX, 5.5, nodeIcon, 28);
                 } else {
-                  setNodePositonNormalLayer(nodeNum, itemTmp, nodeDeltaX, 5.5, nodeIcon, 28);
+                  setNodePositonNormalLayer(nodeNum, itemTmp, nodeStartX, 5.5, nodeIcon, 28);
                 }
               } break;
             default: break;
