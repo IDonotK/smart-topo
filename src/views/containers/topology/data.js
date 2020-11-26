@@ -696,13 +696,6 @@ export const LINKS = [
     tid: 'a8',
   },
   {
-    id: 453,
-    name: 'link453',
-    type: 'tracingto',
-    sid: 'a1',
-    tid: 'a8',
-  },
-  {
     id: 454,
     name: 'link454',
     type: 'tracingto',

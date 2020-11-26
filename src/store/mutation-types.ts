@@ -72,6 +72,7 @@ export const SET_DEFAULT_EMPTY_TRACE = 'SET_DEFAULT_EMPTY_TRACE';
 // topo
 export const SET_TOPO = 'SET_TOPO';
 export const SET_NODE = 'SET_NODE';
+export const SET_NODE_CROSS_LAYER = 'SET_NODE_CROSS_LAYER';
 export const SET_VIEW_NODE = 'SET_VIEW_NODE';
 export const SET_SHOW_NODE_TYPES = 'SET_SHOW_NODE_TYPES';
 export const SET_SHOW_STATE_TYPES = 'SET_SHOW_STATE_TYPES';

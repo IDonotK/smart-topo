@@ -53,6 +53,7 @@ export interface State {
   detectPoints: string[];
   selectedServiceCall: Call | null;
   currentNode: any;
+  curNodeCrossLayer: any;
   viewNode: any;
   currentLink: any;
   current: Option;
@@ -106,6 +107,7 @@ const initState: State = {
   calls: [],
   nodes: [],
   currentNode: {},
+  curNodeCrossLayer: {},
   viewNode: {},
   currentLink: {},
   current: {
@@ -180,6 +182,9 @@ const mutations = {
   },
   [types.SET_NODE](state: State, data: any) {
     state.currentNode = data;
+  },
+  [types.SET_NODE_CROSS_LAYER](state: State, data: any) {
+    state.curNodeCrossLayer = data;
   },
   [types.SET_VIEW_NODE](state: State, data: any) {
     state.viewNode = data;

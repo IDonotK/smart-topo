@@ -8,6 +8,7 @@
             v-if="currentNode && currentNode.id !== undefined"
             :topoDetailData="topoDetailData"
             :topoViewData="topoViewData"
+            @toggleNodeDetail="toggleNodeDetail"
           />
         </overlay-scrollbars>
         <div class="tvcl-close" v-if="currentNode && currentNode.id !== undefined">
@@ -16,6 +17,10 @@
             :class="{ 'tvlci-fold': foldTopoDetail }"
             @click.stop.prevent="toggleTopoDetail"
           ></span>
+        </div>
+        <!-- 节点详情 -->
+        <div class="node-detail-wrapper" v-if="showNodeDetail">
+          <NodeDetail :topoViewData="topoViewData" @toggleNodeDetail="toggleNodeDetail" />
         </div>
       </div>
       <!-- 主拓扑图 -->
@@ -94,6 +99,7 @@
   import $jq from 'jquery';
 
   import TopoDetail from './topo-detail.vue';
+  import NodeDetail from './node-detail.vue';
 
   import appIcon from './assets/types/app.png';
   import processIcon from './assets/types/process.png';
@@ -170,6 +176,7 @@
         scrollOptions: {
           className: "os-theme-light",
           resize: "none",
+          // resize: "horizontal",
           sizeAutoCapable : true,
           paddingAbsolute : true,
           scrollbars : {
@@ -177,11 +184,13 @@
             dragScrolling: true,
           }
         },
+        showNodeDetail: false,
       }
     },
 
     components: {
       TopoDetail,
+      NodeDetail,
       D3Network
     },
 
@@ -218,6 +227,10 @@
         this.initNetTopoData();
       },
       currentNode(newVal, oldVal) {
+        if (this.showNodeDetail) {
+          this.showNodeDetail = false;
+          this.$store.commit('rocketTopo/SET_NODE_CROSS_LAYER', {});
+        }
         if (newVal.id !== undefined) {
           this.foldTopoDetail = false;
           // 根据选中的节点过滤拓扑数据
@@ -243,6 +256,9 @@
     },
 
     methods: {
+      toggleNodeDetail(state) {
+        this.showNodeDetail = state;
+      },
       changeTopoViewData(newTopoViewData) {
         this.$emit('changeTopoViewData', newTopoViewData);
       },
@@ -352,6 +368,10 @@
       linkClick() {},
       toggleTopoDetail() {
         this.foldTopoDetail = !this.foldTopoDetail;
+        if (this.showNodeDetail) {
+          this.showNodeDetail = false;
+          this.$store.commit('rocketTopo/SET_NODE_CROSS_LAYER', {});
+        }
       },
       reset () {
         this.selected = {}
@@ -386,12 +406,6 @@
         height: 100%;
         position: relative;
 
-        .topo-detail-wrapper {
-          -webkit-transition: 0.1s width;
-          transition: 0.1s width;
-          height: 100%;
-        }
-
         .tvcl-close {
           position: absolute;
           top: 0;
@@ -419,6 +433,18 @@
             transform: rotate(180deg);
             -webkit-transform: rotate(180deg);
           }
+        }
+
+        .node-detail-wrapper {
+          width: 600px;
+          height: 100%;
+          position: absolute;
+          top: 0;
+          left: 0;
+          background-color: #252a2f;
+          z-index: 9000;
+          -webkit-transition: 0.5s width;
+          transition: 0.5s width;
         }
       }
 
