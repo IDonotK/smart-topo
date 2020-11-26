@@ -3,13 +3,20 @@
     <div id="tvccId" class="tvc-c">
       <!-- 拓扑详情 -->
       <div class="tvc-l" id="tvclId">
-        <div class="topo-detail-wrapper" id="tdwId" v-show="!foldTopoDetail">
+        <!-- <div class="topo-detail-wrapper" id="tdwId" v-show="!foldTopoDetail">
           <TopoDetail
             v-if="currentNode && currentNode.id !== undefined"
             :topoDetailData="topoDetailData"
             :topoViewData="topoViewData"
           />
-        </div>
+        </div> -->
+        <overlay-scrollbars id="tdwId" style="height:100%" :options="scrollOptions" v-show="!foldTopoDetail">
+          <TopoDetail
+            v-if="currentNode && currentNode.id !== undefined"
+            :topoDetailData="topoDetailData"
+            :topoViewData="topoViewData"
+          />
+        </overlay-scrollbars>
         <div class="tvcl-close" v-if="currentNode && currentNode.id !== undefined">
           <span
             class="tvclc-icon"
@@ -166,6 +173,16 @@
           links: []
         },
         loading: true,
+        scrollOptions: {
+          className: "os-theme-light",
+          resize: "none",
+          sizeAutoCapable : true,
+          paddingAbsolute : true,
+          scrollbars : {
+            clickScrolling : true,
+            dragScrolling: true,
+          }
+        },
       }
     },
 
@@ -374,9 +391,6 @@
           -webkit-transition: 0.1s width;
           transition: 0.1s width;
           height: 100%;
-          position: relative;
-
-          overflow-x: scroll;
         }
 
         .tvcl-close {

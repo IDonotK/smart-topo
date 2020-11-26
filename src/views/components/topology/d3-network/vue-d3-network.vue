@@ -117,6 +117,7 @@
         ],
         topoTickCount: 0,
         defaultNodeSize: 20,
+        defaultLinkWidth: 1,
         nodeNumSmall: 20,
         defaultFontSize: 16,
         elemsAroundPreHovNodeDeep: {
@@ -265,9 +266,9 @@
       },
     },
     methods: {
-      getScaleFix(nodes, fix, isOnNodeSize) {
+      getScaleFixForSim(nodes, fix) {
         if (nodes.length === 1) {
-          return 1;
+          return 2;
         }
         let centerX = $jq('#netSvg').width() / 2;
         let centerY = $jq('#netSvg').height() / 2;
@@ -287,17 +288,39 @@
         scaleFixX = (fix * 2 * centerX) / (xMax - xMin);
         scaleFixY = (fix * 2 * centerY) / (yMax - yMin);
         scaleFix = Math.min(scaleFixX, scaleFixY);
-        if (isOnNodeSize) {
-          // 关系？
-          // scaleFixX = fix * 2 * centerX / (xMax - xMin + this.defaultNodeSize * scaleFix);
-          // scaleFixY = fix * 2 * centerY / (yMax - yMin + this.defaultNodeSize * scaleFix);
-          scaleFixX = (fix * 2 * centerX) / (xMax - xMin + this.nodeSize * scaleFix);
-          scaleFixY = (fix * 2 * centerY) / (yMax - yMin + this.nodeSize * scaleFix);
-          // scaleFixX = fix * 2 * centerX / (xMax - xMin + this.nodeSize);
-          // scaleFixY = fix * 2 * centerY / (yMax - yMin + this.nodeSize);
-          scaleFix = Math.min(scaleFixX, scaleFixY);
-          // scaleFix = Math.min(scaleFixX, scaleFixY) * this.topoScaleFix;
+        return scaleFix;
+      },
+      getScaleFixOnCurNode(nodes, fix, isOnNodeSize) {
+        if (nodes.length === 1) {
+          // 单个节点,在20基础上放大2倍
+          return 2 * this.topoScaleFix;
         }
+        let centerX = $jq('#netSvg').width() / 2;
+        let centerY = $jq('#netSvg').height() / 2;
+        let curNodeX = this.currentNode.x;
+        let curNodeY = this.currentNode.y;
+
+        let toCnxMax = Math.abs(nodes[0].x - curNodeX);
+        let toCnyMax = Math.abs(nodes[0].y - curNodeY);
+        let toCnx = 0;
+        let toCny = 0;
+        for (let i = 0; i < nodes.length; i++) {
+          toCnx = Math.abs(nodes[i].x - curNodeX);
+          toCny = Math.abs(nodes[i].y - curNodeY);
+          toCnxMax = toCnxMax < toCnx ? toCnx : toCnxMax;
+          toCnyMax = toCnyMax < toCny ? toCny : toCnyMax;
+        }
+        let scaleFixX = 1;
+        let scaleFixY = 1;
+        let scaleFix = 1;
+        if (isOnNodeSize) {
+          scaleFixX = (fix * centerX) / (toCnxMax + this.nodeSize);
+          scaleFixY = (fix * centerY) / (toCnyMax + this.nodeSize);
+        } else {
+          scaleFixX = (fix * centerX) / toCnxMax;
+          scaleFixY = (fix * centerY) / toCnyMax;
+        }
+        scaleFix = Math.min(scaleFixX, scaleFixY);
         return scaleFix;
       },
       fixTopoScale(isSetTopoScaleFix, isEnlargeTopo) {
@@ -307,19 +330,20 @@
           .select('#zoomContainer')
           .node()
           .getBBox();
-        let scaleFixX = (0.8 * centerX) / (centerX - bounds.x);
+        let scaleFixX = (0.8 * centerX) / (centerX - bounds.x); // 负数的情况?
         let scaleFixY = (0.8 * centerY) / (centerY - bounds.y);
         let scaleFix = Math.min(scaleFixX, scaleFixY);
         if (isEnlargeTopo) {
           if (this.nodes.length <= 20) {
-            scaleFix = this.getScaleFix(this.nodes, 0.6, false);
+            scaleFix = this.getScaleFixForSim(this.nodes, 0.6);
           } else {
-            scaleFixX = (0.8 * centerX) / (centerX - bounds.x);
+            scaleFixX = (0.8 * centerX) / (centerX - bounds.x); // 负数的情况?
             scaleFixY = (0.8 * centerY) / (centerY - bounds.y);
             scaleFix = Math.min(scaleFixX, scaleFixY);
           }
+          // 布局时,放大拓扑,要同时缩小元素
           this.nodeSize = this.defaultNodeSize / scaleFix;
-          this.linkWidth = 1 / (this.defaultNodeSize / this.nodeSize);
+          this.linkWidth = this.defaultLinkWidth / scaleFix;
           this.fontSize = this.defaultFontSize / scaleFix;
         }
         if (isSetTopoScaleFix) {
@@ -797,7 +821,7 @@
           curNode.fy = curNode.y;
           this.$refs.svg.$forceUpdate();
 
-          // 单跳视口，查询耗时？
+          // 单跳视口，查询耗时
           let nodesTmp = [];
           nodesTmp.push(curNode);
           this.links.forEach((link) => {
@@ -808,7 +832,7 @@
               nodesTmp.push(link.source);
             }
           });
-          let newZoomK = this.getScaleFix(nodesTmp, 0.9, true);
+          let newZoomK = this.getScaleFixOnCurNode(nodesTmp, 0.9, true);
 
           this.zoomController.scaleTo(
             d3

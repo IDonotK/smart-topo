@@ -35,6 +35,12 @@ Vue.use(Radio);
 Vue.use(Input);
 Vue.prototype.$confirm = MessageBox.confirm;
 
+import 'overlayscrollbars/css/OverlayScrollbars.css';
+import OverlayScrollbars from 'overlayscrollbars';
+import { OverlayScrollbarsPlugin } from 'overlayscrollbars-vue';
+Vue.use(OverlayScrollbarsPlugin);
+Vue.use(OverlayScrollbars);
+
 // import $ from 'jquery';
 // Vue.prototype.$jq = $;
 
