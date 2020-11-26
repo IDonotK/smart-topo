@@ -3,13 +3,6 @@
     <div id="tvccId" class="tvc-c">
       <!-- 拓扑详情 -->
       <div class="tvc-l" id="tvclId">
-        <!-- <div class="topo-detail-wrapper" id="tdwId" v-show="!foldTopoDetail">
-          <TopoDetail
-            v-if="currentNode && currentNode.id !== undefined"
-            :topoDetailData="topoDetailData"
-            :topoViewData="topoViewData"
-          />
-        </div> -->
         <overlay-scrollbars id="tdwId" style="height:100%" :options="scrollOptions" v-show="!foldTopoDetail">
           <TopoDetail
             v-if="currentNode && currentNode.id !== undefined"
@@ -75,8 +68,7 @@
         <d3-network
           v-show="topoViewData.nodes.length > 0 && isMatch"
           ref="net"
-          :net-nodes="nodes"
-          :net-links="links"
+          :net-data="netData"
           :options="options"
           :node-sym="nodeSym"
           @node-dblclick="nodeDblClick"
@@ -139,8 +131,10 @@
 
     data() {
       return {
-        nodes: [],
-        links: [],
+        netData: {
+          nodes: [],
+          links: []
+        },
         showMenu: false,
         selected: {},
         showSelection: false,
@@ -220,6 +214,7 @@
 
     watch: {
       topoViewData(newVal, oldVal) {
+        console.log('topoViewData change in topo-view: ', newVal);
         this.initNetTopoData();
       },
       currentNode(newVal, oldVal) {
@@ -228,6 +223,11 @@
           // 根据选中的节点过滤拓扑数据
           this.resetTopoDetailData(newVal);
         } else {
+          this.topoDetailData = {
+            nodes: [],
+            links: []
+          };
+          console.log('topoDetailData to zero in topo-view: ', this.topoDetailData);
           this.foldTopoDetail = true;
         }
       }
@@ -334,9 +334,8 @@
         this.options.size.w = this.$refs.tvcr.clientWidth;
         this.options.size.h = this.$refs.tvcr.clientHeight;
       },
-      initNetTopoData() {  // 浅拷贝
-        this.nodes = this.topoViewData.nodes;
-        this.links = this.topoViewData.links;
+      initNetTopoData() {
+        this.netData = this.topoViewData;
       },
       nodeDblClick(event, node) {
         if (node && this.currentNode && node.id === this.currentNode.id) {

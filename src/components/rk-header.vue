@@ -13,7 +13,7 @@
       </router-link>
     </div>
     <div class="flex-h">
-      <a class="rk-btn mr-5 sm" :class="auto ? 'blue' : 'ghost'" @click="handleAuto">
+      <!-- <a class="rk-btn mr-5 sm" :class="auto ? 'blue' : 'ghost'" @click="handleAuto">
         <span class="vm">{{ this.$t('auto') }}</span>
       </a>
       <div class="auto-time">
@@ -21,7 +21,7 @@
           <input v-model="autoTime" type="number" @change="changeAutoTime" min="1" />
         </span>
         {{ this.$t('second') }}
-      </div>
+      </div> -->
       <a class="rk-btn sm ghost" @click="handleReload">
         <svg class="icon mr-5 vm" :class="{ loading: auto }">
           <use xlink:href="#retry"></use>
@@ -41,17 +41,22 @@
   export default class Header extends Vue {
     @Getter('duration') private duration: any;
     @Action('SET_DURATION') private SET_DURATION: any;
+    @Action('rocketTopo/GET_TOPO_DATA') public GET_TOPO_DATA: any;
+    @State('rocketTopo') private rocketTopo: any;
     private show: boolean = false;
     private auto: boolean = false;
     private autoTime: number = 6;
     private timer: any = null;
     private handleReload() {
-      // 更新localStorage里的durationRow
-      console.log('Refresh Topo');
-      const gap = this.duration.end.getTime() - this.duration.start.getTime();
-      const utcCopy: any = -(new Date().getTimezoneOffset() / 60);
-      const time: Date[] = [new Date(new Date().getTime() - gap), new Date()];
-      this.SET_DURATION(timeFormat(time));
+      this.rocketTopo.toolSetInstance.refreshTopo(false);
+      this.GET_TOPO_DATA({
+        startTime: this.duration.start,
+        endTime: this.duration.end,
+      });
+      // const gap = this.duration.end.getTime() - this.duration.start.getTime();
+      // const utcCopy: any = -(new Date().getTimezoneOffset() / 60);
+      // const time: Date[] = [new Date(new Date().getTime() - gap), new Date()];
+      // this.SET_DURATION(timeFormat(time));
     }
     private handleAuto() {
       // 开启轮询刷新 query queryServices($duration: Duration!,$keyword: String!)

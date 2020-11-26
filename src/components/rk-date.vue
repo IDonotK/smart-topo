@@ -1,17 +1,3 @@
-<!-- Licensed to the Apache Software Foundation (ASF) under one or more
-contributor license agreements.  See the NOTICE file distributed with
-this work for additional information regarding copyright ownership.
-The ASF licenses this file to You under the Apache License, Version 2.0
-(the "License"); you may not use this file except in compliance with
-the License.  You may obtain a copy of the License at
-
-  http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License. -->
 <template>
   <div
     class="datepicker"
@@ -20,9 +6,6 @@ limitations under the License. -->
       datepicker__clearable: clearable && text && !disabled,
     }"
   >
-    <!-- <svg class="icon datepicker-icon">
-    <use xlink:href="#timer"></use>
-  </svg> -->
     <input
       class="cp"
       readonly
@@ -43,23 +26,20 @@ limitations under the License. -->
       >
         <template v-if="range">
           <div class="datepicker-popup__sidebar">
-            <button type="button" class="datepicker-popup__shortcut" @click="quickPick('quarter')">
-              {{ this.local.quarterHourCutTip }}
+            <button type="button" class="datepicker-popup__shortcut" @click="quickPick('tenSeconds')">
+              {{ this.local.tenSecondsCutTip }}
             </button>
-            <button type="button" class="datepicker-popup__shortcut" @click="quickPick('half')">
-              {{ this.local.halfHourCutTip }}
+            <button type="button" class="datepicker-popup__shortcut" @click="quickPick('thirtySeconds')">
+              {{ this.local.thirtySecondsCutTip }}
             </button>
-            <button type="button" class="datepicker-popup__shortcut" @click="quickPick('hour')">
-              {{ this.local.hourCutTip }}
+            <button type="button" class="datepicker-popup__shortcut" @click="quickPick('oneMinute')">
+              {{ this.local.oneMinuteCutTip }}
             </button>
-            <button type="button" class="datepicker-popup__shortcut" @click="quickPick('day')">
-              {{ this.local.dayCutTip }}
+            <button type="button" class="datepicker-popup__shortcut" @click="quickPick('threeMinutes')">
+              {{ this.local.threeMinutesCutTip }}
             </button>
-            <button type="button" class="datepicker-popup__shortcut" @click="quickPick('week')">
-              {{ this.local.weekCutTip }}
-            </button>
-            <button type="button" class="datepicker-popup__shortcut" @click="quickPick('month')">
-              {{ this.local.monthCutTip }}
+            <button type="button" class="datepicker-popup__shortcut" @click="quickPick('fiveMinutes')">
+              {{ this.local.fiveMinutesCutTip }}
             </button>
           </div>
           <div class="datepicker-popup__body">
@@ -148,12 +128,11 @@ limitations under the License. -->
           weeks: this.$t('weeks').split('_'), // weeks
           cancelTip: this.$t('cancel'), // default text for cancel button
           submitTip: this.$t('confirm'), // default text for submit button
-          quarterHourCutTip: this.$t('quarterHourCutTip'),
-          halfHourCutTip: this.$t('halfHourCutTip'),
-          hourCutTip: this.$t('hourCutTip'),
-          dayCutTip: this.$t('dayCutTip'),
-          weekCutTip: this.$t('weekCutTip'),
-          monthCutTip: this.$t('monthCutTip'),
+          tenSecondsCutTip: this.$t('tenSecondsCutTip'),
+          thirtySecondsCutTip: this.$t('thirtySecondsCutTip'),
+          oneMinuteCutTip: this.$t('oneMinuteCutTip'),
+          threeMinutesCutTip: this.$t('threeMinutesCutTip'),
+          fiveMinutesCutTip: this.$t('fiveMinutesCutTip'),
         };
       },
       range() {
@@ -239,23 +218,20 @@ limitations under the License. -->
         const end = new Date();
         const start = new Date();
         switch (type) {
-          case 'quarter':
-            start.setTime(start.getTime() - 60 * 15 * 1000);//15 mins
+          case 'tenSeconds':
+            start.setTime(start.getTime() - 10 * 1000);
             break;
-          case 'half':
-            start.setTime(start.getTime() - 60 * 30 * 1000);//30 mins
+          case 'thirtySeconds':
+            start.setTime(start.getTime() - 30 * 1000);
             break;
-          case 'hour':
-            start.setTime(start.getTime() - 3600 * 1000);//1 hour
+          case 'oneMinute':
+            start.setTime(start.getTime() - 60 * 1000);
             break;
-          case 'day':
-            start.setTime(start.getTime() - 3600 * 1000 * 24);//1 day
+          case 'threeMinutes':
+            start.setTime(start.getTime() - 3 * 60 * 1000);
             break;
-          case 'week':
-            start.setTime(start.getTime() - 3600 * 1000 * 24 * 7);//1 week
-            break;
-          case 'month':
-            start.setTime(start.getTime() - 3600 * 1000 * 24 * 30);//1 month
+          case 'fiveMinutes':
+            start.setTime(start.getTime() - 5 * 60 * 1000);
             break;
           default:
             break;

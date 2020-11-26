@@ -16,19 +16,16 @@
   import { State, Action, Getter, Mutation } from 'vuex-class';
   import { AxiosResponse } from 'axios';
   import { State as topoState } from '@/store/modules/topology';
+  import axios from 'axios';
+  import { cancelToken } from '@/utils/cancelToken';
 
   import TopoView from '../../components/topology/topo-view.vue';
   import TopoSideNavigation from '../../components/topology/topo-side-navigation.vue';
   import TopoToolSet from '../../components/topology/topo-tool-set.vue';
-  import { NODES, LINKS } from './data.js';
 
   export default {
     data() {
       return {
-        topoData: { // 获取的全部数据
-          nodes: [],
-          links: []
-        },
         topoViewData: { // 展示的拓扑数据
           nodes: [],
           links: []
@@ -44,6 +41,12 @@
     },
 
     computed: {
+      topoData() { // 全部拓扑数据
+        return this.$store.state.rocketTopo.topoData;
+      },
+      durationRow() { // 当前选中节点
+        return this.$store.state.rocketbot.durationRow;
+      },
       currentNode() { // 当前选中节点
         return this.$store.state.rocketTopo.currentNode;
       },
@@ -59,8 +62,9 @@
         this.$store.commit('rocketTopo/SET_IS_FIRST_TICK', true);
       },
       topoData(newVal) {
+        this.$store.commit('rocketTopo/SET_IS_TOPO_NODES_UPDATED', true);
+        this.$store.commit('rocketTopo/SET_IS_TOPO_LINKS_UPDATED', true);
         this.topoViewData = newVal;
-        this.topoDataFiltered = newVal;
       },
     },
 
@@ -79,20 +83,10 @@
         this.isMatch = isMatch;
       },
       initTopoData() {
-        setTimeout(() => {
-          // query
-          this.topoData = {
-            nodes: NODES,
-            links: LINKS
-          };
-          // 如何局部更新topo？
-          this.$store.commit('rocketTopo/SET_IS_TOPO_NODES_UPDATED', true);
-          this.$store.commit('rocketTopo/SET_IS_TOPO_LINKS_UPDATED', true);
-
-          // 若把vue-d3-network里的buildNodes、buildLinks的逻辑部分抽出到这里，则会导致多处需要手动强制刷新topo组件视图？
-
-          this.topoViewData = this.topoData;
-        }, 2000);
+        this.$store.dispatch('rocketTopo/GET_TOPO_DATA', {
+          startTime: this.durationRow.start.toString(),
+          endTime: this.durationRow.end.toString(),
+        });
       },
     },
 

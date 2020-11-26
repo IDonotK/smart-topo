@@ -4,6 +4,8 @@ import * as types from '../../mutation-types';
 import axios, { AxiosPromise, AxiosResponse } from 'axios';
 import { cancelToken } from '@/utils/cancelToken';
 
+import { NODES, LINKS } from './data.js';
+
 interface Option {
   key: string;
   label: string;
@@ -90,6 +92,8 @@ export interface State {
   isTopoLinksUpdated: boolean;
   topoMode: string;
   exploreNode: any;
+  topoData: any;
+  toolSetInstance: any;
 }
 
 const PercentileItem: string[] = ['p50', 'p75', 'p90', 'p95', 'p99'];
@@ -149,6 +153,11 @@ const initState: State = {
   isTopoLinksUpdated: false,
   topoMode: 'global',
   exploreNode: {},
+  topoData: {
+    nodes: [],
+    links: [],
+  },
+  toolSetInstance: {},
 };
 
 // getters
@@ -207,6 +216,12 @@ const mutations = {
   },
   [types.SET_EXPLORE_NODE](state: State, data: any) {
     state.exploreNode = data;
+  },
+  [types.SET_TOPO_DATA](state: State, data: any) {
+    state.topoData = data;
+  },
+  [types.SET_TOOL_SET_INSTANCE](state: State, data: any) {
+    state.toolSetInstance = data;
   },
   [types.SET_LINK](state: State, data: any) {
     state.currentLink = data;
@@ -354,6 +369,25 @@ const mutations = {
 
 // actions
 const actions: ActionTree<State, any> = {
+  GET_TOPO_DATA(context: { commit: Commit; state: State }, params: any) {
+    context.commit(types.SET_TOPO_DATA, {
+      nodes: NODES,
+      links: LINKS,
+    });
+    // return axios.post(
+    //     window.location.origin + '/topodata',
+    //     params,
+    //     { cancelToken: cancelToken() },
+    //   ).then(res => {
+    //     // if (res.data.errors) {
+    //     //   context.commit(types.SET_TOPO, { calls: [], nodes: [] });
+    //     //   return;
+    //     // }
+    //     // context.commit(types.SET_TOPO, { calls, nodes });
+    //   }).catch(err => {
+
+    //   });
+  },
   GET_SERVICES(context: { commit: Commit }, params: { duration: Duration; keyword: string }) {
     if (!params.keyword) {
       params.keyword = '';
@@ -488,608 +522,72 @@ const actions: ActionTree<State, any> = {
     if (params.serviceIds) {
       query = 'queryServicesTopo';
     }
-    // return graph
-    //   .query(query)
-    //   .params(params)
-    //   .then((res: AxiosResponse) => {
-    //     if (res.data.errors) {
-    //       context.commit(types.SET_TOPO, { calls: [], nodes: [] });
-    //       return;
-    //     }
-    //     const calls = res.data.data.topo.calls;
-    //     const nodes = res.data.data.topo.nodes;
-    //     const ids = nodes.map((i: any) => i.id);
-    //     const idsC = calls.filter((i: any) => i.detectPoints.indexOf('CLIENT') !== -1).map((b: any) => b.id);
-    //     const idsS = calls.filter((i: any) => i.detectPoints.indexOf('CLIENT') === -1).map((b: any) => b.id);
-    //     return graph
-    //       .query('queryTopoInfo')
-    //       .params({ ...params, ids, idsC, idsS })
-    //       .then((info: AxiosResponse) => {
-    //         const resInfo = info.data.data;
-    //         if (!resInfo.sla) {
-    //           return context.commit(types.SET_TOPO, { calls, nodes });
-    //         }
-    //         for (let i = 0; i < resInfo.sla.values.length; i += 1) {
-    //           for (let j = 0; j < nodes.length; j += 1) {
-    //             if (nodes[j].id === resInfo.sla.values[i].id) {
-    //               nodes[j] = {
-    //                 ...nodes[j],
-    //                 isGroupActive: true,
-    //                 sla: resInfo.sla.values[i].value ? resInfo.sla.values[i].value / 100 : -1,
-    //                 cpm: resInfo.nodeCpm.values[i] ? resInfo.nodeCpm.values[i].value : -1,
-    //                 latency: resInfo.nodeLatency.values[i] ? resInfo.nodeLatency.values[i].value : -1,
-    //               };
-    //             }
-    //           }
-    //         }
-    //         if (!resInfo.cpmC) {
-    //           return context.commit(types.SET_TOPO, { calls, nodes });
-    //         }
-    //         for (let i = 0; i < resInfo.cpmC.values.length; i += 1) {
-    //           for (let j = 0; j < calls.length; j += 1) {
-    //             if (calls[j].id === resInfo.cpmC.values[i].id) {
-    //               calls[j] = {
-    //                 ...calls[j],
-    //                 isGroupActive: true,
-    //                 cpm: resInfo.cpmC.values[i] ? resInfo.cpmC.values[i].value : '',
-    //                 latency: resInfo.latencyC.values[i] ? resInfo.latencyC.values[i].value : '',
-    //               };
-    //             }
-    //           }
-    //         }
-    //         if (!resInfo.cpmS) {
-    //           return context.commit(types.SET_TOPO, { calls, nodes });
-    //         }
-    //         for (let i = 0; i < resInfo.cpmS.values.length; i += 1) {
-    //           for (let j = 0; j < calls.length; j += 1) {
-    //             if (calls[j].id === resInfo.cpmS.values[i].id) {
-    //               calls[j] = {
-    //                 ...calls[j],
-    //                 cpm: resInfo.cpmS.values[i] ? resInfo.cpmS.values[i].value : '',
-    //                 latency: resInfo.latencyS.values[i] ? resInfo.latencyS.values[i].value : '',
-    //               };
-    //             }
-    //           }
-    //         }
-    //         context.commit(types.SET_TOPO, { calls, nodes });
-    //       });
-    //   });
-
-    // luke
-    return Promise.resolve().then(() => {
-      // queryTopo
-      var res = {
-        data: {
-          topo: {
-            nodes: [
-              {
-                id: 'd3d3LmJhaWR1LmNvbTo4MA==.0',
-                name: 'www.baidu.com:80',
-                type: 'HttpClient',
-                isReal: false,
-              },
-              {
-                id: 'bG9hZCBiYWxhbmNlcjEuc3lzdGVt.1',
-                name: 'load balancer1.system',
-                type: 'Nginx',
-                isReal: true,
-              },
-              {
-                id: 'VXNlcg==.0',
-                name: 'User',
-                type: 'USER',
-                isReal: false,
-              },
-              {
-                id: 'cHJvamVjdEMuYnVzaW5lc3Mtem9uZQ==.1',
-                name: 'projectC.business-zone',
-                type: 'SpringMVC',
-                isReal: true,
-              },
-              {
-                id: 'MTkyLjE2OC4yNTIuMTI6ODc2MQ==.0',
-                name: '192.168.252.12:8761',
-                type: 'HttpClient',
-                isReal: false,
-              },
-              {
-                id: 'cHJvamVjdEEuYnVzaW5lc3Mtem9uZQ==.1',
-                name: 'projectA.business-zone',
-                type: 'SpringMVC',
-                isReal: true,
-              },
-              {
-                id: 'cHJvamVjdEIuYnVzaW5lc3Mtem9uZQ==.1',
-                name: 'projectB.business-zone',
-                type: 'SpringMVC',
-                isReal: true,
-              },
-              {
-                id: 'bG9jYWxob3N0Ojg3NjE=.0',
-                name: 'localhost:8761',
-                type: 'HttpClient',
-                isReal: false,
-              },
-              {
-                id: 'MTI3LjAuMC4xOjkwOTI=.0',
-                name: '127.0.0.1:9092',
-                type: 'Kafka',
-                isReal: false,
-              },
-              {
-                id: 'bG9hZCBiYWxhbmNlcjIuc3lzdGVt.1',
-                name: 'load balancer2.system',
-                type: 'Nginx',
-                isReal: true,
-              },
-              {
-                id: 'bG9jYWxob3N0Oi0x.0',
-                name: 'localhost:-1',
-                type: 'H2',
-                isReal: false,
-              },
-              {
-                id: 'cHJvamVjdEQuYnVzaW5lc3Mtem9uZQ==.1',
-                name: 'projectD.business-zone',
-                type: 'kafka-consumer',
-                isReal: true,
-              },
-            ],
-            calls: [
-              {
-                id: 'cHJvamVjdEMuYnVzaW5lc3Mtem9uZQ==.1-d3d3LmJhaWR1LmNvbTo4MA==.0',
-                source: 'cHJvamVjdEMuYnVzaW5lc3Mtem9uZQ==.1',
-                detectPoints: ['CLIENT'],
-                target: 'd3d3LmJhaWR1LmNvbTo4MA==.0',
-              },
-              {
-                id: 'cHJvamVjdEEuYnVzaW5lc3Mtem9uZQ==.1-MTkyLjE2OC4yNTIuMTI6ODc2MQ==.0',
-                source: 'cHJvamVjdEEuYnVzaW5lc3Mtem9uZQ==.1',
-                detectPoints: ['CLIENT'],
-                target: 'MTkyLjE2OC4yNTIuMTI6ODc2MQ==.0',
-              },
-              {
-                id: 'cHJvamVjdEEuYnVzaW5lc3Mtem9uZQ==.1-bG9jYWxob3N0Ojg3NjE=.0',
-                source: 'cHJvamVjdEEuYnVzaW5lc3Mtem9uZQ==.1',
-                detectPoints: ['CLIENT'],
-                target: 'bG9jYWxob3N0Ojg3NjE=.0',
-              },
-              {
-                id: 'cHJvamVjdEIuYnVzaW5lc3Mtem9uZQ==.1-MTkyLjE2OC4yNTIuMTI6ODc2MQ==.0',
-                source: 'cHJvamVjdEIuYnVzaW5lc3Mtem9uZQ==.1',
-                detectPoints: ['CLIENT'],
-                target: 'MTkyLjE2OC4yNTIuMTI6ODc2MQ==.0',
-              },
-              {
-                id: 'cHJvamVjdEIuYnVzaW5lc3Mtem9uZQ==.1-bG9jYWxob3N0Ojg3NjE=.0',
-                source: 'cHJvamVjdEIuYnVzaW5lc3Mtem9uZQ==.1',
-                detectPoints: ['CLIENT'],
-                target: 'bG9jYWxob3N0Ojg3NjE=.0',
-              },
-              {
-                id: 'cHJvamVjdEMuYnVzaW5lc3Mtem9uZQ==.1-MTI3LjAuMC4xOjkwOTI=.0',
-                source: 'cHJvamVjdEMuYnVzaW5lc3Mtem9uZQ==.1',
-                detectPoints: ['CLIENT'],
-                target: 'MTI3LjAuMC4xOjkwOTI=.0',
-              },
-              {
-                id: 'cHJvamVjdEMuYnVzaW5lc3Mtem9uZQ==.1-MTkyLjE2OC4yNTIuMTI6ODc2MQ==.0',
-                source: 'cHJvamVjdEMuYnVzaW5lc3Mtem9uZQ==.1',
-                detectPoints: ['CLIENT'],
-                target: 'MTkyLjE2OC4yNTIuMTI6ODc2MQ==.0',
-              },
-              {
-                id: 'cHJvamVjdEEuYnVzaW5lc3Mtem9uZQ==.1-cHJvamVjdEMuYnVzaW5lc3Mtem9uZQ==.1',
-                source: 'cHJvamVjdEEuYnVzaW5lc3Mtem9uZQ==.1',
-                detectPoints: ['CLIENT', 'SERVER'],
-                target: 'cHJvamVjdEMuYnVzaW5lc3Mtem9uZQ==.1',
-              },
-              {
-                id: 'bG9hZCBiYWxhbmNlcjEuc3lzdGVt.1-bG9hZCBiYWxhbmNlcjIuc3lzdGVt.1',
-                source: 'bG9hZCBiYWxhbmNlcjEuc3lzdGVt.1',
-                detectPoints: ['CLIENT', 'SERVER'],
-                target: 'bG9hZCBiYWxhbmNlcjIuc3lzdGVt.1',
-              },
-              {
-                id: 'bG9hZCBiYWxhbmNlcjIuc3lzdGVt.1-cHJvamVjdEEuYnVzaW5lc3Mtem9uZQ==.1',
-                source: 'bG9hZCBiYWxhbmNlcjIuc3lzdGVt.1',
-                detectPoints: ['CLIENT', 'SERVER'],
-                target: 'cHJvamVjdEEuYnVzaW5lc3Mtem9uZQ==.1',
-              },
-              {
-                id: 'cHJvamVjdEEuYnVzaW5lc3Mtem9uZQ==.1-cHJvamVjdEIuYnVzaW5lc3Mtem9uZQ==.1',
-                source: 'cHJvamVjdEEuYnVzaW5lc3Mtem9uZQ==.1',
-                detectPoints: ['CLIENT', 'SERVER'],
-                target: 'cHJvamVjdEIuYnVzaW5lc3Mtem9uZQ==.1',
-              },
-              {
-                id: 'cHJvamVjdEIuYnVzaW5lc3Mtem9uZQ==.1-bG9jYWxob3N0Oi0x.0',
-                source: 'cHJvamVjdEIuYnVzaW5lc3Mtem9uZQ==.1',
-                detectPoints: ['CLIENT'],
-                target: 'bG9jYWxob3N0Oi0x.0',
-              },
-              {
-                id: 'cHJvamVjdEMuYnVzaW5lc3Mtem9uZQ==.1-bG9jYWxob3N0Ojg3NjE=.0',
-                source: 'cHJvamVjdEMuYnVzaW5lc3Mtem9uZQ==.1',
-                detectPoints: ['CLIENT'],
-                target: 'bG9jYWxob3N0Ojg3NjE=.0',
-              },
-              {
-                id: 'MTI3LjAuMC4xOjkwOTI=.0-cHJvamVjdEQuYnVzaW5lc3Mtem9uZQ==.1',
-                source: 'MTI3LjAuMC4xOjkwOTI=.0',
-                detectPoints: ['SERVER'],
-                target: 'cHJvamVjdEQuYnVzaW5lc3Mtem9uZQ==.1',
-              },
-              {
-                id: 'VXNlcg==.0-bG9hZCBiYWxhbmNlcjEuc3lzdGVt.1',
-                source: 'VXNlcg==.0',
-                detectPoints: ['SERVER'],
-                target: 'bG9hZCBiYWxhbmNlcjEuc3lzdGVt.1',
-              },
-            ],
-          },
-        },
-      };
-      const calls = res.data.topo.calls;
-      const nodes = res.data.topo.nodes;
-      const ids = nodes.map((i: any) => i.id);
-      // luke？
-      const idsC = calls.filter((i: any) => i.detectPoints.indexOf('CLIENT') !== -1).map((b: any) => b.id);
-      const idsS = calls.filter((i: any) => i.detectPoints.indexOf('CLIENT') === -1).map((b: any) => b.id);
-
-      // queryTopoInfo
-      var info = {
-        data: {
-          sla: {
-            values: [
-              {
-                id: 'd3d3LmJhaWR1LmNvbTo4MA==.0',
-                value: 0,
-              },
-              {
-                id: 'bG9hZCBiYWxhbmNlcjEuc3lzdGVt.1',
-                value: 10000,
-              },
-              {
-                id: 'VXNlcg==.0',
-                value: 0,
-              },
-              {
-                id: 'cHJvamVjdEMuYnVzaW5lc3Mtem9uZQ==.1',
-                value: 10000,
-              },
-              {
-                id: 'MTkyLjE2OC4yNTIuMTI6ODc2MQ==.0',
-                value: 0,
-              },
-              {
-                id: 'cHJvamVjdEEuYnVzaW5lc3Mtem9uZQ==.1',
-                value: 10000,
-              },
-              {
-                id: 'cHJvamVjdEIuYnVzaW5lc3Mtem9uZQ==.1',
-                value: 10000,
-              },
-              {
-                id: 'bG9jYWxob3N0Ojg3NjE=.0',
-                value: 0,
-              },
-              {
-                id: 'MTI3LjAuMC4xOjkwOTI=.0',
-                value: 0,
-              },
-              {
-                id: 'bG9hZCBiYWxhbmNlcjIuc3lzdGVt.1',
-                value: 10000,
-              },
-              {
-                id: 'bG9jYWxob3N0Oi0x.0',
-                value: 0,
-              },
-              {
-                id: 'cHJvamVjdEQuYnVzaW5lc3Mtem9uZQ==.1',
-                value: 10000,
-              },
-            ],
-          },
-          nodeCpm: {
-            values: [
-              {
-                id: 'd3d3LmJhaWR1LmNvbTo4MA==.0',
-                value: 0,
-              },
-              {
-                id: 'bG9hZCBiYWxhbmNlcjEuc3lzdGVt.1',
-                value: 202,
-              },
-              {
-                id: 'VXNlcg==.0',
-                value: 0,
-              },
-              {
-                id: 'cHJvamVjdEMuYnVzaW5lc3Mtem9uZQ==.1',
-                value: 213,
-              },
-              {
-                id: 'MTkyLjE2OC4yNTIuMTI6ODc2MQ==.0',
-                value: 0,
-              },
-              {
-                id: 'cHJvamVjdEEuYnVzaW5lc3Mtem9uZQ==.1',
-                value: 200,
-              },
-              {
-                id: 'cHJvamVjdEIuYnVzaW5lc3Mtem9uZQ==.1',
-                value: 201,
-              },
-              {
-                id: 'bG9jYWxob3N0Ojg3NjE=.0',
-                value: 0,
-              },
-              {
-                id: 'MTI3LjAuMC4xOjkwOTI=.0',
-                value: 0,
-              },
-              {
-                id: 'bG9hZCBiYWxhbmNlcjIuc3lzdGVt.1',
-                value: 202,
-              },
-              {
-                id: 'bG9jYWxob3N0Oi0x.0',
-                value: 0,
-              },
-              {
-                id: 'cHJvamVjdEQuYnVzaW5lc3Mtem9uZQ==.1',
-                value: 202,
-              },
-            ],
-          },
-          nodeLatency: {
-            values: [
-              {
-                id: 'd3d3LmJhaWR1LmNvbTo4MA==.0',
-                value: 0,
-              },
-              {
-                id: 'bG9hZCBiYWxhbmNlcjEuc3lzdGVt.1',
-                value: 1892,
-              },
-              {
-                id: 'VXNlcg==.0',
-                value: 0,
-              },
-              {
-                id: 'cHJvamVjdEMuYnVzaW5lc3Mtem9uZQ==.1',
-                value: 4423,
-              },
-              {
-                id: 'MTkyLjE2OC4yNTIuMTI6ODc2MQ==.0',
-                value: 0,
-              },
-              {
-                id: 'cHJvamVjdEEuYnVzaW5lc3Mtem9uZQ==.1',
-                value: 1895,
-              },
-              {
-                id: 'cHJvamVjdEIuYnVzaW5lc3Mtem9uZQ==.1',
-                value: 510,
-              },
-              {
-                id: 'bG9jYWxob3N0Ojg3NjE=.0',
-                value: 0,
-              },
-              {
-                id: 'MTI3LjAuMC4xOjkwOTI=.0',
-                value: 0,
-              },
-              {
-                id: 'bG9hZCBiYWxhbmNlcjIuc3lzdGVt.1',
-                value: 1891,
-              },
-              {
-                id: 'bG9jYWxob3N0Oi0x.0',
-                value: 0,
-              },
-              {
-                id: 'cHJvamVjdEQuYnVzaW5lc3Mtem9uZQ==.1',
-                value: 0,
-              },
-            ],
-          },
-          cpmS: {
-            values: [
-              {
-                id: 'MTI3LjAuMC4xOjkwOTI=.0-cHJvamVjdEQuYnVzaW5lc3Mtem9uZQ==.1',
-                value: 202,
-              },
-              {
-                id: 'VXNlcg==.0-bG9hZCBiYWxhbmNlcjEuc3lzdGVt.1',
-                value: 200,
-              },
-            ],
-          },
-          latencyS: {
-            values: [
-              {
-                id: 'MTI3LjAuMC4xOjkwOTI=.0-cHJvamVjdEQuYnVzaW5lc3Mtem9uZQ==.1',
-                value: 0,
-              },
-              {
-                id: 'VXNlcg==.0-bG9hZCBiYWxhbmNlcjEuc3lzdGVt.1',
-                value: 0,
-              },
-            ],
-          },
-          cpmC: {
-            values: [
-              {
-                id: 'cHJvamVjdEMuYnVzaW5lc3Mtem9uZQ==.1-d3d3LmJhaWR1LmNvbTo4MA==.0',
-                value: 215,
-              },
-              {
-                id: 'cHJvamVjdEEuYnVzaW5lc3Mtem9uZQ==.1-MTkyLjE2OC4yNTIuMTI6ODc2MQ==.0',
-                value: 3,
-              },
-              {
-                id: 'cHJvamVjdEEuYnVzaW5lc3Mtem9uZQ==.1-bG9jYWxob3N0Ojg3NjE=.0',
-                value: 3,
-              },
-              {
-                id: 'cHJvamVjdEIuYnVzaW5lc3Mtem9uZQ==.1-MTkyLjE2OC4yNTIuMTI6ODc2MQ==.0',
-                value: 3,
-              },
-              {
-                id: 'cHJvamVjdEIuYnVzaW5lc3Mtem9uZQ==.1-bG9jYWxob3N0Ojg3NjE=.0',
-                value: 3,
-              },
-              {
-                id: 'cHJvamVjdEMuYnVzaW5lc3Mtem9uZQ==.1-MTI3LjAuMC4xOjkwOTI=.0',
-                value: 213,
-              },
-              {
-                id: 'cHJvamVjdEMuYnVzaW5lc3Mtem9uZQ==.1-MTkyLjE2OC4yNTIuMTI6ODc2MQ==.0',
-                value: 3,
-              },
-              {
-                id: 'cHJvamVjdEEuYnVzaW5lc3Mtem9uZQ==.1-cHJvamVjdEMuYnVzaW5lc3Mtem9uZQ==.1',
-                value: 214,
-              },
-              {
-                id: 'bG9hZCBiYWxhbmNlcjEuc3lzdGVt.1-bG9hZCBiYWxhbmNlcjIuc3lzdGVt.1',
-                value: 200,
-              },
-              {
-                id: 'bG9hZCBiYWxhbmNlcjIuc3lzdGVt.1-cHJvamVjdEEuYnVzaW5lc3Mtem9uZQ==.1',
-                value: 202,
-              },
-              {
-                id: 'cHJvamVjdEEuYnVzaW5lc3Mtem9uZQ==.1-cHJvamVjdEIuYnVzaW5lc3Mtem9uZQ==.1',
-                value: 200,
-              },
-              {
-                id: 'cHJvamVjdEIuYnVzaW5lc3Mtem9uZQ==.1-bG9jYWxob3N0Oi0x.0',
-                value: 412,
-              },
-              {
-                id: 'cHJvamVjdEMuYnVzaW5lc3Mtem9uZQ==.1-bG9jYWxob3N0Ojg3NjE=.0',
-                value: 3,
-              },
-            ],
-          },
-          latencyC: {
-            values: [
-              {
-                id: 'cHJvamVjdEMuYnVzaW5lc3Mtem9uZQ==.1-d3d3LmJhaWR1LmNvbTo4MA==.0',
-                value: 32,
-              },
-              {
-                id: 'cHJvamVjdEEuYnVzaW5lc3Mtem9uZQ==.1-MTkyLjE2OC4yNTIuMTI6ODc2MQ==.0',
-                value: 1,
-              },
-              {
-                id: 'cHJvamVjdEEuYnVzaW5lc3Mtem9uZQ==.1-bG9jYWxob3N0Ojg3NjE=.0',
-                value: 1,
-              },
-              {
-                id: 'cHJvamVjdEIuYnVzaW5lc3Mtem9uZQ==.1-MTkyLjE2OC4yNTIuMTI6ODc2MQ==.0',
-                value: 1,
-              },
-              {
-                id: 'cHJvamVjdEIuYnVzaW5lc3Mtem9uZQ==.1-bG9jYWxob3N0Ojg3NjE=.0',
-                value: 1,
-              },
-              {
-                id: 'cHJvamVjdEMuYnVzaW5lc3Mtem9uZQ==.1-MTI3LjAuMC4xOjkwOTI=.0',
-                value: 3403,
-              },
-              {
-                id: 'cHJvamVjdEMuYnVzaW5lc3Mtem9uZQ==.1-MTkyLjE2OC4yNTIuMTI6ODc2MQ==.0',
-                value: 1,
-              },
-              {
-                id: 'cHJvamVjdEEuYnVzaW5lc3Mtem9uZQ==.1-cHJvamVjdEMuYnVzaW5lc3Mtem9uZQ==.1',
-                value: 1293,
-              },
-              {
-                id: 'bG9hZCBiYWxhbmNlcjEuc3lzdGVt.1-bG9hZCBiYWxhbmNlcjIuc3lzdGVt.1',
-                value: 1896,
-              },
-              {
-                id: 'bG9hZCBiYWxhbmNlcjIuc3lzdGVt.1-cHJvamVjdEEuYnVzaW5lc3Mtem9uZQ==.1',
-                value: 1891,
-              },
-              {
-                id: 'cHJvamVjdEEuYnVzaW5lc3Mtem9uZQ==.1-cHJvamVjdEIuYnVzaW5lc3Mtem9uZQ==.1',
-                value: 511,
-              },
-              {
-                id: 'cHJvamVjdEIuYnVzaW5lc3Mtem9uZQ==.1-bG9jYWxob3N0Oi0x.0',
-                value: 4,
-              },
-              {
-                id: 'cHJvamVjdEMuYnVzaW5lc3Mtem9uZQ==.1-bG9jYWxob3N0Ojg3NjE=.0',
-                value: 1,
-              },
-            ],
-          },
-        },
-      };
-      const resInfo = info.data;
-      if (!resInfo.sla) {
-        return context.commit(types.SET_TOPO, { calls, nodes });
-      }
-      // 填充节点的监控信息：sla、cpm、latency
-      for (let i = 0; i < resInfo.sla.values.length; i += 1) {
-        for (let j = 0; j < nodes.length; j += 1) {
-          if (nodes[j].id === resInfo.sla.values[i].id) {
-            nodes[j] = {
-              ...nodes[j],
-              // @ts-ignore
-              isGroupActive: true,
-              sla: resInfo.sla.values[i].value ? resInfo.sla.values[i].value / 100 : -1,
-              cpm: resInfo.nodeCpm.values[i] ? resInfo.nodeCpm.values[i].value : -1,
-              latency: resInfo.nodeLatency.values[i] ? resInfo.nodeLatency.values[i].value : -1,
-            };
-          }
+    return graph
+      .query(query)
+      .params(params)
+      .then((res: AxiosResponse) => {
+        if (res.data.errors) {
+          context.commit(types.SET_TOPO, { calls: [], nodes: [] });
+          return;
         }
-      }
-      if (!resInfo.cpmC) {
-        return context.commit(types.SET_TOPO, { calls, nodes });
-      }
-      // 填充idsC链路的监控信息：cpm、latency
-      for (let i = 0; i < resInfo.cpmC.values.length; i += 1) {
-        for (let j = 0; j < calls.length; j += 1) {
-          if (calls[j].id === resInfo.cpmC.values[i].id) {
-            calls[j] = {
-              ...calls[j],
-              // @ts-ignore
-              isGroupActive: true,
-              cpm: resInfo.cpmC.values[i] ? resInfo.cpmC.values[i].value : '',
-              latency: resInfo.latencyC.values[i] ? resInfo.latencyC.values[i].value : '',
-            };
-          }
-        }
-      }
-      if (!resInfo.cpmS) {
-        return context.commit(types.SET_TOPO, { calls, nodes });
-      }
-      // 填充idsS链路的监控信息：cpm、latency
-      for (let i = 0; i < resInfo.cpmS.values.length; i += 1) {
-        for (let j = 0; j < calls.length; j += 1) {
-          if (calls[j].id === resInfo.cpmS.values[i].id) {
-            calls[j] = {
-              ...calls[j],
-              // @ts-ignore
-              cpm: resInfo.cpmS.values[i] ? resInfo.cpmS.values[i].value : '',
-              latency: resInfo.latencyS.values[i] ? resInfo.latencyS.values[i].value : '',
-            };
-          }
-        }
-      }
-      // console.log(calls);
-      // console.log(nodes);
-      context.commit(types.SET_TOPO, { calls, nodes });
-    });
+        const calls = res.data.data.topo.calls;
+        const nodes = res.data.data.topo.nodes;
+        const ids = nodes.map((i: any) => i.id);
+        const idsC = calls.filter((i: any) => i.detectPoints.indexOf('CLIENT') !== -1).map((b: any) => b.id);
+        const idsS = calls.filter((i: any) => i.detectPoints.indexOf('CLIENT') === -1).map((b: any) => b.id);
+        return graph
+          .query('queryTopoInfo')
+          .params({ ...params, ids, idsC, idsS })
+          .then((info: AxiosResponse) => {
+            const resInfo = info.data.data;
+            if (!resInfo.sla) {
+              return context.commit(types.SET_TOPO, { calls, nodes });
+            }
+            for (let i = 0; i < resInfo.sla.values.length; i += 1) {
+              for (let j = 0; j < nodes.length; j += 1) {
+                if (nodes[j].id === resInfo.sla.values[i].id) {
+                  nodes[j] = {
+                    ...nodes[j],
+                    isGroupActive: true,
+                    sla: resInfo.sla.values[i].value ? resInfo.sla.values[i].value / 100 : -1,
+                    cpm: resInfo.nodeCpm.values[i] ? resInfo.nodeCpm.values[i].value : -1,
+                    latency: resInfo.nodeLatency.values[i] ? resInfo.nodeLatency.values[i].value : -1,
+                  };
+                }
+              }
+            }
+            if (!resInfo.cpmC) {
+              return context.commit(types.SET_TOPO, { calls, nodes });
+            }
+            for (let i = 0; i < resInfo.cpmC.values.length; i += 1) {
+              for (let j = 0; j < calls.length; j += 1) {
+                if (calls[j].id === resInfo.cpmC.values[i].id) {
+                  calls[j] = {
+                    ...calls[j],
+                    isGroupActive: true,
+                    cpm: resInfo.cpmC.values[i] ? resInfo.cpmC.values[i].value : '',
+                    latency: resInfo.latencyC.values[i] ? resInfo.latencyC.values[i].value : '',
+                  };
+                }
+              }
+            }
+            if (!resInfo.cpmS) {
+              return context.commit(types.SET_TOPO, { calls, nodes });
+            }
+            for (let i = 0; i < resInfo.cpmS.values.length; i += 1) {
+              for (let j = 0; j < calls.length; j += 1) {
+                if (calls[j].id === resInfo.cpmS.values[i].id) {
+                  calls[j] = {
+                    ...calls[j],
+                    cpm: resInfo.cpmS.values[i] ? resInfo.cpmS.values[i].value : '',
+                    latency: resInfo.latencyS.values[i] ? resInfo.latencyS.values[i].value : '',
+                  };
+                }
+              }
+            }
+            context.commit(types.SET_TOPO, { calls, nodes });
+          });
+      });
   },
   // todo sync
   GET_ALL_ENDPOINT_DEPENDENCY(

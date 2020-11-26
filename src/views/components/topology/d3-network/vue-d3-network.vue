@@ -16,11 +16,8 @@
       svgRenderer,
     },
     props: {
-      netNodes: {
-        type: Array,
-      },
-      netLinks: {
-        type: Array,
+      netData: {
+        type: Object,
       },
       options: {
         type: Object,
@@ -185,8 +182,8 @@
     },
     created() {
       this.updateOptions(this.options);
-      this.buildNodes(this.netNodes);
-      this.links = this.buildLinks(this.netLinks);
+      this.buildNodes(this.netData.nodes);
+      this.links = this.buildLinks(this.netData.links);
       this.updateNodeSvg();
     },
     mounted() {
@@ -244,12 +241,9 @@
       currentNode(newVal, oldVal) {
         this.setTopoViewport(newVal, oldVal);
       },
-      netNodes(newValue) {
-        this.buildNodes(newValue);
-        this.reset();
-      },
-      netLinks(newValue, oldValue) {
-        this.links = this.buildLinks(newValue);
+      netData(newVal) {
+        this.buildNodes(newVal.nodes);
+        this.links = this.buildLinks(newVal.links);
         this.reset();
       },
       nodeSym() {

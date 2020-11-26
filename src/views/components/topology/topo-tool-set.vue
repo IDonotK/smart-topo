@@ -229,6 +229,7 @@
       this.$store.commit('rocketTopo/SET_SHOW_NODE_TYPES', nodeTypes);
       this.$store.commit('rocketTopo/SET_SHOW_STATE_TYPES', stateTypes);
       this.$store.commit('rocketTopo/SET_SHOW_RELATIVE_TYPES', relativeTypes);
+      this.$store.commit('rocketTopo/SET_TOOL_SET_INSTANCE', this);
     },
 
     components: {
@@ -372,18 +373,24 @@
             this.setCurNodeStably(result);
           });
         } else if (this.exploreMode === 'global') {
-          this.isShowExplore = false;
-          this.restoreTopoViewPort(0);
-          this.$store.commit('rocketTopo/SET_TOPO_MODE', this.exploreMode);
-          this.$emit('changeTopoViewData', this.topoData);
-          this.$store.commit('rocketTopo/SET_VIEW_NODE', {});
-          this.$store.commit('rocketTopo/SET_NODE', {});
+          this.refreshTopo(true);
         }
       },
       handleClickExploreBtn() {
         this.exploreMode = 'specific';
         this.specificId = '';
         this.isShowExplore = true;
+      },
+      refreshTopo(isRefreshView) {
+        this.isShowExplore = false;
+        this.restoreTopoViewPort(0);
+        this.$store.commit('rocketTopo/SET_TOPO_MODE', this.exploreMode);
+        if (isRefreshView) {
+          this.$emit('changeTopoViewData', this.topoData);
+        }
+        this.$store.commit('rocketTopo/SET_VIEW_NODE', {});
+        this.$store.commit('rocketTopo/SET_NODE', {});
+        this.restoreFilters();
       },
 
       // 过滤

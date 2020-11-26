@@ -1,5 +1,5 @@
 <template>
-  <div class="topo-detail" ref="tdDom">
+  <div id="tdId" class="topo-detail" ref="tdDom">
     <!-- 背景调色 -->
     <div
       class="td-item"
@@ -9,7 +9,7 @@
     >
       <div class="tdi-c"></div>
     </div>
-    <div class="td-topo" ref="tdTopo">
+    <div id="tdtId" class="td-topo" ref="tdTopo">
       <!-- 节点纵向依赖 -->
       <div id="tdt-view-cross-layer">
         <!-- link text -->
@@ -148,10 +148,15 @@
     },
 
     watch: {
-      topoDetailData(newVal, oldVal) {
-        if (newVal.nodes.length > 0) {
-          this.drawDetailTopoCrossLayer();
-        }
+      topoDetailData: {
+        handler(newVal) {
+          console.log('topoDetailData to zero in topo-detail: ', this.topoDetailData);
+          if (newVal.nodes.length > 0) {
+            this.drawDetailTopoCrossLayer();
+          }
+        },
+        // deep: true,
+        immediate: true,
       }
     },
 
@@ -380,7 +385,6 @@
         this.$store.commit('rocketTopo/SET_SHOW_NODE_TYPES', itemId);
       },
       drawDetailTopoCrossLayer() {
-        // 提示概率性不消失?
         if (this.tip) {
           this.tip.hide(this);
           this.tip = null;
@@ -396,6 +400,8 @@
           top: 0 + 'px',
         };
 
+        console.log("topoDetailData: ", this.topoDetailData);
+
         if (this.topoDetailData.nodes.length <= 0) {
           return;
         }
@@ -404,7 +410,7 @@
 
         const graph = this.topoDetailData;
 
-        const topoHeight = this.$refs.tdTopo.clientHeight;
+        const topoHeight = $jq("#tdtId").height();
         const deltah = topoHeight / 6;
         // #tdw最大宽度为主拓扑视口#tvcc的一半
         const tdwWidthMax = document.getElementById('tvccId').clientWidth * 0.6;
@@ -445,7 +451,7 @@
         // 设置tvcl宽度
         $jq('#tdwId').width(tdwWidth);
         // 设置topoDetail宽度
-        this.$refs.tdDom.style.width = topoWidth + 'px';
+        $jq('#tdId').width(topoWidth);
 
         // 计算起点坐标
         let appStartX = 50 + (maxNum - appNum) / 2 * 50;
@@ -455,7 +461,7 @@
         let podStartX = 50 + (maxNum - podNum) / 2 * 50;
         let nodeStartX = 50 + (maxNum - nodeNum) / 2 * 50;
 
-        // 调整曲线 ?
+        // 调整曲线
         let isAppLine2Src = appNum >= middlewareNum ? true : false;
         let isMiddlewareLine2Src = middlewareNum >= processNum ? true : false;
         let isProcessLine2Src = processNum >= workloadNum ? true : false;
@@ -575,7 +581,7 @@
           .select('#tdt-view-cross-layer')
           .append('svg')
           .attr('class', 'topo-svg')
-          .attr('height', this.$refs.tdTopo.clientHeight);
+          .attr('height', topoHeight);
 
         // 设置提示
         this.tip = d3tip()
@@ -592,7 +598,6 @@
             return `M ${d.source.fx} ${d.source.fy} Q ${(d.source.fx + d.target.fx) / 2} ${(d.source.fy + d.target.fy) / 2 + 45 } ${d.target.fx} ${d.target.fy}`;
           });
         };
-
         const force = d3
           .forceSimulation(nodesOption)
           .force("link", d3.forceLink(linksOption).id(d => d.id))
