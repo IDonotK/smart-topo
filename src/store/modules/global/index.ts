@@ -118,8 +118,10 @@ const initState: State = {
 const getters = {
   duration(state: State): Duration {
     return {
-      start: getLocalTime(parseInt(state.utc + '', 10), state.durationRow.start),
-      end: getLocalTime(parseInt(state.utc + '', 10), state.durationRow.end),
+      // start: getLocalTime(parseInt(state.utc + '', 10), state.durationRow.start),
+      // end: getLocalTime(parseInt(state.utc + '', 10), state.durationRow.end),
+      start: state.durationRow.start,
+      end: state.durationRow.end,
       step: state.durationRow.step,
     };
   },

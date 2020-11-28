@@ -7,21 +7,14 @@
       <RkEcharts :option="smallTopoOption" ref="smallTopo" />
     </div>
     <div class="tvsl-node-info">
-      <div class="info-item">
-        <span class="item-title" title="id">id :</span>
-        <span class="item-content" :title="curNodeCrossLayer.id">{{ curNodeCrossLayer.id }}</span>
-      </div>
-      <div class="info-item">
-        <span class="item-title" title="name">name :</span>
-        <span class="item-content" :title="curNodeCrossLayer.name">{{ curNodeCrossLayer.name }}</span>
-      </div>
-      <div class="info-item">
-        <span class="item-title" title="label">label :</span>
-        <span class="item-content" :title="curNodeCrossLayer.type">{{ curNodeCrossLayer.type }}</span>
-      </div>
-      <div class="info-item">
-        <span class="item-title" title="state">state :</span>
-        <span class="item-content" :title="curNodeCrossLayer.state">{{ curNodeCrossLayer.state }}</span>
+      <div
+        class="info-item"
+        v-for="(value, key) in curNodeCrossLayer"
+        :key="key"
+        v-show="nodeDetailItems.includes(key)"
+      >
+        <span class="item-title" :title="key">{{ key }} :</span>
+        <span class="item-content" :title="value">{{ value }}</span>
       </div>
       <div class="clear"></div>
     </div>
@@ -45,6 +38,17 @@
     data() {
       return {
         smallTopoOption: {},
+        nodeDetailItems: [
+          'id',
+          'name',
+          'label',
+          'state',
+          'event_count',
+          'create_time',
+          'update_time',
+          'pod_id',
+          'node_ip'
+        ],
         pallet: [
           '#3fb1e3',
           '#a0a7e6',
@@ -139,7 +143,7 @@
           }
           let nodeColor = '#fff';
           switch (node.type) {
-            case 'App':
+            case 'Application':
               nodeColor = this.pallet[0];
               break;
             case 'Middleware':
@@ -221,10 +225,6 @@
             eventNodes.push(nodeObj);
           }
         });
-
-        // console.log('nodes: ', nodes)
-        // console.log('links: ', links)
-        // console.log('eventNodes: ', eventNodes)
 
         this.smallTopoOption = {
           title: {

@@ -5,6 +5,7 @@ import axios, { AxiosPromise, AxiosResponse } from 'axios';
 import { cancelToken } from '@/utils/cancelToken';
 
 import { NODES, LINKS } from './data.js';
+import { GES_DATA } from './ges-data.js';
 
 interface Option {
   key: string;
@@ -95,6 +96,9 @@ export interface State {
   exploreNode: any;
   topoData: any;
   toolSetInstance: any;
+  networkInstance: any;
+  elemIdsRTCAll: any;
+  topoDetailData: any;
 }
 
 const PercentileItem: string[] = ['p50', 'p75', 'p90', 'p95', 'p99'];
@@ -160,6 +164,15 @@ const initState: State = {
     links: [],
   },
   toolSetInstance: {},
+  networkInstance: {},
+  elemIdsRTCAll: {
+    nodeIds: [],
+    linkIds: [],
+  },
+  topoDetailData: {
+    nodes: [],
+    links: [],
+  },
 };
 
 // getters
@@ -227,6 +240,15 @@ const mutations = {
   },
   [types.SET_TOOL_SET_INSTANCE](state: State, data: any) {
     state.toolSetInstance = data;
+  },
+  [types.SET_NETWORK_INSTANCE](state: State, data: any) {
+    state.networkInstance = data;
+  },
+  [types.SET_ELEM_IDS_RTC_ALL](state: State, data: any) {
+    state.elemIdsRTCAll = data;
+  },
+  [types.SET_TOPO_DETAIL_DATA](state: State, data: any) {
+    state.topoDetailData = data;
   },
   [types.SET_LINK](state: State, data: any) {
     state.currentLink = data;
@@ -372,71 +394,72 @@ const mutations = {
   },
 };
 
+function formatTopoData(originData) {
+  let topoData = {
+    nodes: [],
+    links: [],
+  };
+  topoData.nodes = [
+    ...originData.applications,
+    ...originData.processes,
+    ...originData.workloads,
+    ...originData.pods,
+    ...originData.nodes,
+    ...originData.middleWares,
+  ];
+  topoData.links = [...originData.tracingTos, ...originData.createOns];
+
+  // 字段名同步
+  topoData.nodes.forEach((node) => {
+    node.type = node.label;
+    node.state = node.event_count > 0 ? 'Abnormal' : 'Normal';
+  });
+  topoData.links.forEach((link) => {
+    link.type = link.label;
+    link.sid = link.source;
+    link.tid = link.target;
+  });
+
+  return topoData;
+}
+
 // actions
 const actions: ActionTree<State, any> = {
   GET_TOPO_DATA(context: { commit: Commit; state: State }, params: any) {
-    context.commit(types.SET_TOPO_DATA, {
-      nodes: NODES,
-      links: LINKS,
-    });
-    // return axios.post(
-    //     window.location.origin + '/topodata',
-    //     params,
-    //     { cancelToken: cancelToken() },
-    //   ).then(res => {
-    //     // if (res.data.errors) {
-    //     //   context.commit(types.SET_TOPO, { calls: [], nodes: [] });
-    //     //   return;
-    //     // }
-    //     // context.commit(types.SET_TOPO, { calls, nodes });
-    //   }).catch(err => {
-
-    //   });
+    // let topoData = formatTopoData(GES_DATA);
+    // context.commit(types.SET_TOPO_DATA, {
+    //   nodes: topoData.nodes,
+    //   links: topoData.links,
+    // });
+    // context.commit(types.SET_TOPO_DATA, {
+    //   nodes: NODES,
+    //   links: LINKS,
+    // });
+    console.log(params);
+    return axios
+      .get(window.location.origin + '/v1/endpoints', {
+        params,
+        cancelToken: cancelToken(),
+      })
+      .then((res: any) => {
+        let topoData = formatTopoData(res.data);
+        context.commit(types.SET_TOPO_DATA, {
+          nodes: topoData.nodes,
+          links: topoData.links,
+        });
+      })
+      .catch((err) => {});
   },
   GET_SERVICES(context: { commit: Commit }, params: { duration: Duration; keyword: string }) {
     if (!params.keyword) {
       params.keyword = '';
     }
-    // return graph
-    //   .query('queryServices')
-    //   .params(params)
-    //   .then((res: AxiosResponse) => {
-    //     return res.data.data.services || [];
-    //   });
-    // luke
-    return Promise.resolve().then(() => {
-      var res = {
-        data: {
-          services: [
-            {
-              key: 'bG9hZCBiYWxhbmNlcjEuc3lzdGVt.1',
-              label: 'load balancer1.system',
-            },
-            {
-              key: 'bG9hZCBiYWxhbmNlcjIuc3lzdGVt.1',
-              label: 'load balancer2.system',
-            },
-            {
-              key: 'cHJvamVjdEMuYnVzaW5lc3Mtem9uZQ==.1',
-              label: 'projectC.business-zone',
-            },
-            {
-              key: 'cHJvamVjdEEuYnVzaW5lc3Mtem9uZQ==.1',
-              label: 'projectA.business-zone',
-            },
-            {
-              key: 'cHJvamVjdEIuYnVzaW5lc3Mtem9uZQ==.1',
-              label: 'projectB.business-zone',
-            },
-            {
-              key: 'cHJvamVjdEQuYnVzaW5lc3Mtem9uZQ==.1',
-              label: 'projectD.business-zone',
-            },
-          ],
-        },
-      };
-      return res.data.services || [];
-    });
+    return graph
+      .query('queryServices')
+      .params(params)
+      .then((res: AxiosResponse) => {
+        return res.data.data.services || [];
+      });
   },
   GET_SERVICE_ENDPOINTS(context: { commit: Commit }, params: { serviceId: string; keyword: string }) {
     if (!params.serviceId) {

@@ -127,6 +127,8 @@
 
   import * as d3 from 'd3';
   import $jq from 'jquery';
+  import axios, { AxiosPromise, AxiosResponse } from 'axios';
+  import { cancelToken } from '@/utils/cancelToken';
 
   export default {
     props: {
@@ -158,7 +160,7 @@
         inputId: '',
         moreToolState: false,
         pallet: {
-          App: '#3fb1e3',
+          Application: '#3fb1e3',
           Middleware: '#a0a7e6',
           Process: '#96dee8',
           Workload: '#3f96e3',
@@ -172,7 +174,7 @@
         nodeTypesOption: {
           title: '显示节点类型',
           data: [
-            {key: 0, label: 'App', checked: true},
+            {key: 0, label: 'Application', checked: true},
             {key: 1, label: 'Middleware', checked: true},
             {key: 2, label: 'Process', checked: true},
             {key: 3, label: 'Workload', checked: true},
@@ -237,6 +239,9 @@
     },
 
     computed: {
+      durationRow() {
+        return this.$store.state.rocketbot.durationRow;
+      },
       topoMode() {
         return this.$store.state.rocketTopo.topoMode;
       },
@@ -249,98 +254,326 @@
       currentNode() {
         return this.$store.state.rocketTopo.currentNode;
       },
+      topoDetailData() {
+        return this.$store.state.rocketTopo.topoDetailData;
+      },
+      networkInstance() {
+        return this.$store.state.rocketTopo.networkInstance;
+      },
     },
 
     watch: {
+      topoViewData(newVal) {
+        this.filterTopo();
+      },
       inputId(newVal) {
         if (newVal === '') {
           this.$emit('onSearchResult', true);
         }
       },
-      currentNode(newVal) {
+      currentNode(newVal, oldVal) {
+        this.restoreTopoDetailData();
         if (newVal.id !== undefined) {
           // 注意:这里是基于视图数据topoViewData进行查询上下游节点
-          this.getRelativeElems(this.currentNode, this.topoViewData, this.filterTopo);
+          this.getRelativeElems(this.currentNode, this.topoViewData, false, () => {
+            // 选中节点放大居中展示
+            this.networkInstance.setTopoViewport(newVal, oldVal);
+            // 重置左侧纵向topo数据
+            this.resetTopoDetailDataOnLine();
+            // this.resetTopoDetailDataOffLine();
+            this.filterTopo();
+          });
         } else {
-          this.elemIdsRTCUp = {
-            nodeIds: [],
-            linkIds: []
-          };
-          this.elemIdsRTCDown = {
-            nodeIds: [],
-            linkIds: []
-          };
-          this.elemIdsRTCAll = {
-            nodeIds: [],
-            linkIds: []
-          };
-
-          this.elemsRTCUp = {
-            nodes: [],
-            links: []
-          };
-          this.elemsRTCDown = {
-            nodes: [],
-            links: []
-          };
-          this.elemsRTCAll = {
-            nodes: [],
-            links: []
-          };
           this.filterTopo();
         }
       },
     },
 
     methods: {
-      getRelativeElems(curNode, topoData, cb) {
-        // query上下游节点,数据模拟:单跳数据
-        let elemIdsRTCUpTmp = {
+      dateFormat(fmt, date) {
+        let ret;
+        const opt = {
+            "Y+": date.getFullYear().toString(),        // 年
+            "m+": (date.getMonth() + 1).toString(),     // 月
+            "d+": date.getDate().toString(),            // 日
+            "H+": date.getHours().toString(),           // 时
+            "M+": date.getMinutes().toString(),         // 分
+            "S+": date.getSeconds().toString()          // 秒
+            // 有其他格式化字符需求可以继续添加，必须转化成字符串
+        };
+        for (let k in opt) {
+            ret = new RegExp("(" + k + ")").exec(fmt);
+            if (ret) {
+                fmt = fmt.replace(ret[1], (ret[1].length == 1) ? (opt[k]) : (opt[k].padStart(ret[1].length, "0")))
+            };
+        };
+        return fmt;
+      },
+      restoreTopoDetailData() {
+        this.$store.commit('rocketTopo/SET_TOPO_DETAIL_DATA', {nodes: [], links: []});
+      },
+      restoreElemsRTC() {
+        this.$store.commit('rocketTopo/SET_ELEM_IDS_RTC_ALL', {nodeIds: [], linkIds: []});
+        this.elemIdsRTCUp = {
           nodeIds: [],
           linkIds: []
         };
-        let elemIdsRTCDownTmp = {
+        this.elemIdsRTCDown = {
+          nodeIds: [],
+          linkIds: []
+        };
+        this.elemIdsRTCAll = {
           nodeIds: [],
           linkIds: []
         };
 
-        let elemsRTCUpTmp = {
+        this.elemsRTCUp = {
           nodes: [],
           links: []
         };
-        let elemsRTCDownTmp = {
+        this.elemsRTCDown = {
           nodes: [],
           links: []
         };
-        topoData.links.forEach((link) => {
-          if (link.sid === curNode.id) { // 模拟下游节点
-            elemIdsRTCDownTmp.nodeIds.push(link.target.id);
-            elemIdsRTCDownTmp.linkIds.push(link.id);
+        this.elemsRTCAll = {
+          nodes: [],
+          links: []
+        };
+      },
+      deepSearchTopoUp(curNode, topoData, nodeSet, linkSet) {
+        for (let i = 0; i < topoData.links.length; i++) { // 基于全局的拓扑数据
+          let link = topoData.links[i];
+          if (link.tid === curNode.id) {
+            if (link.source.type === curNode.type) {
+              continue;
+            }
+            linkSet.add(link);
+            nodeSet.add(link.source);
+            this.deepSearchTopoUp(link.source, topoData, nodeSet, linkSet);
+          }
+        }
+      },
+      deepSearchTopoDown(curNode, topoData, nodeSet, linkSet) {
+        for (let i = 0; i < topoData.links.length; i++) { // 基于全局的拓扑数据
+          let link = topoData.links[i];
+          if (link.sid === curNode.id) {
+            if (link.target.type === curNode.type) {
+              continue;
+            }
+            linkSet.add(link);
+            nodeSet.add(link.target);
+            this.deepSearchTopoDown(link.target, topoData, nodeSet, linkSet);
+          }
+        }
+      },
+      searchStreamOnSingleHop(curNode, topoData, nodeSet, linkSet) {
+        const nodesTmpUp = new Set();
+        const linksTmpUp = new Set();
+        const nodesTmpDown = new Set();
+        const linksTmpDown = new Set();
+        topoData.links.forEach(link => {
+          if (link.tid === curNode.id && link.source.type === curNode.type) {
+            linksTmpUp.add(link);
+            nodesTmpUp.add(link.source);
 
-            elemsRTCDownTmp.nodes.push(link.target);
-            elemsRTCDownTmp.links.push(link);
-          } else if (link.tid === curNode.id) { // 模拟上游节点
-            elemIdsRTCUpTmp.nodeIds.push(link.source.id);
-            elemIdsRTCUpTmp.linkIds.push(link.id);
+            linkSet.add(link);
+            nodeSet.add(link.source);
+          }
+          if (link.sid === curNode.id && link.target.type === curNode.type) {
+            linksTmpDown.add(link);
+            nodesTmpDown.add(link.target);
 
-            elemsRTCUpTmp.nodes.push(link.source);
-            elemsRTCUpTmp.links.push(link);
+            linkSet.add(link);
+            nodeSet.add(link.target);
           }
         });
-        this.elemIdsRTCUp = elemIdsRTCUpTmp;
-        this.elemIdsRTCDown = elemIdsRTCDownTmp;
+        const nodesTmp = new Set([...nodesTmpUp, ...nodesTmpDown]);
+        const linksTmp = new Set([...linksTmpUp, ...linksTmpDown]);
+      },
+      resetTopoDetailDataOffLine() {
+        let curNode = this.currentNode;
+        const nodesTmp = new Set();
+        const linksTmp = new Set();
+        this.deepSearchTopoUp(curNode, this.topoViewData, nodesTmp, linksTmp);
+        this.deepSearchTopoDown(curNode, this.topoViewData, nodesTmp, linksTmp);
+
+        // 注意顺序: 选中节点 => 上游节点 => 下游节点,集中在topoDetailData的尾部
+        nodesTmp.add(curNode);
+        this.searchStreamOnSingleHop(curNode, this.elemsRTCAll, nodesTmp, linksTmp);
+
+        this.$store.commit('rocketTopo/SET_TOPO_DETAIL_DATA', {
+          nodes: Array.from(nodesTmp),
+          links: Array.from(linksTmp)
+        });
+      },
+      formatTopoData(originData, hasTracingTos) {
+        let topoData = {
+          nodes: [],
+          links: []
+        };
+        topoData.nodes = [
+          ...originData.applications,
+          ...originData.processes,
+          ...originData.workloads,
+          ...originData.pods,
+          ...originData.nodes,
+          ...originData.middleWares,
+        ];
+        if (hasTracingTos) {
+          topoData.links = [
+            ...originData.tracingTos,
+            ...originData.createOns,
+          ];
+        } else {
+          topoData.links = [
+            ...originData.createOns,
+          ];
+        }
+
+        // 字段名同步
+        topoData.nodes.forEach(node => {
+          node.type = node.label;
+          node.state = node.event_count > 0 ? 'Abnormal' : 'Normal';
+        });
+        topoData.links.forEach(link => {
+          link.type = link.label;
+          link.sid = link.source;
+          link.tid = link.target;
+        });
+
+        return topoData;
+      },
+      queryCrosslayerNodes(curNode) {
+        const params = {
+          id: curNode.id,
+          start_time: this.dateFormat("YYYY-mm-dd HH:MM:SS", this.durationRow.start),
+          end_time: this.dateFormat("YYYY-mm-dd HH:MM:SS", this.durationRow.end),
+        };
+        return axios.get(
+          window.location.origin + '/v1/underlying-resources',
+          {
+            params,
+            cancelToken: cancelToken()
+          },
+        );
+      },
+      async resetTopoDetailDataOnLine() {
+        let curNode = this.currentNode;
+        let crossLayerDataTmp = await this.queryCrosslayerNodes(curNode);
+        let crossLayerData = this.formatTopoData(crossLayerDataTmp.data);
+        // const nodesTmp = new Set([...crossLayerData.nodes]); // 纵向依赖响应能否去掉选中节点本身？
+        const nodesTmp = new Set([...crossLayerData.nodes].filter(node => node.id !== curNode.id));
+        const linksTmp = new Set([...crossLayerData.links]);
+        nodesTmp.add(curNode);
+        this.searchStreamOnSingleHop(curNode, this.elemsRTCAll, nodesTmp, linksTmp);
+        this.$store.commit('rocketTopo/SET_TOPO_DETAIL_DATA', {
+          nodes: Array.from(nodesTmp),
+          links: Array.from(linksTmp)
+        });
+      },
+      queryRelativeNodes(curNode, direction) {
+        const params = {
+          application_id: curNode.id,
+          direction: direction,
+          start_time: this.dateFormat("YYYY-mm-dd HH:MM:SS", this.durationRow.start),
+          end_time: this.dateFormat("YYYY-mm-dd HH:MM:SS", this.durationRow.end),
+        };
+        return axios.get(
+          window.location.origin + '/v1/applications',
+          {
+            params,
+            cancelToken: cancelToken()
+          },
+        );
+      },
+      async getRelativeElems(curNode, topoData, isRefreshLink, cb) {
+        this.restoreElemsRTC();
+        let elemIdsRTCUpTmp = { // 上游节点集合
+          nodeIds: [],
+          linkIds: []
+        };
+        let elemIdsRTCDownTmp = { // 下游节点集合
+          nodeIds: [],
+          linkIds: []
+        };
+        let upStreamData = await this.queryRelativeNodes(curNode, 'in'); // 查询上游节点
+        let downStreamData = await this.queryRelativeNodes(curNode, 'out'); // 查询下游节点
+        upStreamData.data.applications.forEach(node => {
+          elemIdsRTCUpTmp.nodeIds.push(node.id);
+        });
+        upStreamData.data.subTracingTos.forEach(link => {
+          elemIdsRTCUpTmp.linkIds.push(link.id);
+        });
+        downStreamData.data.applications.forEach(node => {
+          elemIdsRTCDownTmp.nodeIds.push(node.id);
+        });
+        downStreamData.data.subTracingTos.forEach(link => {
+          elemIdsRTCDownTmp.linkIds.push(link.id);
+        });
+
+        // 匹配提取topoData里的节点对象
+        topoData.nodes.forEach(node => {
+          if (elemIdsRTCUpTmp.nodeIds.includes(node.id)) {
+            this.elemIdsRTCUp.nodeIds.push(node.id); // 提取元素id
+            this.elemsRTCUp.nodes.push(node); // 提取元素对象
+          }
+          if (elemIdsRTCDownTmp.nodeIds.includes(node.id)) {
+            this.elemIdsRTCDown.nodeIds.push(node.id);
+            this.elemsRTCDown.nodes.push(node);
+          }
+        });
+
+        if (!isRefreshLink) { // 探索全部节点时，不需要刷新边，直接使用topoData里的边对象，浅拷贝
+          topoData.links.forEach(link => {
+            if (elemIdsRTCUpTmp.linkIds.includes(link.id)) {
+              this.elemIdsRTCUp.linkIds.push(link.id);
+              this.elemsRTCUp.links.push(link);
+            }
+            if (elemIdsRTCDownTmp.linkIds.includes(link.id)) {
+              this.elemIdsRTCDown.linkIds.push(link.id);
+              this.elemsRTCDown.links.push(link);
+            }
+          });
+        } else { // 探索目标节点时，需要刷新边：label、call_per_minute 次/min、response_time_per_minute 次/min
+          topoData.links.forEach(link => {
+            if (elemIdsRTCUpTmp.linkIds.includes(link.id)) {
+              this.elemIdsRTCUp.linkIds.push(link.id);
+
+              let linkCopy = JSON.parse(JSON.stringify(link));
+              let linkTmp = upStreamData.data.subTracingTos.find(slink => slink.id === link.id);
+              linkCopy.type = linkTmp.label;
+              linkCopy.label = linkTmp.label;
+              linkCopy.call_per_minute = linkTmp.call_per_minute;
+              linkCopy.response_time_per_minute = linkTmp.response_time_per_minute;
+              this.elemsRTCUp.links.push(linkCopy);
+            }
+            if (elemIdsRTCDownTmp.linkIds.includes(link.id)) {
+              this.elemIdsRTCDown.linkIds.push(link.id);
+
+              let linkCopy = JSON.parse(JSON.stringify(link));
+              let linkTmp = downStreamData.data.subTracingTos.find(slink => slink.id === link.id);
+              linkCopy.type = linkTmp.label;
+              linkCopy.label = linkTmp.label;
+              linkCopy.call_per_minute = linkTmp.call_per_minute;
+              linkCopy.response_time_per_minute = linkTmp.response_time_per_minute;
+              this.elemsRTCDown.links.push(linkCopy);
+            }
+          });
+        }
+
         this.elemIdsRTCAll = {
-          nodeIds: [...elemIdsRTCUpTmp.nodeIds, ...elemIdsRTCDownTmp.nodeIds],
-          linkIds: [...elemIdsRTCUpTmp.linkIds, ...elemIdsRTCDownTmp.linkIds]
+          nodeIds: [...this.elemIdsRTCUp.nodeIds, ...this.elemIdsRTCDown.nodeIds],
+          linkIds: [...this.elemIdsRTCUp.linkIds, ...this.elemIdsRTCDown.linkIds]
+        };
+        this.$store.commit('rocketTopo/SET_ELEM_IDS_RTC_ALL', this.elemIdsRTCAll);
+
+
+        this.elemsRTCAll = {
+          nodes: [curNode, ...this.elemsRTCUp.nodes, ...this.elemsRTCDown.nodes],
+          links: [...this.elemsRTCUp.links, ...this.elemsRTCDown.links]
         };
 
-        this.elemsRTCUp = elemsRTCUpTmp;
-        this.elemsRTCDown = elemsRTCDownTmp;
-        this.elemsRTCAll = {
-          nodes: [curNode, ...elemsRTCUpTmp.nodes, ...elemsRTCDownTmp.nodes],
-          links: [...elemsRTCUpTmp.links, ...elemsRTCDownTmp.links]
-        };
-        // 获取到数据后执行回调函数
+        // 执行回调函数
         if (cb) {
           cb();
         }
@@ -352,19 +585,19 @@
           if (this.specificId === '') {
             return;
           }
-
-          // 查询目标节点
+          // 注意:这里是基于当前topoData查询目标节点是否存在
           let result = {};
           result = this.topoData.nodes.find(node => String(node.id) === this.specificId);
           if (result === undefined) {
             return;
           }
           this.isShowExplore = false;
+          this.restoreTopoViewPort(0);
           this.$store.commit('rocketTopo/SET_TOPO_MODE', this.exploreMode);
-          this.getRelativeElems(result, this.topoData, () => { // 注意:这里是基于全局数据topoData进行查询上下游节点
+          this.getRelativeElems(result, this.topoData, true, () => {
             // 查询目标节点的上下游topo,替换topoViewData
             this.$store.commit('rocketTopo/SET_VIEW_NODE', {});
-            this.$store.commit('rocketTopo/SET_NODE', {});
+            this.$store.commit('rocketTopo/SET_NODE', {}); // 注意这里对currentNode的watch事件
             this.$emit('changeTopoViewData', this.elemsRTCAll);
 
             // 待拓扑布局稳定后,手动选中目标节点
@@ -384,7 +617,7 @@
       refreshTopo(isRefreshView) {
         this.isShowExplore = false;
         this.restoreTopoViewPort(0);
-        this.$store.commit('rocketTopo/SET_TOPO_MODE', this.exploreMode);
+        this.$store.commit('rocketTopo/SET_TOPO_MODE', 'global'); // 刷新回到global
         if (isRefreshView) {
           this.$emit('changeTopoViewData', this.topoData);
         }

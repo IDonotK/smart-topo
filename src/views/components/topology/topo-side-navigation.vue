@@ -25,7 +25,7 @@
 </template>
 
 <script lang="js">
-  import appIcon from './assets/APP.png';
+  import appIcon from './assets/APPLICATION.png';
   import middlewareIcon from './assets/MIDDLEWARE.png';
   import processIcon from './assets/PROCESS.png';
   import workloadIcon from './assets/WORKLOAD.png';
@@ -49,7 +49,7 @@
       return {
         navList: [
           {
-            id: 'App',
+            id: 'Application',
             name: 'Applications',
             imgUrl: appIcon,
             abnormal: 0,

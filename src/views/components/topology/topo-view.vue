@@ -1,12 +1,11 @@
 <template>
   <div class="topo-view-chart">
     <div id="tvccId" class="tvc-c">
-      <!-- 拓扑详情 -->
+      <!-- 左侧拓扑详情 -->
       <div class="tvc-l" id="tvclId">
         <overlay-scrollbars id="tdwId" style="height:100%" :options="scrollOptions" v-show="!foldTopoDetail">
           <TopoDetail
-            v-if="currentNode && currentNode.id !== undefined"
-            :topoDetailData="topoDetailData"
+            v-if="topoDetailData.nodes.length > 0"
             :topoViewData="topoViewData"
             @toggleNodeDetail="toggleNodeDetail"
           />
@@ -23,7 +22,7 @@
           <NodeDetail :topoViewData="topoViewData" @toggleNodeDetail="toggleNodeDetail" />
         </div>
       </div>
-      <!-- 主拓扑图 -->
+      <!-- 右侧主拓扑图 -->
       <div class="tvc-r" id="tvcrId" ref="tvcr">
         <!-- 拓扑标题 -->
         <div class="main-topo-info" v-show="topoViewData.nodes.length > 0 && isMatch">
@@ -51,21 +50,9 @@
           <!-- 查看节点详情 -->
           <div class="mti-item view-node-info" v-show="viewNode.id !== undefined">
             <div class="info-title">当前查看的节点信息:</div>
-            <div class="info-item">
-              <span class="item-title" title="id">id :</span>
-              <span class="item-content" :title="viewNode.id">{{ viewNode.id }}</span>
-            </div>
-            <div class="info-item">
-              <span class="item-title" title="name">name :</span>
-              <span class="item-content" :title="viewNode.name">{{ viewNode.name }}</span>
-            </div>
-            <div class="info-item">
-              <span class="item-title" title="label">label :</span>
-              <span class="item-content" :title="viewNode.type">{{ viewNode.type }}</span>
-            </div>
-            <div class="info-item">
-              <span class="item-title" title="state">state :</span>
-              <span class="item-content" :title="viewNode.state">{{ viewNode.state }}</span>
+            <div class="info-item" v-for="(value, key) in viewNode" :key="key" v-show="nodeDetailItems.includes(key)">
+              <span class="item-title" :title="key">{{ key }} :</span>
+              <span class="item-content" :title="value">{{ value }}</span>
             </div>
           </div>
         </div>
@@ -100,11 +87,6 @@
 
   import TopoDetail from './topo-detail.vue';
   import NodeDetail from './node-detail.vue';
-
-  import appIcon from './assets/types/app.png';
-  import processIcon from './assets/types/process.png';
-  import podIcon from './assets/types/pod.png';
-  import nodeIcon from './assets/types/node.png';
 
   import * as utils from './d3-network/utils.js';
   import D3Network from './d3-network/vue-d3-network.vue';
@@ -158,6 +140,7 @@
           },
           nodeSize: 20,
           linkWidth: 1,
+          fontSize: 16,
           nodeLabels: true,
           linkLabels: true,
           strLinks: true,
@@ -168,10 +151,6 @@
         },
         nodeSym: null,
         foldTopoDetail: false,
-        topoDetailData: {
-          nodes: [],
-          links: []
-        },
         loading: true,
         scrollOptions: {
           className: "os-theme-light",
@@ -185,6 +164,17 @@
           }
         },
         showNodeDetail: false,
+        nodeDetailItems: [
+          'id',
+          'name',
+          'label',
+          'state',
+          'event_count',
+          'create_time',
+          'update_time',
+          'pod_id',
+          'node_ip'
+        ]
       }
     },
 
@@ -218,30 +208,27 @@
       },
       viewNode() { // 当前查看节点
         return this.$store.state.rocketTopo.viewNode;
-      }
+      },
+      topoDetailData() {
+        return this.$store.state.rocketTopo.topoDetailData;
+      },
     },
 
     watch: {
       topoViewData(newVal, oldVal) {
-        console.log('topoViewData change in topo-view: ', newVal);
         this.initNetTopoData();
+      },
+      topoDetailData(newVal, oldVal) {
+        if (newVal.nodes.length > 0) {
+          this.foldTopoDetail = false;
+        } else {
+          this.foldTopoDetail = true;
+        }
       },
       currentNode(newVal, oldVal) {
         if (this.showNodeDetail) {
           this.showNodeDetail = false;
           this.$store.commit('rocketTopo/SET_NODE_CROSS_LAYER', {});
-        }
-        if (newVal.id !== undefined) {
-          this.foldTopoDetail = false;
-          // 根据选中的节点过滤拓扑数据
-          this.resetTopoDetailData(newVal);
-        } else {
-          this.topoDetailData = {
-            nodes: [],
-            links: []
-          };
-          console.log('topoDetailData to zero in topo-view: ', this.topoDetailData);
-          this.foldTopoDetail = true;
         }
       }
     },
@@ -279,72 +266,6 @@
             this.$store.commit('rocketTopo/SET_NODE', curNode);
           }
         }, 10);
-      },
-      resetTopoDetailData(curNode) {
-        // query
-        const nodesTmp = new Set();
-        const linksTmp = new Set();
-        this.deepSearchTopoUp(curNode, this.topoViewData, nodesTmp, linksTmp);
-        this.deepSearchTopoDown(curNode, this.topoViewData, nodesTmp, linksTmp);
-        // 注意顺序: 选中节点 => 上游节点 => 下游节点,集中在topoDetailData的尾部
-        nodesTmp.add(curNode);
-        this.searchStreamOnSingleHop(curNode, this.topoViewData, nodesTmp, linksTmp);
-
-        this.topoDetailData = {
-          nodes: Array.from(nodesTmp),
-          links: Array.from(linksTmp)
-        };
-      },
-      searchStreamOnSingleHop(curNode, topoData, nodeSet, linkSet) {
-        // query
-        const nodesTmpUp = new Set();
-        const linksTmpUp = new Set();
-        const nodesTmpDown = new Set();
-        const linksTmpDown = new Set();
-        topoData.links.forEach(link => {
-          if (link.tid === curNode.id && link.source.type === curNode.type) {
-            linksTmpUp.add(link);
-            nodesTmpUp.add(link.source);
-
-            linkSet.add(link);
-            nodeSet.add(link.source);
-          }
-          if (link.sid === curNode.id && link.target.type === curNode.type) {
-            linksTmpDown.add(link);
-            nodesTmpDown.add(link.target);
-
-            linkSet.add(link);
-            nodeSet.add(link.target);
-          }
-        });
-        const nodesTmp = new Set([...nodesTmpUp, ...nodesTmpDown]);
-        const linksTmp = new Set([...linksTmpUp, ...linksTmpDown]);
-      },
-      deepSearchTopoUp(curNode, topoData, nodeSet, linkSet) {
-        for (let i = 0; i < topoData.links.length; i++) { // 基于全局的拓扑数据
-          let link = topoData.links[i];
-          if (link.tid === curNode.id) {
-            if (link.source.type === curNode.type) {
-              continue;
-            }
-            linkSet.add(link);
-            nodeSet.add(link.source);
-            this.deepSearchTopoUp(link.source, topoData, nodeSet, linkSet);
-          }
-        }
-      },
-      deepSearchTopoDown(curNode, topoData, nodeSet, linkSet) {
-        for (let i = 0; i < topoData.links.length; i++) { // 基于全局的拓扑数据
-          let link = topoData.links[i];
-          if (link.sid === curNode.id) {
-            if (link.target.type === curNode.type) {
-              continue;
-            }
-            linkSet.add(link);
-            nodeSet.add(link.target);
-            this.deepSearchTopoDown(link.target, topoData, nodeSet, linkSet);
-          }
-        }
       },
       initSvgSizeArg() {
         this.options.size.w = this.$refs.tvcr.clientWidth;

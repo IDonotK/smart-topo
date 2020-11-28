@@ -24,7 +24,7 @@
   import d3tip from 'd3-tip';
   import $jq from 'jquery';
 
-  import appIcon from './assets/APP.png';
+  import appIcon from './assets/APPLICATION.png';
   import middlewareIcon from './assets/MIDDLEWARE.png';
   import processIcon from './assets/PROCESS.png';
   import workloadIcon from './assets/WORKLOAD.png';
@@ -47,21 +47,12 @@
           };
         },
       },
-      topoDetailData: {
-        type: Object,
-        default() {
-          return {
-            nodes: [],
-            links: [],
-          };
-        },
-      }
     },
     data() {
       return {
         navList: [
           {
-            id: 'App',
+            id: 'Application',
             name: 'Applications',
           },
           {
@@ -97,21 +88,17 @@
     },
 
     computed: {
+      topoDetailData() {
+        return this.$store.state.rocketTopo.topoDetailData;
+      },
       currentNode() {
         return this.$store.state.rocketTopo.currentNode;
       },
     },
 
     watch: {
-      topoDetailData: {
-        handler(newVal) {
-          console.log('topoDetailData to zero in topo-detail: ', this.topoDetailData);
-          if (newVal.nodes.length > 0) {
-            this.drawDetailTopoCrossLayer();
-          }
-        },
-        // deep: true,
-        immediate: true,
+      topoDetailData(newVal) {
+        this.drawDetailTopoCrossLayer();
       }
     },
 
@@ -139,10 +126,9 @@
           }
         }, 10);
       },
-      handleSelectNav(itemId) {
-        this.$store.commit('rocketTopo/SET_SHOW_NODE_TYPES', itemId);
-      },
       drawDetailTopoCrossLayer() {
+        d3.select("#tdt-view-cross-layer svg").remove();
+
         if (this.tip) {
           this.tip.hide(this);
           this.tip = null;
@@ -158,13 +144,11 @@
           top: 0 + 'px',
         };
 
-        console.log("topoDetailData: ", this.topoDetailData);
+        // console.log("topoDetailData: ", this.topoDetailData);
 
         if (this.topoDetailData.nodes.length <= 0) {
           return;
         }
-
-        d3.select("#tdt-view-cross-layer svg").remove();
 
         const graph = this.topoDetailData;
 
@@ -183,7 +167,7 @@
         let nodeNum = 0;
         graph.nodes.forEach(node => {
           switch (node.type) {
-            case 'App': appNum++; break;
+            case 'Application': appNum++; break;
             case 'Middleware': middlewareNum++; break;
             case 'Process': processNum++; break;
             case 'Workload': workloadNum++; break;
@@ -195,7 +179,7 @@
         // 选中节点类型 偶补成奇
         let curTypeNum = 0;
         switch (this.currentNode.type) {
-          case 'App': appNum = (appNum % 2 === 0 ? appNum + 1 : appNum); curTypeNum = appNum; break;
+          case 'Application': appNum = (appNum % 2 === 0 ? appNum + 1 : appNum); curTypeNum = appNum; break;
           case 'Middleware': middlewareNum = (middlewareNum % 2 === 0 ? middlewareNum + 1 : middlewareNum); curTypeNum = middlewareNum; break;
           case 'Process': processNum = (processNum % 2 === 0 ? processNum + 1 : processNum); curTypeNum = processNum; break;
           case 'Workload': workloadNum = (workloadNum % 2 === 0 ? workloadNum + 1 : workloadNum); curTypeNum = workloadNum; break;
@@ -261,9 +245,9 @@
             state: node.state,
           };
           switch (node.type) {
-            case 'App': {
+            case 'Application': {
                 appNum++;
-                if (this.currentNode.type === 'App') {
+                if (this.currentNode.type === 'Application') {
                   setNodePositonCurNodeLayer(appNum, curTypeNum, itemTmp, appStartX, 0.5, appIcon, 28);
                 } else {
                   setNodePositonNormalLayer(appNum, itemTmp, appStartX, 0.5, appIcon, 28);
@@ -319,10 +303,10 @@
             source: link.sid,
             target: link.tid,
             type: link.type,
-            isTracingTo: link.type === 'tracingto' ? true : false,
+            isTracingTo: (link.type === 'TracingTo' || link.type === 'SubTracingTo')? true : false,
           };
           switch (link.source.type) {
-            case 'App': itemTmp.isLine2Src = isAppLine2Src; break;
+            case 'Application': itemTmp.isLine2Src = isAppLine2Src; break;
             case 'Middleware': itemTmp.isLine2Src = isMiddlewareLine2Src; break;
             case 'Process': itemTmp.isLine2Src = isProcessLine2Src; break;
             case 'Workload': itemTmp.isLine2Src = isWorkloadLine2Src; break;
@@ -331,9 +315,6 @@
           }
           linksOption.push(itemTmp);
         });
-
-        console.log('nodesOption: ', nodesOption);
-        console.log('linksOption: ', linksOption);
 
         const svg = d3
           .select('#tdt-view-cross-layer')

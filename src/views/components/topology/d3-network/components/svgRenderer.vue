@@ -53,6 +53,7 @@
             v-bind="linkAttrs(link)"
             :class="linkClass(link.id, [link.isDark ? 'dark-link' : '', link.isBright ? 'bright-link' : ''])"
             :style="linkStyle(link)"
+            :stroke-dasharray="link.label === 'TracingTo' || link.label === 'SubTracingTo' ? '13 7' : 'none'"
             :marker-end="'url(#arrow' + link.id + ')'"
             @click.stop.prevent="emit('linkClick', [$event, link])"
             @mouseenter.stop.prevent="emit('mouseEnterLink', [$event, link])"

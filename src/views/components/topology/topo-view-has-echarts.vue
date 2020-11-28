@@ -89,7 +89,7 @@
             }
           };
           switch (item) {
-            case 'App': itemTmp.icon = 'image://' + appIcon + ''; break;
+            case 'Application': itemTmp.icon = 'image://' + appIcon + ''; break;
             case 'Process': itemTmp.icon = 'image://' + processIcon + ''; break;
             case 'Pod': itemTmp.icon = 'image://' + podIcon + ''; break;
             case 'Node': itemTmp.icon = 'image://' + nodeIcon + ''; break;
@@ -104,7 +104,7 @@
           itemWidth: 20,
           itemHeight: 20,
           selected: {
-            'App': true,
+            'Application': true,
             'Process': true,
             'Pod': true,
             'Node': true
@@ -153,7 +153,7 @@
             }
           };
           switch (node.type) {
-            case 'App': itemTmp.symbol = 'image://' + appIcon + ''; break;
+            case 'Application': itemTmp.symbol = 'image://' + appIcon + ''; break;
             case 'Process': itemTmp.symbol = 'image://' + processIcon + ''; break;
             case 'Pod': itemTmp.symbol = 'image://' + podIcon + ''; break;
             case 'Node': itemTmp.symbol = 'image://' + nodeIcon + ''; break;

@@ -78,7 +78,7 @@
         linkWidth: 1,
         nodeLabels: false,
         linkLabels: false,
-        nodeSize: 5,
+        nodeSize: 20,
         mouseOfst: {
           x: 0,
           y: 0,
@@ -187,6 +187,7 @@
       this.updateNodeSvg();
     },
     mounted() {
+      this.$store.commit('rocketTopo/SET_NETWORK_INSTANCE', this);
       this.onResize();
       this.$nextTick(() => {
         this.animate();
@@ -211,6 +212,9 @@
       },
       showNodeTypes() {
         return this.$store.state.rocketTopo.showNodeTypes;
+      },
+      elemIdsRTCAll() {
+        return this.$store.state.rocketTopo.elemIdsRTCAll;
       },
       currentNode() {
         return this.$store.state.rocketTopo.currentNode;
@@ -238,10 +242,9 @@
       },
     },
     watch: {
-      currentNode(newVal, oldVal) {
-        this.setTopoViewport(newVal, oldVal);
-      },
       netData(newVal) {
+        this.updateOptions(this.options);
+        // this.resetElemsSize();
         this.buildNodes(newVal.nodes);
         this.links = this.buildLinks(newVal.links);
         this.reset();
@@ -260,6 +263,11 @@
       },
     },
     methods: {
+      resetElemsSize() {
+        this.nodeSize = 20;
+        this.linkWidth = 1;
+        this.fontSize = 16;
+      },
       getScaleFixForSim(nodes, fix) {
         if (nodes.length === 1) {
           return 2;
@@ -393,7 +401,7 @@
             switch (
               node.type // 调色板如何解耦？
             ) {
-              case 'App':
+              case 'Application':
                 nodeColor = this.pallet[0];
                 break;
               case 'Middleware':
@@ -492,6 +500,7 @@
         sim.on('tick', () => {
           if (this.isFirstTick) {
             if (this.nodes.length > this.nodeNumSmall) {
+              console.log('tick');
               let bounds = d3
                 .select('#zoomContainer')
                 .node()
@@ -519,6 +528,7 @@
             this.$store.commit('rocketTopo/SET_IS_FIRST_TICK', false);
             this.topoTickCount = 0;
             if (this.nodes.length > this.nodeNumSmall) {
+              console.log('tick end');
               this.fixTopoScale(true, false);
             } else if (this.nodes.length <= this.nodeNumSmall) {
               this.fixTopoScale(true, true);
@@ -815,17 +825,26 @@
           curNode.fy = curNode.y;
           this.$refs.svg.$forceUpdate();
 
-          // 单跳视口，查询耗时
           let nodesTmp = [];
           nodesTmp.push(curNode);
-          this.links.forEach((link) => {
-            if (link.sid === curNode.id) {
-              nodesTmp.push(link.target);
-            }
-            if (link.tid === curNode.id) {
-              nodesTmp.push(link.source);
-            }
-          });
+          if (this.elemIdsRTCAll.nodeIds.length > 0) {
+            // 上下游视口
+            this.nodes.forEach((node) => {
+              if (this.elemIdsRTCAll.nodeIds.includes(node.id)) {
+                nodesTmp.push(node);
+              }
+            });
+          } else {
+            // 单跳视口
+            this.links.forEach((link) => {
+              if (link.sid === curNode.id) {
+                nodesTmp.push(link.target);
+              }
+              if (link.tid === curNode.id) {
+                nodesTmp.push(link.source);
+              }
+            });
+          }
           let newZoomK = this.getScaleFixOnCurNode(nodesTmp, 0.9, true);
 
           this.zoomController.scaleTo(
@@ -927,7 +946,7 @@
           }
 
           &.pinned {
-            stroke: #ccc;
+            stroke: rgba(255, 255, 0, 1) !important;
           }
         }
 
@@ -959,6 +978,16 @@
 
           &.selected {
             stroke: rgba(202, 164, 85, 0.6);
+          }
+          animation: topo-dash 1s linear infinite !important;
+        }
+
+        @keyframes topo-dash {
+          from {
+            stroke-dashoffset: 20;
+          }
+          to {
+            stroke-dashoffset: 0;
           }
         }
 

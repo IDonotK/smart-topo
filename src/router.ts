@@ -16,35 +16,35 @@ const router = new Router({
   base: process.env.BASE_URL,
   linkActiveClass: 'active',
   routes: [
-    {
-      path: '/login',
-      component: Login,
-      meta: { login: true },
-    },
+    // {
+    //   path: '/login',
+    //   component: Login,
+    //   meta: { login: true },
+    // },
     {
       path: '/',
       component: Index,
       children: [
-        {
-          path: 'dashboard',
-          component: Dashboard,
-        },
-        {
-          path: 'trace',
-          component: Trace,
-        },
+        // {
+        //   path: 'dashboard',
+        //   component: Dashboard,
+        // },
+        // {
+        //   path: 'trace',
+        //   component: Trace,
+        // },
         {
           path: 'topology',
           component: Topology,
         },
-        {
-          path: 'alarm',
-          component: Alarm,
-        },
-        {
-          path: 'profile',
-          component: Profile,
-        },
+        // {
+        //   path: 'alarm',
+        //   component: Alarm,
+        // },
+        // {
+        //   path: 'profile',
+        //   component: Profile,
+        // },
       ],
     },
   ],

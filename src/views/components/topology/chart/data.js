@@ -3,12 +3,12 @@
 //     {
 //       id: 'app1',
 //       name: 'app1',
-//       type: 'App'
+//       type: 'Application'
 //     },
 //     {
 //       id: 'app2',
 //       name: 'app2',
-//       type: 'App'
+//       type: 'Application'
 //     },
 //     {
 //       id: 'process1',
@@ -56,40 +56,40 @@
 //       source: {
 //         id: 'app1',
 //         name: 'app1',
-//         type: 'App'
+//         type: 'Application'
 //       },
 //       target: {
 //         id: 'app2',
 //         name: 'app2',
-//         type: 'App'
+//         type: 'Application'
 //       },
-//       type: 'tracingto'
+//       type: 'TracingTo'
 //     },
 //     {
 //       source: {
 //         id: 'app1',
 //         name: 'app1',
-//         type: 'App'
+//         type: 'Application'
 //       },
 //       target: {
 //         id: 'process1',
 //         name: 'process1',
 //         type: 'Process'
 //       },
-//       type: 'createon'
+//       type: 'CreateOn'
 //     },
 //     {
 //       source: {
 //         id: 'app1',
 //         name: 'app1',
-//         type: 'App'
+//         type: 'Application'
 //       },
 //       target: {
 //         id: 'process2',
 //         name: 'process2',
 //         type: 'Process'
 //       },
-//       type: 'createon'
+//       type: 'CreateOn'
 //     },
 //     {
 //       source: {
@@ -102,7 +102,7 @@
 //         name: 'pod1',
 //         type: 'Pod'
 //       },
-//       type: 'createon'
+//       type: 'CreateOn'
 //     },
 //     {
 //       source: {
@@ -115,7 +115,7 @@
 //         name: 'pod1',
 //         type: 'Pod'
 //       },
-//       type: 'createon'
+//       type: 'CreateOn'
 //     },
 //     {
 //       source: {
@@ -128,33 +128,33 @@
 //         name: 'node1',
 //         type: 'Node'
 //       },
-//       type: 'createon'
+//       type: 'CreateOn'
 //     },
 //     {
 //       source: {
 //         id: 'app2',
 //         name: 'app2',
-//         type: 'App'
+//         type: 'Application'
 //       },
 //       target: {
 //         id: 'process3',
 //         name: 'process3',
 //         type: 'Process'
 //       },
-//       type: 'createon'
+//       type: 'CreateOn'
 //     },
 //     {
 //       source: {
 //         id: 'app2',
 //         name: 'app2',
-//         type: 'App'
+//         type: 'Application'
 //       },
 //       target: {
 //         id: 'process4',
 //         name: 'process4',
 //         type: 'Process'
 //       },
-//       type: 'createon'
+//       type: 'CreateOn'
 //     },
 //     {
 //       source: {
@@ -167,7 +167,7 @@
 //         name: 'pod2',
 //         type: 'Pod'
 //       },
-//       type: 'createon'
+//       type: 'CreateOn'
 //     },
 //     {
 //       source: {
@@ -180,7 +180,7 @@
 //         name: 'pod2',
 //         type: 'Pod'
 //       },
-//       type: 'createon'
+//       type: 'CreateOn'
 //     },
 //     {
 //       source: {
@@ -193,7 +193,7 @@
 //         name: 'node2',
 //         type: 'Node'
 //       },
-//       type: 'createon'
+//       type: 'CreateOn'
 //     }
 //   ]
 // };
@@ -203,12 +203,12 @@ const LOCAL_STATE_TOPO = {
     {
       id: 'app1',
       name: 'app1',
-      type: 'App',
+      type: 'Application',
     },
     {
       id: 'app2',
       name: 'app2',
-      type: 'App',
+      type: 'Application',
     },
     {
       id: 'process1',
@@ -255,57 +255,57 @@ const LOCAL_STATE_TOPO = {
     {
       source: 'app1',
       target: 'app2',
-      type: 'tracingto',
+      type: 'TracingTo',
     },
     {
       source: 'app1',
       target: 'process1',
-      type: 'createon',
+      type: 'CreateOn',
     },
     {
       source: 'app1',
       target: 'process2',
-      type: 'createon',
+      type: 'CreateOn',
     },
     {
       source: 'process1',
       target: 'pod1',
-      type: 'createon',
+      type: 'CreateOn',
     },
     {
       source: 'process2',
       target: 'pod1',
-      type: 'createon',
+      type: 'CreateOn',
     },
     {
       source: 'pod1',
       target: 'node1',
-      type: 'createon',
+      type: 'CreateOn',
     },
     {
       source: 'app2',
       target: 'process3',
-      type: 'createon',
+      type: 'CreateOn',
     },
     {
       source: 'app2',
       target: 'process4',
-      type: 'createon',
+      type: 'CreateOn',
     },
     {
       source: 'process3',
       target: 'pod2',
-      type: 'createon',
+      type: 'CreateOn',
     },
     {
       source: 'process4',
       target: 'pod2',
-      type: 'createon',
+      type: 'CreateOn',
     },
     {
       source: 'pod2',
       target: 'node2',
-      type: 'createon',
+      type: 'CreateOn',
     },
   ],
 };
