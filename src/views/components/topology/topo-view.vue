@@ -51,8 +51,11 @@
           <div class="mti-item view-node-info" v-show="viewNode.id !== undefined">
             <div class="info-title">当前查看的节点信息:</div>
             <div class="info-item" v-for="(value, key) in viewNode" :key="key" v-show="nodeDetailItems.includes(key)">
-              <span class="item-title" :title="key">{{ key }} :</span>
-              <span class="item-content" :title="value">{{ value }}</span>
+              <span class="item-title">{{ key }} :</span>
+              <span class="item-content">
+                {{ value }}
+                <span v-if="key === 'id'" class="copy-btn" @click.prevent.stop="copyNodeId(value)">复制</span>
+              </span>
             </div>
           </div>
         </div>
@@ -173,7 +176,11 @@
           'create_time',
           'update_time',
           'pod_id',
-          'node_ip'
+          'node_ip',
+          'host_name',
+          'process_no',
+          'middleware_type',
+          'kind',
         ]
       }
     },
@@ -243,6 +250,16 @@
     },
 
     methods: {
+      copyNodeId(id) {
+        const input = document.createElement('input');
+        document.body.appendChild(input)
+        input.setAttribute('value', id);
+        input.select()
+        if (document.execCommand('copy')) {
+          document.execCommand('copy')
+        }
+        document.body.removeChild(input);
+      },
       toggleNodeDetail(state) {
         this.showNodeDetail = state;
       },
@@ -387,6 +404,7 @@
           color: #ccc;
           background: transparent;
           opacity: 0.8;
+          z-index: 8900;
 
           .mti-item {
             padding: 2px 0px;
@@ -411,11 +429,24 @@
               }
 
               .item-content {
-                flex-grow: 1;
+                // flex-grow: 1;
                 text-align: left;
                 overflow: hidden;
                 text-overflow: ellipsis;
                 white-space: nowrap;
+                display: flex;
+                align-items: center;
+
+                .copy-btn {
+                  margin-left: 5px;
+                  color: #ddd;
+                  font-size: 10px;
+                  cursor: pointer;
+
+                  &:active {
+                    color: rgb(63, 177, 227);
+                  }
+                }
               }
             }
           }

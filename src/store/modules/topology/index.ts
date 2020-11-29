@@ -411,8 +411,32 @@ function formatTopoData(originData) {
 
   // 字段名同步
   topoData.nodes.forEach((node) => {
+    node.shortName = node.name.indexOf('-') > -1 ? '...' + node.name.split('-').pop() : node.name;
     node.type = node.label;
     node.state = node.event_count > 0 ? 'Abnormal' : 'Normal';
+  });
+  topoData.links.forEach((link) => {
+    link.type = link.label;
+    link.sid = link.source;
+    link.tid = link.target;
+  });
+
+  return topoData;
+}
+
+function formatMyTopoData(originData) {
+  let topoData = {
+    nodes: [],
+    links: [],
+  };
+  topoData.nodes = originData.nodes;
+  topoData.links = originData.links;
+
+  // 字段名同步
+  topoData.nodes.forEach((node) => {
+    node.shortName = node.name.split('-').pop();
+    node.type = node.label;
+    // node.state = node.event_count > 0 ? 'Abnormal' : 'Normal';
   });
   topoData.links.forEach((link) => {
     link.type = link.label;
@@ -426,16 +450,11 @@ function formatTopoData(originData) {
 // actions
 const actions: ActionTree<State, any> = {
   GET_TOPO_DATA(context: { commit: Commit; state: State }, params: any) {
-    // let topoData = formatTopoData(GES_DATA);
-    // context.commit(types.SET_TOPO_DATA, {
-    //   nodes: topoData.nodes,
-    //   links: topoData.links,
-    // });
-    // context.commit(types.SET_TOPO_DATA, {
+    // let topoData = formatMyTopoData({
     //   nodes: NODES,
     //   links: LINKS,
-    // });
-    console.log(params);
+    // })
+    // context.commit(types.SET_TOPO_DATA, topoData);
     return axios
       .get(window.location.origin + '/v1/endpoints', {
         params,

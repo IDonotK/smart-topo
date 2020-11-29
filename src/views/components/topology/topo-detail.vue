@@ -84,6 +84,21 @@
         linkTextContent: '',
         nodeSingleClickTimer: null,
         usedTool: null,
+        nodeDetailItems: [
+          'id',
+          'name',
+          'label',
+          'state',
+          'event_count',
+          'create_time',
+          'update_time',
+          'pod_id',
+          'node_ip',
+          'host_name',
+          'process_no',
+          'middleware_type',
+          'kind',
+        ],
       }
     },
 
@@ -219,6 +234,7 @@
 
         const nodesOption = [];
         const linksOption = [];
+        const anchorOption = [];
         // 计算节点坐标
         function setNodePositonNormalLayer(nNum, nObj, startX, factorY, nIcon, nSize) {
           nObj.x = startX + (nNum - 1) * deltaw;
@@ -238,12 +254,13 @@
           }
         }
         graph.nodes.forEach(node => {
-          let itemTmp = {
-            id: node.id,
-            name: node.name,
-            type: node.type,
-            state: node.state,
-          };
+          let itemTmp = {};
+          Object.keys(node).forEach(key => {
+            if (this.nodeDetailItems.includes(key)) {
+              itemTmp[key] = node[key];
+            }
+          });
+          itemTmp.type = node.type;
           switch (node.type) {
             case 'Application': {
                 appNum++;
@@ -304,6 +321,8 @@
             target: link.tid,
             type: link.type,
             isTracingTo: (link.type === 'TracingTo' || link.type === 'SubTracingTo')? true : false,
+            call_per_minute: link.call_per_minute,
+            response_time_per_min: link.response_time_per_min,
           };
           switch (link.source.type) {
             case 'Application': itemTmp.isLine2Src = isAppLine2Src; break;
@@ -314,6 +333,11 @@
             default: break;
           }
           linksOption.push(itemTmp);
+        });
+        linksOption.forEach(link => {
+          if (link.type === 'TracingTo' || link.type === 'SubTracingTo') {
+            anchorOption.push(link);
+          }
         });
 
         const svg = d3
@@ -336,6 +360,12 @@
             }
             return `M ${d.source.fx} ${d.source.fy} Q ${(d.source.fx + d.target.fx) / 2} ${(d.source.fy + d.target.fy) / 2 + 45 } ${d.target.fx} ${d.target.fy}`;
           });
+          anchorEles.attr('transform', d => {
+             if (d.isLine2Src) {
+              return `translate(${(d.source.x + d.target.x) / 2}, ${(d.target.y + d.source.y) / 2 - 22.5})`;
+            }
+            return `translate(${(d.source.x + d.target.x) / 2}, ${(d.target.y + d.source.y) / 2 + 22.5})`;
+          });
         };
         const force = d3
           .forceSimulation(nodesOption)
@@ -344,6 +374,7 @@
 
         let nodeEles = svg.append('g').attr("class", "topo-nodes").selectAll('.topo-node');
         let linkEles = svg.append('g').attr("class", "topo-lines").selectAll('.topo-line');
+        let anchorEles = svg.append('g').attr("class", "topo-line-anchors").selectAll('.topo-line-anchor');
 
         let shapeOption = {
           side: 3,
@@ -448,6 +479,36 @@
           })
           .style("stroke", "#217EF25f");
 
+        anchorEles= anchorEles.data(anchorOption, (d) => d.id)
+          .enter().append("circle")
+          .attr('class', 'topo-line-anchor')
+          .attr('stroke', 'none')
+          .attr('r', 5)
+          .attr('fill', (d) => '#217EF25f')
+          .on('mouseover', (data, index, element) => {
+            d3.event.stopPropagation();
+            d3.event.preventDefault();
+
+            $jq('.topo-line').addClass('tl-static');
+
+            this.tip.html(data =>
+              `
+                <div class="mb-5"><span class="grey">调用方式: </span>${data.type}</div>
+                <div class="mb-5"><span class="grey">调用频率: </span>${data.call_per_minute === undefined ? ' ' : data.call_per_minute + ' 次/分钟'}</div>
+                <div><span class="grey">平均响应时间: </span>${data.response_time_per_min  === undefined ? ' ' : data.response_time_per_min + ' 秒/分钟'}</div>
+              `
+            ).show(data, element[index]);
+          })
+          .on('mouseout', () => {
+            d3.event.stopPropagation();
+            d3.event.preventDefault();
+
+            $jq('.topo-line').removeClass('tl-static');
+
+            // this.tip.hide(this);
+          });
+
+
         svg.on('click', (d, i) => {
           d3.event.stopPropagation();
           d3.event.preventDefault();
@@ -480,6 +541,9 @@
 </script>
 
 <style lang="scss">
+  .d3-tip {
+    pointer-events: none !important;
+  }
   .topo-detail {
     height: 100%;
     -webkit-transition: all 0.5s;
@@ -536,6 +600,10 @@
             // stroke-dasharray: 13 7;
             fill: none;
             animation: topo-dash 1s linear infinite !important;
+          }
+
+          .topo-line-anchor {
+            cursor: pointer;
           }
 
           .tl-static {

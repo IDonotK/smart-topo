@@ -79,12 +79,14 @@
           :key="index"
           :class="{ unchecked: !item.checked }"
         >
-          <span class="item-title">{{ item.label }}</span>
-          <span
-            class="item-btn"
-            :style="'background-color:' + pallet[item.label]"
-            @click="toggleNodeTypeChecked(item)"
-          ></span>
+          <span class="item-wrapper item-icon"><img :src="item.imgUrl" alt=""/></span>
+          <span class="item-wrapper item-title">{{ item.label }}</span>
+          <span class="item-wrapper item-checkbox">
+            <input type="checkbox" v-model="item.checked" @change="toggleNodeTypeChecked" />
+            <!-- <el-checkbox 
+              v-model="item.checked"
+              @change="toggleNodeTypeChecked"></el-checkbox> -->
+          </span>
         </div>
       </div>
       <div class="tb-item state-types-filter">
@@ -94,12 +96,13 @@
           :key="index"
           :class="{ unchecked: !item.checked }"
         >
-          <span class="item-title">{{ item.label }}</span>
-          <span
-            class="item-btn"
-            :style="'background-color:' + pallet['State']"
-            @click="toggleStateTypeChecked(item)"
-          ></span>
+          <span class="item-wrapper item-title">{{ item.label }}</span>
+          <span class="item-wrapper item-checkbox">
+            <input type="checkbox" v-model="item.checked" @change="toggleStateTypeChecked" />
+            <!-- <el-checkbox 
+              v-model="item.checked"
+              @change="toggleStateTypeChecked"></el-checkbox> -->
+          </span>
         </div>
       </div>
       <div class="tb-item relative-types-filter" v-show="currentNode.id !== undefined">
@@ -109,12 +112,13 @@
           :key="index"
           :class="{ unchecked: !item.checked }"
         >
-          <span class="item-title">{{ item.label }}</span>
-          <span
-            class="item-btn"
-            :style="'background-color:' + pallet['Relative']"
-            @click="toggleRelativeTypeChecked(item)"
-          ></span>
+          <span class="item-wrapper item-title">{{ item.label }}</span>
+          <span class="item-wrapper item-checkbox">
+            <input type="checkbox" v-model="item.checked" @change="toggleRelativeTypeChecked" />
+            <!-- <el-checkbox 
+              v-model="item.checked"
+              @change="toggleRelativeTypeChecked"></el-checkbox> -->
+          </span>
         </div>
       </div>
     </div>
@@ -122,6 +126,13 @@
 </template>
 
 <script lang="js">
+  import applicationIcon from './assets/APPLICATION.png';
+  import middlewareIcon from './assets/MIDDLEWARE.png';
+  import processIcon from './assets/PROCESS.png';
+  import workloadIcon from './assets/WORKLOAD.png';
+  import podIcon from './assets/POD.png';
+  import nodeIcon from './assets/NODE.png';
+
   require('./assets/iconfont-toolset/iconfont.js');
   import TopoSelect from './topo-select.vue';
 
@@ -174,12 +185,12 @@
         nodeTypesOption: {
           title: '显示节点类型',
           data: [
-            {key: 0, label: 'Application', checked: true},
-            {key: 1, label: 'Middleware', checked: true},
-            {key: 2, label: 'Process', checked: true},
-            {key: 3, label: 'Workload', checked: true},
-            {key: 4, label: 'Pod', checked: true},
-            {key: 5, label: 'Node', checked: true},
+            {key: 0, label: 'Application', checked: true, imgUrl: applicationIcon},
+            {key: 1, label: 'Middleware', checked: true, imgUrl: middlewareIcon},
+            {key: 2, label: 'Process', checked: true, imgUrl: processIcon},
+            {key: 3, label: 'Workload', checked: true, imgUrl: workloadIcon},
+            {key: 4, label: 'Pod', checked: true, imgUrl: podIcon},
+            {key: 5, label: 'Node', checked: true, imgUrl: nodeIcon},
           ],
         },
         stateTypesOption: {
@@ -279,8 +290,8 @@
             // 选中节点放大居中展示
             this.networkInstance.setTopoViewport(newVal, oldVal);
             // 重置左侧纵向topo数据
-            this.resetTopoDetailDataOnLine();
-            // this.resetTopoDetailDataOffLine();
+            // this.resetTopoDetailDataOnLine();
+            this.resetTopoDetailDataOffLine();
             this.filterTopo();
           });
         } else {
@@ -544,7 +555,7 @@
               linkCopy.type = linkTmp.label;
               linkCopy.label = linkTmp.label;
               linkCopy.call_per_minute = linkTmp.call_per_minute;
-              linkCopy.response_time_per_minute = linkTmp.response_time_per_minute;
+              linkCopy.response_time_per_min = linkTmp.response_time_per_min;
               this.elemsRTCUp.links.push(linkCopy);
             }
             if (elemIdsRTCDownTmp.linkIds.includes(link.id)) {
@@ -555,7 +566,7 @@
               linkCopy.type = linkTmp.label;
               linkCopy.label = linkTmp.label;
               linkCopy.call_per_minute = linkTmp.call_per_minute;
-              linkCopy.response_time_per_minute = linkTmp.response_time_per_minute;
+              linkCopy.response_time_per_min = linkTmp.response_time_per_min;
               this.elemsRTCDown.links.push(linkCopy);
             }
           });
@@ -593,6 +604,7 @@
           }
           this.isShowExplore = false;
           this.restoreTopoViewPort(0);
+          this.restoreFilters();
           this.$store.commit('rocketTopo/SET_TOPO_MODE', this.exploreMode);
           this.getRelativeElems(result, this.topoData, true, () => {
             // 查询目标节点的上下游topo,替换topoViewData
@@ -707,16 +719,13 @@
         this.$store.commit('rocketTopo/SET_SHOW_STATE_TYPES', [...stateTypesSet]);
         this.$store.commit('rocketTopo/SET_SHOW_RELATIVE_TYPES', [...relativeTypesSet]);
       },
-      toggleStateTypeChecked(stateType) {
-        stateType.checked = !stateType.checked;
+      toggleStateTypeChecked() {
         this.filterTopo();
       },
-      toggleNodeTypeChecked(nodeType) {
-        nodeType.checked = !nodeType.checked;
+      toggleNodeTypeChecked() {
         this.filterTopo();
       },
-      toggleRelativeTypeChecked(relativeType) {
-        relativeType.checked = !relativeType.checked;
+      toggleRelativeTypeChecked() {
         this.filterTopo();
       },
 
@@ -930,6 +939,8 @@
 
     .explore-topo-wrapper {
       .explore-dialog {
+        z-index: 99999 !important;
+
         .el-dialog {
           background-color: #333840;
 
@@ -1089,12 +1100,25 @@
           justify-content: flex-end;
 
           &.unchecked {
-            opacity: 0.2;
+            opacity: 0.5;
+          }
+
+          .item-wrapper {
+            display: flex;
+            align-items: center;
           }
 
           .item-title {
             color: #ddd;
             margin-right: 10px;
+          }
+
+          .item-icon {
+            margin-right: 5px;
+            img {
+              width: 20px;
+              height: 20px;
+            }
           }
 
           .item-btn {

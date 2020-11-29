@@ -12,6 +12,7 @@
         v-for="(value, key) in curNodeCrossLayer"
         :key="key"
         v-show="nodeDetailItems.includes(key)"
+        :class="{ large: largeItems.includes(key) }"
       >
         <span class="item-title" :title="key">{{ key }} :</span>
         <span class="item-content" :title="value">{{ value }}</span>
@@ -47,7 +48,17 @@
           'create_time',
           'update_time',
           'pod_id',
-          'node_ip'
+          'node_ip',
+          'host_name',
+          'process_no',
+          'middleware_type',
+          'kind',
+        ],
+        largeItems: [
+          'id',
+          'name',
+          'create_time',
+          'update_time'
         ],
         pallet: [
           '#3fb1e3',
@@ -323,16 +334,19 @@
 
       .info-item {
         float: left;
-        width: 33.33%;
-        height: 50px;
+        width: 30%;
+        height: 30px;
         display: flex;
         justify-content: flex-start;
         align-items: center;
         color: #ccc;
 
+        &.large {
+          width: 100%;
+        }
+
         .item-title {
-          // width: 50%;
-          margin-right: 8px;
+          margin-right: 5px;
           text-align: left;
           overflow: hidden;
           text-overflow: ellipsis;

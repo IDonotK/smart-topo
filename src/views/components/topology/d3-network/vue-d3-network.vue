@@ -1,6 +1,7 @@
 <script>
   // import * as forceSimulation from 'd3-force'
   import * as d3 from 'd3';
+  import d3tip from 'd3-tip';
   import $jq from 'jquery';
 
   import svgRenderer from './components/svgRenderer.vue';
@@ -91,6 +92,7 @@
         nodeSvg: null,
         resizeListener: true,
         linkTextStyle: {
+          height: 0,
           left: 0,
           top: 0,
         },
@@ -129,6 +131,7 @@
           nodes: [],
           links: [],
         },
+        tip: null,
       };
     },
     render(createElement) {
@@ -187,6 +190,12 @@
       this.updateNodeSvg();
     },
     mounted() {
+      // this.tip = d3tip()
+      //   .attr('class', 'd3-tip')
+      //   .offset([-8, 0]);
+      // d3.select('#netSvg').call(this.tip);
+      // this.setLinkAnchor();
+
       this.$store.commit('rocketTopo/SET_NETWORK_INSTANCE', this);
       this.onResize();
       this.$nextTick(() => {
@@ -263,6 +272,12 @@
       },
     },
     methods: {
+      setLinkAnchor() {
+        d3.selectAll('.link-anchor') // 结果集为空？
+          .on('mouseover', (d) => {
+            console.log(d);
+          });
+      },
       resetElemsSize() {
         this.nodeSize = 20;
         this.linkWidth = 1;
@@ -290,6 +305,7 @@
         scaleFixX = (fix * 2 * centerX) / (xMax - xMin);
         scaleFixY = (fix * 2 * centerY) / (yMax - yMin);
         scaleFix = Math.min(scaleFixX, scaleFixY);
+        scaleFix = scaleFix <= 0 ? 1 : scaleFix;
         return scaleFix;
       },
       getScaleFixOnCurNode(nodes, fix, isOnNodeSize) {
@@ -323,6 +339,7 @@
           scaleFixY = (fix * centerY) / toCnyMax;
         }
         scaleFix = Math.min(scaleFixX, scaleFixY);
+        scaleFix = scaleFix <= 0 ? 1 : scaleFix;
         return scaleFix;
       },
       fixTopoScale(isSetTopoScaleFix, isEnlargeTopo) {
@@ -332,16 +349,18 @@
           .select('#zoomContainer')
           .node()
           .getBBox();
-        let scaleFixX = (0.8 * centerX) / (centerX - bounds.x); // 负数的情况?
+        let scaleFixX = (0.8 * centerX) / (centerX - bounds.x);
         let scaleFixY = (0.8 * centerY) / (centerY - bounds.y);
         let scaleFix = Math.min(scaleFixX, scaleFixY);
+        scaleFix = scaleFix <= 0 ? 1 : scaleFix;
         if (isEnlargeTopo) {
           if (this.nodes.length <= 20) {
             scaleFix = this.getScaleFixForSim(this.nodes, 0.6);
           } else {
-            scaleFixX = (0.8 * centerX) / (centerX - bounds.x); // 负数的情况?
+            scaleFixX = (0.8 * centerX) / (centerX - bounds.x);
             scaleFixY = (0.8 * centerY) / (centerY - bounds.y);
             scaleFix = Math.min(scaleFixX, scaleFixY);
+            scaleFix = scaleFix <= 0 ? 1 : scaleFix;
           }
           // 布局时,放大拓扑,要同时缩小元素
           this.nodeSize = this.defaultNodeSize / scaleFix;
@@ -500,7 +519,6 @@
         sim.on('tick', () => {
           if (this.isFirstTick) {
             if (this.nodes.length > this.nodeNumSmall) {
-              console.log('tick');
               let bounds = d3
                 .select('#zoomContainer')
                 .node()
@@ -528,7 +546,6 @@
             this.$store.commit('rocketTopo/SET_IS_FIRST_TICK', false);
             this.topoTickCount = 0;
             if (this.nodes.length > this.nodeNumSmall) {
-              console.log('tick end');
               this.fixTopoScale(true, false);
             } else if (this.nodes.length <= this.nodeNumSmall) {
               this.fixTopoScale(true, true);
@@ -627,10 +644,12 @@
       mouseEnterNode(event, hoveredNode) {
         // 强制更新svgRenderer组件，防止mouseEnterNode后视图样式无法更新
         this.$refs.svg.$forceUpdate();
+        $jq('.link-anchor').addClass('link-anchor-static');
         this.lightAroundHoveredNode(hoveredNode);
       },
       mouseLeaveNode(event, elem) {
         this.$refs.svg.$forceUpdate();
+        $jq('.link-anchor').removeClass('link-anchor-static');
         this.normalAroundHoveredNode();
         this.elemsAroundPreHovNodeShallow = null;
         this.elemsAroundPreHovNodeShallow = {
@@ -676,11 +695,15 @@
         this.elemsAroundPreHovLinkShallow = elemsAround;
       },
       mouseEnterLink(event, hoveredLink) {
+        if (hoveredLink.type === 'TracingTo' || hoveredLink.type === 'SubTracingTo') {
+          return;
+        }
         this.$refs.svg.$forceUpdate();
         let offsetX = $jq('#netContent').offset().left;
         let offsetY = $jq('#netContent').offset().top;
         this.linkTextStyle = {
-          left: event.clientX - offsetX + 10 + 'px',
+          height: 25 + 'px',
+          left: event.clientX - offsetX + 8 + 'px',
           top: event.clientY - offsetY - 25 + 'px',
         };
         this.isLinkTextDark = hoveredLink.isDark;
@@ -689,10 +712,53 @@
         this.lightAroundHoveredLink(event, hoveredLink);
       },
       mouseLeaveLink(event, hoveredLink) {
+        if (hoveredLink.type === 'TracingTo' || hoveredLink.type === 'SubTracingTo') {
+          return;
+        }
         this.$refs.svg.$forceUpdate();
         this.linkTextVisible = false;
         this.linkTextContent = '';
         this.linkTextStyle = {
+          height: 0 + 'px',
+          left: 0 + 'px',
+          top: 0 + 'px',
+        };
+        this.isLinkTextDark = hoveredLink.isDark;
+        this.normalAroundHoveredLink();
+        this.elemsAroundPreHovLinkShallow = null;
+        this.elemsAroundPreHovLinkShallow = {
+          nodes: [],
+          links: [],
+        };
+      },
+      mouseEnterLinkAnchor(event, hoveredLink) {
+        this.$refs.svg.$forceUpdate();
+        let offsetX = $jq('#netContent').offset().left;
+        let offsetY = $jq('#netContent').offset().top;
+        this.linkTextContent = `
+          <div class="mb-5"><span class="grey">调用方式: </span>${hoveredLink.type}</div>
+          <div class="mb-5"><span class="grey">调用频率: </span>${
+            hoveredLink.call_per_minute === undefined ? ' ' : hoveredLink.call_per_minute + ' 次/分钟'
+          }</div>
+          <div><span class="grey">平均响应时间: </span>${
+            hoveredLink.response_time_per_min === undefined ? ' ' : hoveredLink.response_time_per_min + ' 秒/分钟'
+          }</div>
+        `;
+        this.linkTextVisible = true;
+        this.linkTextStyle = {
+          height: 75 + 'px',
+          left: event.clientX - offsetX + 8 + 'px',
+          top: event.clientY - offsetY - 75 + 'px',
+        };
+        this.isLinkTextDark = hoveredLink.isDark;
+        this.lightAroundHoveredLink(event, hoveredLink);
+      },
+      mouseLeaveLinkAnchor(event, hoveredLink) {
+        this.$refs.svg.$forceUpdate();
+        this.linkTextVisible = false;
+        this.linkTextContent = '';
+        this.linkTextStyle = {
+          height: 0 + 'px',
           left: 0 + 'px',
           top: 0 + 'px',
         };
@@ -909,10 +975,14 @@
       .linkText {
         position: absolute;
         z-index: 999;
-        background-color: rgba(75, 75, 75, 0.596);
+        // background-color: rgba(75, 75, 75, 0.596);
+        background-color: #242424;
         border-radius: 2px;
         color: white;
         padding: 2px;
+        text-align: left;
+
+        pointer-events: none !important;
 
         &.dark-linkText {
           opacity: 0.1;
@@ -980,6 +1050,20 @@
             stroke: rgba(202, 164, 85, 0.6);
           }
           animation: topo-dash 1s linear infinite !important;
+        }
+
+        .link-anchor {
+          &.dark-link-anchor {
+            opacity: 0.1;
+          }
+
+          &.bright-link-anchor {
+            fill: rgba(255, 255, 0, 1) !important;
+          }
+        }
+
+        .link-anchor-static {
+          pointer-events: none;
         }
 
         @keyframes topo-dash {

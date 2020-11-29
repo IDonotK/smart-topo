@@ -27,12 +27,13 @@ import './assets';
 // import 'element-ui/lib/theme-chalk/index.css';
 // import './assets/themedark/index.css';
 // Vue.use(ElementUI);
-import { Button, Dialog, MessageBox, Radio, Input } from 'element-ui';
+import { Button, Dialog, MessageBox, Radio, Input, Checkbox } from 'element-ui';
 Vue.prototype.$ELEMENT = { size: 'small', zIndex: 3000 };
 Vue.use(Button);
 Vue.use(Dialog);
 Vue.use(Radio);
 Vue.use(Input);
+Vue.use(Checkbox);
 Vue.prototype.$confirm = MessageBox.confirm;
 
 import 'overlayscrollbars/css/OverlayScrollbars.css';

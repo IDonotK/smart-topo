@@ -3,10 +3,11 @@
     <!-- link text -->
     <div
       v-show="linkTextVisible"
+      id="linkText"
       class="linkText"
       :class="{ 'dark-linkText': isLinkTextDark }"
       :style="linkTextStyle"
-      v-text="linkTextContent"
+      v-html="linkTextContent"
     ></div>
 
     <!-- topo svg -->
@@ -100,7 +101,7 @@
               :cy="node.y"
               :style="nodeStyle(node)"
               :stroke-width="fontSize / 8"
-              :title="node.name"
+              :title="node.shortName"
               :class="
                 nodeClass(node, [
                   node.isDark ? 'dark-node' : '',
@@ -119,10 +120,10 @@
             <!-- warn icon -->
             <svg
               v-if="node.state === 'Abnormal'"
-              :x="node.x + (getNodeSize(node) - 4 / topoScaleFix) / 2"
-              :y="node.y - (getNodeSize(node) - 4 / topoScaleFix)"
-              :width="getNodeSize(node) - 4 / topoScaleFix"
-              :height="getNodeSize(node) - 4 / topoScaleFix"
+              :x="node.x + (0.8 * getNodeSize(node)) / 2"
+              :y="node.y - 0.8 * getNodeSize(node)"
+              :width="0.8 * getNodeSize(node)"
+              :height="0.8 * getNodeSize(node)"
               :class="warnClass(node, [node.isDark ? 'dark-warn-icon' : '', node.isBright ? 'bright-warn-icon' : ''])"
               :key="'event' + key"
               aria-hidden="true"
@@ -130,6 +131,24 @@
               <use xlink:href="#icon-tanhao"></use>
             </svg>
           </template>
+        </g>
+
+        <!-- Link Anchors -->
+        <g class="anchors" id="link-anchors">
+          <circle
+            v-for="(link, index) in links"
+            :key="index"
+            :class="
+              linkAnchorClass(link, [link.isDark ? 'dark-link-anchor' : '', link.isBright ? 'bright-link-anchor' : ''])
+            "
+            v-show="link.type === 'TracingTo' || link.type === 'SubTracingTo'"
+            :r="nodeSize / 6"
+            fill="#217EF25f"
+            :cx="(link.source.x + link.target.x) / 2"
+            :cy="(link.source.y + link.target.y) / 2"
+            @mouseenter.stop.prevent="emit('mouseEnterLinkAnchor', [$event, link])"
+            @mouseleave.stop.prevent="emit('mouseLeaveLinkAnchor', [$event, link])"
+          ></circle>
         </g>
 
         <!-- Node Labels -->
@@ -146,7 +165,7 @@
             "
             :stroke-width="fontSize / 8"
           >
-            {{ node.name }}
+            {{ node.shortName }}
           </text>
         </g>
       </g>
@@ -299,6 +318,13 @@
       },
       warnClass(node, classes = []) {
         let cssClass = ['warn-icon-in-main-topo'];
+        classes.forEach((c) => cssClass.push(c));
+        return cssClass;
+      },
+      linkAnchorClass(link, classes = []) {
+        let cssClass = link._labelClass ? link._labelClass : [];
+        if (!Array.isArray(cssClass)) cssClass = [cssClass];
+        cssClass.push('link-anchor');
         classes.forEach((c) => cssClass.push(c));
         return cssClass;
       },

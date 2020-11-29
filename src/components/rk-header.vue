@@ -47,6 +47,9 @@
     private auto: boolean = false;
     private autoTime: number = 6;
     private timer: any = null;
+    private mounted() {
+      this.$router.push('/topology');
+    }
     private dateFormat(fmt, date) {
       let ret;
       const opt = {
