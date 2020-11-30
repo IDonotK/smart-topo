@@ -44,21 +44,21 @@
           'name',
           'label',
           'state',
-          'event_count',
-          'create_time',
-          'update_time',
-          'pod_id',
-          'node_ip',
-          'host_name',
-          'process_no',
-          'middleware_type',
+          'eventCount',
+          'createTime',
+          'updateTime',
+          'podIp',
+          'nodeIp',
+          'hostName',
+          'processNo',
+          'middlewareType',
           'kind',
         ],
         largeItems: [
           'id',
           'name',
-          'create_time',
-          'update_time'
+          'createTime',
+          'updateTime'
         ],
         pallet: [
           '#3fb1e3',
@@ -122,7 +122,7 @@
             });
             nodes.push({
               id: link.target.id,
-              name: link.target.name,
+              name: link.target.shortName,
               type: link.target.type,
               state: link.target.state,
               category: 1
@@ -137,7 +137,7 @@
             });
             nodes.push({
               id: link.source.id,
-              name: link.source.name,
+              name: link.source.shortName,
               type: link.source.type,
               state: link.source.state,
               category: 1

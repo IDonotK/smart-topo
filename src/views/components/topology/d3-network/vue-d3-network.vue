@@ -207,6 +207,9 @@
       if (this.resizeListener) window.removeEventListener('resize', this.onResize);
     },
     computed: {
+      isAutoReloadTopo() {
+        return this.$store.state.rocketTopo.isAutoReloadTopo;
+      },
       isTopoNodesUpdated() {
         return this.$store.state.rocketTopo.isTopoNodesUpdated;
       },
@@ -738,10 +741,10 @@
         this.linkTextContent = `
           <div class="mb-5"><span class="grey">调用方式: </span>${hoveredLink.type}</div>
           <div class="mb-5"><span class="grey">调用频率: </span>${
-            hoveredLink.call_per_minute === undefined ? ' ' : hoveredLink.call_per_minute + ' 次/分钟'
+            hoveredLink.callPerMinute === undefined ? ' ' : hoveredLink.callPerMinute + ' 次/分钟'
           }</div>
           <div><span class="grey">平均响应时间: </span>${
-            hoveredLink.response_time_per_min === undefined ? ' ' : hoveredLink.response_time_per_min + ' 秒/分钟'
+            hoveredLink.responseTimePerMin === undefined ? ' ' : hoveredLink.responseTimePerMin + ' 毫秒/分钟'
           }</div>
         `;
         this.linkTextVisible = true;
@@ -778,6 +781,9 @@
         return { x, y };
       },
       handleClickNet(event) {
+        if (this.isAutoReloadTopo) {
+          this.$store.commit('rocketTopo/SET_IS_AUTO_RELOAD_TOPO', false);
+        }
         this.simulation.stop();
         if (this.isFirstTick) {
           this.$store.commit('rocketTopo/SET_IS_FIRST_TICK', false);
@@ -822,6 +828,11 @@
         }
       },
       dragNodeStart(event, nodeKey, node) {
+        // 鼠标右键点击节点
+        if (event.button === 2) {
+          return;
+        }
+
         this.isMouseDwonNet = false;
 
         // 区分拖拽 单击节点
@@ -838,6 +849,11 @@
         this.setMouseOffset(event, this.nodes[nodeKey]);
       },
       dragNodeEnd(event, nodeKey, node) {
+        // 鼠标右键点击节点
+        if (event.button === 2) {
+          this.$emit('node-right-click', event, node);
+          return;
+        }
         if (this.nodeSingleClicked) {
           clearTimeout(this.clickNodeTimer);
           this.nodeClick(event, node);

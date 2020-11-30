@@ -496,8 +496,8 @@ export const LINKS = [
     label: 'TracingTo',
     source: 'a1',
     target: 'm1',
-    call_per_minute: '50',
-    response_time_per_min: '10',
+    callPerMinute: '50',
+    responseTimePerMin: '10',
   },
   {
     id: 23,
@@ -654,8 +654,8 @@ export const LINKS = [
     label: 'TracingTo',
     source: 'a1',
     target: 'a2',
-    call_per_minute: '50',
-    response_time_per_min: '10',
+    callPerMinute: '50',
+    responseTimePerMin: '10',
   },
   {
     id: 42,

@@ -99,6 +99,7 @@ export interface State {
   networkInstance: any;
   elemIdsRTCAll: any;
   topoDetailData: any;
+  isAutoReloadTopo: boolean;
 }
 
 const PercentileItem: string[] = ['p50', 'p75', 'p90', 'p95', 'p99'];
@@ -173,6 +174,7 @@ const initState: State = {
     nodes: [],
     links: [],
   },
+  isAutoReloadTopo: false,
 };
 
 // getters
@@ -249,6 +251,9 @@ const mutations = {
   },
   [types.SET_TOPO_DETAIL_DATA](state: State, data: any) {
     state.topoDetailData = data;
+  },
+  [types.SET_IS_AUTO_RELOAD_TOPO](state: State, data: any) {
+    state.isAutoReloadTopo = data;
   },
   [types.SET_LINK](state: State, data: any) {
     state.currentLink = data;
@@ -413,7 +418,7 @@ function formatTopoData(originData) {
   topoData.nodes.forEach((node) => {
     node.shortName = node.name.indexOf('-') > -1 ? '...' + node.name.split('-').pop() : node.name;
     node.type = node.label;
-    node.state = node.event_count > 0 ? 'Abnormal' : 'Normal';
+    node.state = node.eventCount > 0 ? 'Abnormal' : 'Normal';
   });
   topoData.links.forEach((link) => {
     link.type = link.label;
@@ -436,7 +441,7 @@ function formatMyTopoData(originData) {
   topoData.nodes.forEach((node) => {
     node.shortName = node.name.split('-').pop();
     node.type = node.label;
-    // node.state = node.event_count > 0 ? 'Abnormal' : 'Normal';
+    // node.state = node.eventCount > 0 ? 'Abnormal' : 'Normal';
   });
   topoData.links.forEach((link) => {
     link.type = link.label;

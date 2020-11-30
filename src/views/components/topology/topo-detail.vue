@@ -13,7 +13,7 @@
       <!-- 节点纵向依赖 -->
       <div id="tdt-view-cross-layer">
         <!-- link text -->
-        <div class="linkText" :style="linkTextPosition" v-show="linkTextVisible" v-text="linkTextContent"></div>
+        <div class="linkText" :style="linkTextStyle" v-show="linkTextVisible" v-html="linkTextContent"></div>
       </div>
     </div>
   </div>
@@ -76,7 +76,7 @@
             name: 'Nodes',
           }
         ],
-        linkTextPosition: {
+        linkTextStyle: {
           left: 0,
           top: 0,
         },
@@ -89,14 +89,14 @@
           'name',
           'label',
           'state',
-          'event_count',
-          'create_time',
-          'update_time',
-          'pod_id',
-          'node_ip',
-          'host_name',
-          'process_no',
-          'middleware_type',
+          'eventCount',
+          'createTime',
+          'updateTime',
+          'podIp',
+          'nodeIp',
+          'hostName',
+          'processNo',
+          'middlewareType',
           'kind',
         ],
       }
@@ -154,7 +154,8 @@
         }
         this.linkTextVisible = false;
         this.linkTextContent = '';
-        this.linkTextPosition = {
+        this.linkTextStyle = {
+          height: 0 + 'px',
           left: 0 + 'px',
           top: 0 + 'px',
         };
@@ -261,6 +262,7 @@
             }
           });
           itemTmp.type = node.type;
+          itemTmp.shortName = node.shortName;
           switch (node.type) {
             case 'Application': {
                 appNum++;
@@ -321,8 +323,8 @@
             target: link.tid,
             type: link.type,
             isTracingTo: (link.type === 'TracingTo' || link.type === 'SubTracingTo')? true : false,
-            call_per_minute: link.call_per_minute,
-            response_time_per_min: link.response_time_per_min,
+            callPerMinute: link.callPerMinute,
+            responseTimePerMin: link.responseTimePerMin,
           };
           switch (link.source.type) {
             case 'Application': itemTmp.isLine2Src = isAppLine2Src; break;
@@ -349,7 +351,7 @@
         // 设置提示
         this.tip = d3tip()
           .attr('class', 'd3-tip')
-          .offset([-8, 0]);
+          // .offset([-8, 0]);
         svg.call(this.tip);
 
         function tick() {
@@ -460,7 +462,8 @@
             d3.event.preventDefault();
             let offsetX = $jq('#tdt-view-cross-layer').offset().left;
             let offsetY = $jq('#tdt-view-cross-layer').offset().top;
-            this.linkTextPosition = {
+            this.linkTextStyle = {
+              height: 25 + 'px',
               left: d3.event.clientX - offsetX + 10 + 'px',
               top: d3.event.clientY - offsetY - 25 + 'px',
             };
@@ -472,7 +475,8 @@
             d3.event.preventDefault();
             this.linkTextVisible = false;
             this.linkTextContent = '';
-            this.linkTextPosition = {
+            this.linkTextStyle = {
+              height: 0 + 'px',
               left: 0 + 'px',
               top: 0 + 'px',
             };
@@ -491,13 +495,37 @@
 
             $jq('.topo-line').addClass('tl-static');
 
+            if (data.source.type === 'Application' || data.target.type === 'Application') {
+              this.tip.direction('e');
+            } else {
+              this.tip.direction('n');
+            }
             this.tip.html(data =>
               `
                 <div class="mb-5"><span class="grey">调用方式: </span>${data.type}</div>
-                <div class="mb-5"><span class="grey">调用频率: </span>${data.call_per_minute === undefined ? ' ' : data.call_per_minute + ' 次/分钟'}</div>
-                <div><span class="grey">平均响应时间: </span>${data.response_time_per_min  === undefined ? ' ' : data.response_time_per_min + ' 秒/分钟'}</div>
+                <div class="mb-5"><span class="grey">调用频率: </span>${data.callPerMinute === undefined ? ' ' : data.callPerMinute + ' 次/分钟'}</div>
+                <div><span class="grey">平均响应时间: </span>${data.responseTimePerMin  === undefined ? ' ' : data.responseTimePerMin + ' 毫秒/分钟'}</div>
               `
             ).show(data, element[index]);
+
+            // let offsetX = $jq('#tdt-view-cross-layer').offset().left;
+            // let offsetY = $jq('#tdt-view-cross-layer').offset().top;
+            // this.linkTextContent =
+            // `
+            //   <div class="mb-5"><span class="grey">调用方式: </span>${data.type}</div>
+            //   <div class="mb-5"><span class="grey">调用频率: </span>${
+            //     data.callPerMinute === undefined ? ' ' : data.callPerMinute + ' 次/分钟'
+            //   }</div>
+            //   <div><span class="grey">平均响应时间: </span>${
+            //     data.responseTimePerMin === undefined ? ' ' : data.responseTimePerMin + ' 毫秒/分钟'
+            //   }</div>
+            // `;
+            // this.linkTextVisible = true;
+            // this.linkTextStyle = {
+            //   height: 75 + 'px',
+            //   left: d3.event.clientX - offsetX + 8 + 'px',
+            //   top: d3.event.clientY - offsetY + 'px',
+            // };
           })
           .on('mouseout', () => {
             d3.event.stopPropagation();
@@ -505,7 +533,16 @@
 
             $jq('.topo-line').removeClass('tl-static');
 
-            // this.tip.hide(this);
+            // this.linkTextContent = '';
+            // this.linkTextVisible = false;
+            // this.linkTextStyle = {
+            //   height: 0 + 'px',
+            //   left: 0 + 'px',
+            //   top: 0 + 'px',
+            // };
+
+            this.tip.direction('n');
+            this.tip.hide(this);
           });
 
 
@@ -543,6 +580,7 @@
 <style lang="scss">
   .d3-tip {
     pointer-events: none !important;
+    z-index: 9999;
   }
   .topo-detail {
     height: 100%;
@@ -584,10 +622,14 @@
         .linkText {
           position: absolute;
           z-index: 999;
-          background-color: rgba(75, 75, 75, 0.596);
+          background-color: #242424;
           border-radius: 2px;
           color: white;
           padding: 2px;
+          text-align: left;
+          white-space: nowrap;
+
+          pointer-events: none !important;
         }
 
         .topo-svg {

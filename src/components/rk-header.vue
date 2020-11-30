@@ -13,17 +13,17 @@
       </router-link>
     </div>
     <div class="flex-h">
-      <!-- <a class="rk-btn mr-5 sm" :class="auto ? 'blue' : 'ghost'" @click="handleAuto">
+      <a class="rk-btn mr-5 sm" :class="isAutoReloadTopo ? 'blue' : 'ghost'" @click="handleAuto">
         <span class="vm">{{ this.$t('auto') }}</span>
       </a>
       <div class="auto-time">
         <span class="rk-auto-select">
-          <input v-model="autoTime" type="number" @change="changeAutoTime" min="1" />
+          <input v-model="autoTime" type="number" @change="changeAutoTime" min="10" />
         </span>
         {{ this.$t('second') }}
-      </div> -->
-      <a class="rk-btn sm ghost" @click="handleReload">
-        <svg class="icon mr-5 vm" :class="{ loading: auto }">
+      </div>
+      <a class="rk-btn sm ghost" @click="handleReload" :class="{ 'reload-static': isAutoReloadTopo }">
+        <svg class="icon mr-5 vm" :class="{ loading: isAutoReloadTopo }">
           <use xlink:href="#retry"></use>
         </svg>
         <span class="vm">{{ this.$t('reload') }}</span>
@@ -33,23 +33,36 @@
 </template>
 
 <script lang="ts">
-  import { Vue, Component } from 'vue-property-decorator';
-  import { Action, State, Getter } from 'vuex-class';
+  import { Vue, Component, Watch } from 'vue-property-decorator';
+  import { Mutation, Action, State, Getter } from 'vuex-class';
   import timeFormat from '@/utils/timeFormat';
 
   @Component
   export default class Header extends Vue {
+    @State('rocketTopo') private rocketTopo: any;
     @Getter('duration') private duration: any;
     @Action('SET_DURATION') private SET_DURATION: any;
-    @Action('rocketTopo/GET_TOPO_DATA') public GET_TOPO_DATA: any;
-    @State('rocketTopo') private rocketTopo: any;
-    private show: boolean = false;
-    private auto: boolean = false;
-    private autoTime: number = 6;
+    @Action('rocketTopo/GET_TOPO_DATA') private GET_TOPO_DATA: any;
+    @Mutation('rocketTopo/SET_IS_AUTO_RELOAD_TOPO') private SET_IS_AUTO_RELOAD_TOPO: any;
+
+    private autoTime: number = 10;
     private timer: any = null;
+
+    private get isAutoReloadTopo() {
+      return this.rocketTopo.isAutoReloadTopo;
+    }
+
+    @Watch('isAutoReloadTopo')
+    private changeIsAutoReloadTopo(newVal) {
+      if (newVal === false) {
+        clearInterval(this.timer);
+      }
+    }
+
     private mounted() {
       this.$router.push('/topology');
     }
+
     private dateFormat(fmt, date) {
       let ret;
       const opt = {
@@ -69,40 +82,42 @@
       }
       return fmt;
     }
+
     private handleReload() {
       this.rocketTopo.toolSetInstance.refreshTopo(false);
-      this.GET_TOPO_DATA({
-        start_time: this.dateFormat('YYYY-mm-dd HH:MM:SS', this.duration.start),
-        end_time: this.dateFormat('YYYY-mm-dd HH:MM:SS', this.duration.end),
-      });
-      // const gap = this.duration.end.getTime() - this.duration.start.getTime();
-      // const utcCopy: any = -(new Date().getTimezoneOffset() / 60);
-      // const time: Date[] = [new Date(new Date().getTime() - gap), new Date()];
-      // this.SET_DURATION(timeFormat(time));
+      const params = {
+        start_time: '',
+        end_time: '',
+      };
+      if (this.isAutoReloadTopo) {
+        // 开启轮询，查的是最近的时间段
+        const gap = this.duration.end.getTime() - this.duration.start.getTime();
+        const time: Date[] = [new Date(new Date().getTime() - gap), new Date()];
+        this.SET_DURATION(timeFormat(time));
+
+        params.start_time = this.dateFormat('YYYY-mm-dd HH:MM:SS', time[0]);
+        params.end_time = this.dateFormat('YYYY-mm-dd HH:MM:SS', time[1]);
+      } else {
+        // 关闭轮询，可以查询任意时间段
+        params.start_time = this.dateFormat('YYYY-mm-dd HH:MM:SS', this.duration.start);
+        params.end_time = this.dateFormat('YYYY-mm-dd HH:MM:SS', this.duration.end);
+      }
+      this.GET_TOPO_DATA(params);
     }
+
     private handleAuto() {
-      // 开启轮询刷新 query queryServices($duration: Duration!,$keyword: String!)
-      this.auto = !this.auto;
-      if (this.auto) {
+      this.SET_IS_AUTO_RELOAD_TOPO(!this.isAutoReloadTopo);
+      if (this.isAutoReloadTopo) {
         this.handleReload();
         this.timer = setInterval(this.handleReload, this.autoTime * 1000);
       } else {
         clearInterval(this.timer);
       }
     }
-    private handleHide() {
-      this.show = false;
-    }
-    private handleShow() {
-      this.show = !this.show;
-    }
-    private handleSignout() {
-      localStorage.removeItem('skywalking-authority');
-      this.$router.push('/login');
-    }
+
     private changeAutoTime() {
       clearInterval(this.timer);
-      if (this.auto) {
+      if (this.isAutoReloadTopo) {
         this.handleReload();
         this.timer = setInterval(this.handleReload, this.autoTime * 1000);
       }
@@ -126,6 +141,10 @@
     color: #efefef;
     background-color: #252a2f;
     box-shadow: 0 1px 2px 0 rgba(26, 24, 29, 0.24);
+
+    .reload-static {
+      pointer-events: none !important;
+    }
 
     .hcs-logo {
       width: 28px;
@@ -152,29 +171,16 @@
       opacity: 1;
       background-color: #333844;
     }
-  }
-  .rk-header-user {
-    display: none;
-    position: relative;
-  }
-  .rk-header-user-menu {
-    position: absolute;
-    top: 35px;
-    right: 0;
-    background-color: #fff;
-    overflow: hidden;
-    border-radius: 4px;
-    padding: 3px 0;
-    color: #333844;
-    width: 100px;
-    box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.1), 0 0 1px rgba(0, 0, 0, 0.15);
-  }
-  .rk-header-user-menu-i {
-    padding: 6px 10px;
-    will-change: background-color;
-    transition: background-color 0.3s;
-    &:hover {
-      background-color: #dededf;
+
+    .auto-time {
+      .rk-auto-select {
+        input {
+          width: 38px;
+          border-style: unset;
+          border-radius: 3px;
+          outline: 0;
+        }
+      }
     }
   }
 </style>

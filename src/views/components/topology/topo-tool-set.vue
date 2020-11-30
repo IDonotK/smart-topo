@@ -29,6 +29,7 @@
         class="sw-input"
         v-model="inputId"
         placeholder="请输入节点ID"
+        @focus="handelFocusInputId"
         @keyup.prevent.enter="handleMouseUp"
       />
       <span class="sw-clear">
@@ -250,6 +251,9 @@
     },
 
     computed: {
+      isAutoReloadTopo() {
+        return this.$store.state.rocketTopo.isAutoReloadTopo;
+      },
       durationRow() {
         return this.$store.state.rocketbot.durationRow;
       },
@@ -290,8 +294,8 @@
             // 选中节点放大居中展示
             this.networkInstance.setTopoViewport(newVal, oldVal);
             // 重置左侧纵向topo数据
-            // this.resetTopoDetailDataOnLine();
-            this.resetTopoDetailDataOffLine();
+            this.resetTopoDetailDataOnLine(this.topoViewData);
+            // this.resetTopoDetailDataOffLine();
             this.filterTopo();
           });
         } else {
@@ -301,6 +305,14 @@
     },
 
     methods: {
+      resetIsAutoReloadTopo() {
+        if (this.networkInstance.simulation) {
+          this.networkInstance.simulation.stop();
+        }
+        if (this.isAutoReloadTopo) {
+          this.$store.commit('rocketTopo/SET_IS_AUTO_RELOAD_TOPO', false);
+        }
+      },
       dateFormat(fmt, date) {
         let ret;
         const opt = {
@@ -444,7 +456,7 @@
         // 字段名同步
         topoData.nodes.forEach(node => {
           node.type = node.label;
-          node.state = node.event_count > 0 ? 'Abnormal' : 'Normal';
+          node.state = node.eventCount > 0 ? 'Abnormal' : 'Normal';
         });
         topoData.links.forEach(link => {
           link.type = link.label;
@@ -468,13 +480,31 @@
           },
         );
       },
-      async resetTopoDetailDataOnLine() {
+      async resetTopoDetailDataOnLine(topoData) {
         let curNode = this.currentNode;
         let crossLayerDataTmp = await this.queryCrosslayerNodes(curNode);
         let crossLayerData = this.formatTopoData(crossLayerDataTmp.data);
-        // const nodesTmp = new Set([...crossLayerData.nodes]); // 纵向依赖响应能否去掉选中节点本身？
-        const nodesTmp = new Set([...crossLayerData.nodes].filter(node => node.id !== curNode.id));
-        const linksTmp = new Set([...crossLayerData.links]);
+        let elemsIdsCL = {
+          nodeIds: [],
+          linkIds: []
+        };
+        crossLayerData.nodes.forEach(node => elemsIdsCL.nodeIds.push(node.id));
+        crossLayerData.links.forEach(link => elemsIdsCL.linkIds.push(link.id));
+
+        let nodesTmp = new Set();
+        let linksTmp = new Set();
+        // 匹配提取topoViewData里的节点对象
+        topoData.nodes.forEach(node => {
+          if (elemsIdsCL.nodeIds.includes(node.id)) {
+            nodesTmp.add(node);
+          }
+        });
+        topoData.links.forEach(link => {
+          if (elemsIdsCL.linkIds.includes(link.id)) {
+            linksTmp.add(link);
+          }
+        });
+
         nodesTmp.add(curNode);
         this.searchStreamOnSingleHop(curNode, this.elemsRTCAll, nodesTmp, linksTmp);
         this.$store.commit('rocketTopo/SET_TOPO_DETAIL_DATA', {
@@ -554,8 +584,8 @@
               let linkTmp = upStreamData.data.subTracingTos.find(slink => slink.id === link.id);
               linkCopy.type = linkTmp.label;
               linkCopy.label = linkTmp.label;
-              linkCopy.call_per_minute = linkTmp.call_per_minute;
-              linkCopy.response_time_per_min = linkTmp.response_time_per_min;
+              linkCopy.callPerMinute = linkTmp.callPerMinute;
+              linkCopy.responseTimePerMin = linkTmp.responseTimePerMin;
               this.elemsRTCUp.links.push(linkCopy);
             }
             if (elemIdsRTCDownTmp.linkIds.includes(link.id)) {
@@ -565,8 +595,8 @@
               let linkTmp = downStreamData.data.subTracingTos.find(slink => slink.id === link.id);
               linkCopy.type = linkTmp.label;
               linkCopy.label = linkTmp.label;
-              linkCopy.call_per_minute = linkTmp.call_per_minute;
-              linkCopy.response_time_per_min = linkTmp.response_time_per_min;
+              linkCopy.callPerMinute = linkTmp.callPerMinute;
+              linkCopy.responseTimePerMin = linkTmp.responseTimePerMin;
               this.elemsRTCDown.links.push(linkCopy);
             }
           });
@@ -591,7 +621,23 @@
       },
 
       // 探索
-      handleConfirmExplore(done) {
+      goToExploreNode(targetNode) {
+        this.restoreTopoViewPort(0);
+        this.restoreFilters();
+        this.$store.commit('rocketTopo/SET_TOPO_MODE', 'specific');
+        this.getRelativeElems(targetNode, this.topoData, true, () => {
+          // 查询目标节点的上下游topo,替换topoViewData
+          this.$store.commit('rocketTopo/SET_VIEW_NODE', {});
+          this.$store.commit('rocketTopo/SET_NODE', {}); // 注意这里对currentNode的watch事件
+          this.$emit('changeTopoViewData', this.elemsRTCAll);
+
+          // 待拓扑布局稳定后,手动选中目标节点
+          this.$store.commit('rocketTopo/SET_VIEW_NODE', targetNode);
+          this.$store.commit('rocketTopo/SET_EXPLORE_NODE', targetNode);
+          this.setCurNodeStably(targetNode);
+        });
+      },
+      handleConfirmExplore() {
         if (this.exploreMode === 'specific') {
           if (this.specificId === '') {
             return;
@@ -622,6 +668,7 @@
         }
       },
       handleClickExploreBtn() {
+        this.resetIsAutoReloadTopo();
         this.exploreMode = 'specific';
         this.specificId = '';
         this.isShowExplore = true;
@@ -720,12 +767,15 @@
         this.$store.commit('rocketTopo/SET_SHOW_RELATIVE_TYPES', [...relativeTypesSet]);
       },
       toggleStateTypeChecked() {
+        this.resetIsAutoReloadTopo();
         this.filterTopo();
       },
       toggleNodeTypeChecked() {
+        this.resetIsAutoReloadTopo();
         this.filterTopo();
       },
       toggleRelativeTypeChecked() {
+        this.resetIsAutoReloadTopo();
         this.filterTopo();
       },
 
@@ -747,6 +797,9 @@
             this.$store.commit('rocketTopo/SET_NODE', curNode);
           }
         }, 10);
+      },
+      handelFocusInputId() {
+        this.resetIsAutoReloadTopo();
       },
       handleMouseUp() {
         this.handleSearchOnId();
@@ -773,6 +826,7 @@
 
       // 控制
       handleEnlargeTopo() {
+        this.resetIsAutoReloadTopo();
         let zoomTimes = d3.zoomTransform(d3.select('#zoomContainer').node()).k;
         if (zoomTimes < 1) {
           zoomTimes = Number((Number(zoomTimes.toFixed(1)) + 0.1).toFixed(1));
@@ -786,6 +840,7 @@
         this.zoomController.scaleTo(d3.select('.net-svg').transition().duration(750), zoomTimes);
       },
       handleNarrowTopo() {
+        this.resetIsAutoReloadTopo();
         let zoomTimes = d3.zoomTransform(d3.select('#zoomContainer').node()).k;
         if (zoomTimes <= 1) {
           zoomTimes = Number((Number(zoomTimes.toFixed(1)) - 0.1).toFixed(1));
@@ -862,6 +917,7 @@
         }
       },
       handleRestoreTopo() {
+        this.resetIsAutoReloadTopo();
         if (this.nodeSingleClickTimer !== null) {
           clearTimeout(this.nodeSingleClickTimer);
           this.nodeSingleClickTimer = null;
@@ -879,6 +935,7 @@
         }, 300);
       },
       handleRestoreTopoToOrigin() {
+        this.resetIsAutoReloadTopo();
         this.inputId = '';
         this.$emit('onSearchResult', true);
         this.currentNode.fx = null;

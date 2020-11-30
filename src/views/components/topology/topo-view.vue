@@ -66,10 +66,23 @@
           :net-data="netData"
           :options="options"
           :node-sym="nodeSym"
+          @node-right-click="nodeRightClick"
           @node-dblclick="nodeDblClick"
           @node-click="nodeClick"
           @link-click="linkClick"
         />
+        <!-- 鼠标右键探索弹框 -->
+        <el-dialog class="explore-dialog" title="确定探索该节点？" :visible.sync="isShowExplore" width="30%">
+          <!-- <div class="modes-wrapper">
+            <div class="mw-item">
+             
+            </div>
+          </div> -->
+          <span slot="footer" class="dialog-footer">
+            <el-button @click="isShowExplore = false">取 消</el-button>
+            <el-button type="primary" @click="handleConfirmExplore">确 定</el-button>
+          </span>
+        </el-dialog>
         <!-- 加载样式 -->
         <div class="main-topo-loading" v-show="topoViewData.nodes.length === 0">
           <svg class="icon loading">
@@ -117,7 +130,8 @@
       isMatch: {
         type: Boolean,
         default: true
-      }
+      },
+      nodeToExplore: {},
     },
 
     data() {
@@ -172,16 +186,17 @@
           'name',
           'label',
           'state',
-          'event_count',
-          'create_time',
-          'update_time',
-          'pod_id',
-          'node_ip',
-          'host_name',
-          'process_no',
-          'middleware_type',
+          'eventCount',
+          'createTime',
+          'updateTime',
+          'podIp',
+          'nodeIp',
+          'hostName',
+          'processNo',
+          'middlewareType',
           'kind',
-        ]
+        ],
+        isShowExplore: false,
       }
     },
 
@@ -219,6 +234,12 @@
       topoDetailData() {
         return this.$store.state.rocketTopo.topoDetailData;
       },
+      networkInstance() {
+        return this.$store.state.rocketTopo.networkInstance;
+      },
+      toolSetInstance() {
+        return this.$store.state.rocketTopo.toolSetInstance;
+      },
     },
 
     watch: {
@@ -246,10 +267,18 @@
     },
 
     mounted() {
+      document.oncontextmenu = function(e){
+        e.preventDefault();
+      };
       this.initSvgSizeArg();
     },
 
     methods: {
+      handleConfirmExplore() {
+        this.isShowExplore = false;
+        this.toolSetInstance.goToExploreNode(this.nodeToExplore);
+        this.nodeToExplore = {};
+      },
       copyNodeId(id) {
         const input = document.createElement('input');
         document.body.appendChild(input)
@@ -290,6 +319,10 @@
       },
       initNetTopoData() {
         this.netData = this.topoViewData;
+      },
+      nodeRightClick(event, node) {
+        this.isShowExplore = true;
+        this.nodeToExplore = node;
       },
       nodeDblClick(event, node) {
         if (node && this.currentNode && node.id === this.currentNode.id) {
@@ -447,6 +480,67 @@
                     color: rgb(63, 177, 227);
                   }
                 }
+              }
+            }
+          }
+        }
+
+        .explore-dialog {
+          z-index: 99999 !important;
+
+          .el-dialog {
+            background-color: #333840;
+
+            .el-dialog__header {
+              text-align: left;
+
+              .el-dialog__title {
+                color: #ccc;
+              }
+            }
+
+            .el-dialog__body {
+              display: none;
+              .modes-wrapper {
+                .mw-item {
+                  display: flex;
+                  align-items: center;
+                  justify-content: flex-start;
+
+                  .el-radio {
+                    color: #ccc;
+                    margin-right: 10px;
+                  }
+
+                  .el-input {
+                    &.is-disabled {
+                      opacity: 0.5;
+                    }
+                  }
+
+                  .el-input__inner {
+                    background-color: #ddd;
+
+                    &::-webkit-input-placeholder {
+                      color: #252a2f;
+                      opacity: 0.5;
+                    }
+                  }
+                }
+              }
+            }
+
+            .el-dialog__footer .dialog-footer {
+              .el-button {
+                border: none;
+              }
+
+              .el-button--default {
+                background-color: #ccc;
+              }
+
+              .el-button--primary {
+                color: #ccc;
               }
             }
           }
