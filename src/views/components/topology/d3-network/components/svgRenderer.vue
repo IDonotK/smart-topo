@@ -67,14 +67,12 @@
           <template v-for="(node, key) in nodes">
             <svg
               v-if="svgIcon(node)"
-              :key="key"
-              :viewBox="svgIcon(node).attrs.viewBox"
+              :key="key + 'svg'"
               :width="getNodeSize(node, 'width')"
               :height="getNodeSize(node, 'height')"
               :x="node.x - getNodeSize(node, 'width') / 2"
               :y="node.y - getNodeSize(node, 'height') / 2"
               :style="nodeStyle(node)"
-              :title="node.name"
               :class="
                 nodeClass(node, [
                   'node-svg',
@@ -83,32 +81,21 @@
                   node.id === currentNode.id ? 'pinned' : '',
                 ])
               "
-              v-html="svgIcon(node).data"
               v-bind="node._svgAttrs"
-              @dblclick.stop.prevent="emit('nodeDblClick', [$event, node])"
-              @mousedown.stop.prevent="emit('dragNodeStart', [$event, key, node])"
-              @mouseup.stop.prevent="emit('dragNodeEnd', [$event, key, node])"
-              @mouseenter.stop.prevent="emit('mouseEnterNode', [$event, node])"
-              @mouseleave.stop.prevent="emit('mouseLeaveNode', [$event, node])"
-            ></svg>
+            >
+              <use v-show="!node.isBright" :xlink:href="'#' + node.svgIcon"></use>
+              <use v-show="node.isBright" :xlink:href="'#' + node.svgIconBright"></use>
+            </svg>
 
-            <!-- default circle nodes -->
             <circle
-              v-else
-              :key="key"
+              :key="key + 'agent'"
               :r="getNodeSize(node) / 2"
               :cx="node.x"
               :cy="node.y"
               :style="nodeStyle(node)"
               :stroke-width="fontSize / 8"
               :title="node.shortName"
-              :class="
-                nodeClass(node, [
-                  node.isDark ? 'dark-node' : '',
-                  node.isBright ? 'bright-node' : '',
-                  node.id === currentNode.id ? 'pinned' : '',
-                ])
-              "
+              :class="nodeClass(node, ['node-agent'])"
               v-bind="node._svgAttrs"
               @dblclick.stop.prevent="emit('nodeDblClick', [$event, node])"
               @mousedown.stop.prevent="emit('dragNodeStart', [$event, key, node])"
@@ -267,7 +254,7 @@
         return size;
       },
       svgIcon(node) {
-        return node.svgObj || this.nodeSvg;
+        return node.svgIcon || this.nodeSvg;
       },
       emit(e, args) {
         this.$emit('action', e, args);

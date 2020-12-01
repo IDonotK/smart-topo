@@ -132,7 +132,10 @@ export default {
 
   isSvgData(svgData) {
     if (!svgData.firstChild) return false;
-    return svgData.firstChild.parentNode.nodeName === 'svg';
+    return (
+      svgData.firstChild.parentNode.nodeName === 'svg' ||
+      svgData.firstChild.parentNode.nodeName.toLowerCase() === 'symbol'
+    );
   },
 
   svgToUrl(svg) {

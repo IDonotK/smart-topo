@@ -56,7 +56,7 @@
             name: 'Applications',
           },
           {
-            id: 'Middleware',
+            id: 'MiddleWare',
             name: 'Middlewares',
           },
           {
@@ -99,6 +99,7 @@
           'middlewareType',
           'kind',
         ],
+        tickTimer: null,
       }
     },
 
@@ -122,12 +123,19 @@
       window.addEventListener('resize', this.resize);
     },
 
+    destroyed() {
+      if (this.tickTimer) {
+        clearTimeout(this.tickTimer);
+        this.tickTimer = null;
+      }
+    },
+
     methods: {
       setCurNodeStably(curNode) {
         let lastX = curNode.x;
         let lastY = curNode.y;
         let staticNum = 0;
-        let tickTimer = setInterval(() => {
+        this.tickTimer = setInterval(() => {
           if (parseInt(curNode.x) === parseInt(lastX) && parseInt(curNode.y) === parseInt(lastY)) { // 可放宽限制，加快速度
             staticNum++;
           } else {
@@ -136,7 +144,8 @@
             staticNum = 0;
           }
           if (staticNum > 10) {
-            clearTimeout(tickTimer);
+            clearTimeout(this.tickTimer);
+            this.tickTimer = null;
             this.$store.commit('rocketTopo/SET_NODE', curNode);
           }
         }, 10);
@@ -184,7 +193,7 @@
         graph.nodes.forEach(node => {
           switch (node.type) {
             case 'Application': appNum++; break;
-            case 'Middleware': middlewareNum++; break;
+            case 'MiddleWare': middlewareNum++; break;
             case 'Process': processNum++; break;
             case 'Workload': workloadNum++; break;
             case 'Pod': podNum++; break;
@@ -196,7 +205,7 @@
         let curTypeNum = 0;
         switch (this.currentNode.type) {
           case 'Application': appNum = (appNum % 2 === 0 ? appNum + 1 : appNum); curTypeNum = appNum; break;
-          case 'Middleware': middlewareNum = (middlewareNum % 2 === 0 ? middlewareNum + 1 : middlewareNum); curTypeNum = middlewareNum; break;
+          case 'MiddleWare': middlewareNum = (middlewareNum % 2 === 0 ? middlewareNum + 1 : middlewareNum); curTypeNum = middlewareNum; break;
           case 'Process': processNum = (processNum % 2 === 0 ? processNum + 1 : processNum); curTypeNum = processNum; break;
           case 'Workload': workloadNum = (workloadNum % 2 === 0 ? workloadNum + 1 : workloadNum); curTypeNum = workloadNum; break;
           case 'Pod': podNum = (podNum % 2 === 0 ? podNum + 1 : podNum); curTypeNum = podNum; break;
@@ -272,9 +281,9 @@
                   setNodePositonNormalLayer(appNum, itemTmp, appStartX, 0.5, appIcon, 28);
                 }
               } break;
-            case 'Middleware': {
+            case 'MiddleWare': {
                 middlewareNum++;
-                if (this.currentNode.type === 'Middleware') {
+                if (this.currentNode.type === 'MiddleWare') {
                   setNodePositonCurNodeLayer(middlewareNum, curTypeNum, itemTmp, middlewareStartX, 1.5, middlewareIcon, 28);
                 } else {
                   setNodePositonNormalLayer(middlewareNum, itemTmp, middlewareStartX, 1.5, middlewareIcon, 28);
@@ -328,7 +337,7 @@
           };
           switch (link.source.type) {
             case 'Application': itemTmp.isLine2Src = isAppLine2Src; break;
-            case 'Middleware': itemTmp.isLine2Src = isMiddlewareLine2Src; break;
+            case 'MiddleWare': itemTmp.isLine2Src = isMiddlewareLine2Src; break;
             case 'Process': itemTmp.isLine2Src = isProcessLine2Src; break;
             case 'Workload': itemTmp.isLine2Src = isWorkloadLine2Src; break;
             case 'Pod': itemTmp.isLine2Src = isPodLine2Src; break;

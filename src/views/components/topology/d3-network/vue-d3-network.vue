@@ -11,6 +11,10 @@
 
   // const d3 = Object.assign({}, forceSimulation)
 
+  // import nodeIcon from './APPLICATION.svg';
+
+  import '../assets';
+
   export default {
     name: 'd3-network',
     components: {
@@ -410,10 +414,10 @@
           if (!node.y) vm.$set(node, 'y', 0);
           // node default name, allow string 0 as name
           if (!node.name && node.name !== '0') vm.$set(node, 'name', 'node ' + node.id);
-          if (node.svgSym) {
-            node.svgIcon = svgExport.svgElFromString(node.svgSym);
-            if (node.svgIcon && !node.svgObj) node.svgObj = svgExport.toObject(node.svgIcon);
-          }
+
+          node.svgIcon = node.type.toUpperCase();
+          node.svgIconBright = node.type.toUpperCase() + '-BRIGHT';
+
           if (this.isTopoNodesUpdated) {
             vm.$set(node, 'showLabel', false);
             vm.$set(node, 'isDark', false);
@@ -426,7 +430,7 @@
               case 'Application':
                 nodeColor = this.pallet[0];
                 break;
-              case 'Middleware':
+              case 'MiddleWare':
                 nodeColor = this.pallet[1];
                 break;
               case 'Process':
@@ -839,14 +843,17 @@
         this.nodeSingleClicked = true;
         this.clickNodeTimer = setTimeout(() => {
           this.nodeSingleClicked = false;
+
+          this.dragging = nodeKey;
+          this.setMouseOffset(event, this.nodes[nodeKey]);
         }, 100);
 
         // 拖拽 双击被选中节点无效
         if (node && this.currentNode && node.id === this.currentNode.id) {
           return;
         }
-        this.dragging = nodeKey;
-        this.setMouseOffset(event, this.nodes[nodeKey]);
+        // this.dragging = nodeKey;
+        // this.setMouseOffset(event, this.nodes[nodeKey]);
       },
       dragNodeEnd(event, nodeKey, node) {
         // 鼠标右键点击节点
@@ -857,6 +864,7 @@
         if (this.nodeSingleClicked) {
           clearTimeout(this.clickNodeTimer);
           this.nodeClick(event, node);
+          return;
         }
 
         // 拖拽 双击被选中节点无效
@@ -992,11 +1000,13 @@
         position: absolute;
         z-index: 999;
         // background-color: rgba(75, 75, 75, 0.596);
-        background-color: #242424;
+        // background-color: #242424;
+        background-color: #252a2f;
         border-radius: 2px;
         color: white;
         padding: 2px;
         text-align: left;
+        opacity: 0.8;
 
         pointer-events: none !important;
 
@@ -1018,6 +1028,14 @@
           // stroke: rgba(18, 120, 98, 0.7);
           // stroke-width: 3px;
           transition: translate 0.5s ease;
+
+          &.node-svg {
+            pointer-events: none;
+          }
+
+          &.node-agent {
+            opacity: 0;
+          }
 
           &.dark-node {
             opacity: 0.1;

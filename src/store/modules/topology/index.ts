@@ -4,9 +4,6 @@ import * as types from '../../mutation-types';
 import axios, { AxiosPromise, AxiosResponse } from 'axios';
 import { cancelToken } from '@/utils/cancelToken';
 
-import { NODES, LINKS } from './data.js';
-import { GES_DATA } from './ges-data.js';
-
 interface Option {
   key: string;
   label: string;
@@ -416,32 +413,13 @@ function formatTopoData(originData) {
 
   // 字段名同步
   topoData.nodes.forEach((node) => {
-    node.shortName = node.name.indexOf('-') > -1 ? '...' + node.name.split('-').pop() : node.name;
+    if (node.name.length > 5) {
+      node.shortName = node.name.substring(0, 5) + '...';
+    } else {
+      node.shortName = node.name;
+    }
     node.type = node.label;
     node.state = node.eventCount > 0 ? 'Abnormal' : 'Normal';
-  });
-  topoData.links.forEach((link) => {
-    link.type = link.label;
-    link.sid = link.source;
-    link.tid = link.target;
-  });
-
-  return topoData;
-}
-
-function formatMyTopoData(originData) {
-  let topoData = {
-    nodes: [],
-    links: [],
-  };
-  topoData.nodes = originData.nodes;
-  topoData.links = originData.links;
-
-  // 字段名同步
-  topoData.nodes.forEach((node) => {
-    node.shortName = node.name.split('-').pop();
-    node.type = node.label;
-    // node.state = node.eventCount > 0 ? 'Abnormal' : 'Normal';
   });
   topoData.links.forEach((link) => {
     link.type = link.label;
@@ -455,11 +433,6 @@ function formatMyTopoData(originData) {
 // actions
 const actions: ActionTree<State, any> = {
   GET_TOPO_DATA(context: { commit: Commit; state: State }, params: any) {
-    // let topoData = formatMyTopoData({
-    //   nodes: NODES,
-    //   links: LINKS,
-    // })
-    // context.commit(types.SET_TOPO_DATA, topoData);
     return axios
       .get(window.location.origin + '/v1/endpoints', {
         params,

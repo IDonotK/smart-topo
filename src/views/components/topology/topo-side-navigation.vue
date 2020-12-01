@@ -56,7 +56,7 @@
             total: 0
           },
           {
-            id: 'Middleware',
+            id: 'MiddleWare',
             name: 'Middlewares',
             imgUrl: middlewareIcon,
             abnormal: 0,

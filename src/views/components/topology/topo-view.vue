@@ -72,7 +72,12 @@
           @link-click="linkClick"
         />
         <!-- 鼠标右键探索弹框 -->
-        <el-dialog class="explore-dialog" title="确定探索该节点？" :visible.sync="isShowExplore" width="30%">
+        <el-dialog
+          class="explore-dialog"
+          :title="'确定探索节点 ' + nodeToExplore.id + '？'"
+          :visible.sync="isShowExplore"
+          width="30%"
+        >
           <!-- <div class="modes-wrapper">
             <div class="mw-item">
              
@@ -131,7 +136,6 @@
         type: Boolean,
         default: true
       },
-      nodeToExplore: {},
     },
 
     data() {
@@ -197,6 +201,8 @@
           'kind',
         ],
         isShowExplore: false,
+        nodeToExplore: {},
+        tickTimer: null,
       }
     },
 
@@ -273,6 +279,13 @@
       this.initSvgSizeArg();
     },
 
+    destroyed() {
+      if (this.tickTimer) {
+        clearTimeout(this.tickTimer);
+        this.tickTimer = null;
+      }
+    },
+
     methods: {
       handleConfirmExplore() {
         this.isShowExplore = false;
@@ -299,7 +312,7 @@
         let lastX = curNode.x;
         let lastY = curNode.y;
         let staticNum = 0;
-        let tickTimer = setInterval(() => {
+        this.tickTimer = setInterval(() => {
           if (parseInt(curNode.x) === parseInt(lastX) && parseInt(curNode.y) === parseInt(lastY)) { // 可放宽限制，加快速度
             staticNum++;
           } else {
@@ -308,7 +321,8 @@
             staticNum = 0;
           }
           if (staticNum > 10) {
-            clearTimeout(tickTimer);
+            clearTimeout(this.tickTimer);
+            this.tickTimer = null;
             this.$store.commit('rocketTopo/SET_NODE', curNode);
           }
         }, 10);

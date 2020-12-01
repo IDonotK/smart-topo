@@ -42,9 +42,6 @@ import { OverlayScrollbarsPlugin } from 'overlayscrollbars-vue';
 Vue.use(OverlayScrollbarsPlugin);
 Vue.use(OverlayScrollbars);
 
-// import $ from 'jquery';
-// Vue.prototype.$jq = $;
-
 Vue.use(eventBus);
 Vue.use(VueI18n);
 Vue.use(components);

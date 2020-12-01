@@ -84,9 +84,6 @@
           <span class="item-wrapper item-title">{{ item.label }}</span>
           <span class="item-wrapper item-checkbox">
             <input type="checkbox" v-model="item.checked" @change="toggleNodeTypeChecked" />
-            <!-- <el-checkbox 
-              v-model="item.checked"
-              @change="toggleNodeTypeChecked"></el-checkbox> -->
           </span>
         </div>
       </div>
@@ -100,9 +97,6 @@
           <span class="item-wrapper item-title">{{ item.label }}</span>
           <span class="item-wrapper item-checkbox">
             <input type="checkbox" v-model="item.checked" @change="toggleStateTypeChecked" />
-            <!-- <el-checkbox 
-              v-model="item.checked"
-              @change="toggleStateTypeChecked"></el-checkbox> -->
           </span>
         </div>
       </div>
@@ -116,9 +110,6 @@
           <span class="item-wrapper item-title">{{ item.label }}</span>
           <span class="item-wrapper item-checkbox">
             <input type="checkbox" v-model="item.checked" @change="toggleRelativeTypeChecked" />
-            <!-- <el-checkbox 
-              v-model="item.checked"
-              @change="toggleRelativeTypeChecked"></el-checkbox> -->
           </span>
         </div>
       </div>
@@ -173,7 +164,7 @@
         moreToolState: false,
         pallet: {
           Application: '#3fb1e3',
-          Middleware: '#a0a7e6',
+          MiddleWare: '#a0a7e6',
           Process: '#96dee8',
           Workload: '#3f96e3',
           Pod: '#6be6c1',
@@ -187,7 +178,7 @@
           title: '显示节点类型',
           data: [
             {key: 0, label: 'Application', checked: true, imgUrl: applicationIcon},
-            {key: 1, label: 'Middleware', checked: true, imgUrl: middlewareIcon},
+            {key: 1, label: 'MiddleWare', checked: true, imgUrl: middlewareIcon},
             {key: 2, label: 'Process', checked: true, imgUrl: processIcon},
             {key: 3, label: 'Workload', checked: true, imgUrl: workloadIcon},
             {key: 4, label: 'Pod', checked: true, imgUrl: podIcon},
@@ -233,6 +224,7 @@
           nodes: [],
           links: []
         },
+        tickTimer: null,
       }
     },
 
@@ -244,6 +236,13 @@
       this.$store.commit('rocketTopo/SET_SHOW_STATE_TYPES', stateTypes);
       this.$store.commit('rocketTopo/SET_SHOW_RELATIVE_TYPES', relativeTypes);
       this.$store.commit('rocketTopo/SET_TOOL_SET_INSTANCE', this);
+    },
+
+    destroyed() {
+      if (this.tickTimer) {
+        clearTimeout(this.tickTimer);
+        this.tickTimer = null;
+      }
     },
 
     components: {
@@ -295,7 +294,6 @@
             this.networkInstance.setTopoViewport(newVal, oldVal);
             // 重置左侧纵向topo数据
             this.resetTopoDetailDataOnLine(this.topoViewData);
-            // this.resetTopoDetailDataOffLine();
             this.filterTopo();
           });
         } else {
@@ -363,32 +361,6 @@
           links: []
         };
       },
-      deepSearchTopoUp(curNode, topoData, nodeSet, linkSet) {
-        for (let i = 0; i < topoData.links.length; i++) { // 基于全局的拓扑数据
-          let link = topoData.links[i];
-          if (link.tid === curNode.id) {
-            if (link.source.type === curNode.type) {
-              continue;
-            }
-            linkSet.add(link);
-            nodeSet.add(link.source);
-            this.deepSearchTopoUp(link.source, topoData, nodeSet, linkSet);
-          }
-        }
-      },
-      deepSearchTopoDown(curNode, topoData, nodeSet, linkSet) {
-        for (let i = 0; i < topoData.links.length; i++) { // 基于全局的拓扑数据
-          let link = topoData.links[i];
-          if (link.sid === curNode.id) {
-            if (link.target.type === curNode.type) {
-              continue;
-            }
-            linkSet.add(link);
-            nodeSet.add(link.target);
-            this.deepSearchTopoDown(link.target, topoData, nodeSet, linkSet);
-          }
-        }
-      },
       searchStreamOnSingleHop(curNode, topoData, nodeSet, linkSet) {
         const nodesTmpUp = new Set();
         const linksTmpUp = new Set();
@@ -412,22 +384,6 @@
         });
         const nodesTmp = new Set([...nodesTmpUp, ...nodesTmpDown]);
         const linksTmp = new Set([...linksTmpUp, ...linksTmpDown]);
-      },
-      resetTopoDetailDataOffLine() {
-        let curNode = this.currentNode;
-        const nodesTmp = new Set();
-        const linksTmp = new Set();
-        this.deepSearchTopoUp(curNode, this.topoViewData, nodesTmp, linksTmp);
-        this.deepSearchTopoDown(curNode, this.topoViewData, nodesTmp, linksTmp);
-
-        // 注意顺序: 选中节点 => 上游节点 => 下游节点,集中在topoDetailData的尾部
-        nodesTmp.add(curNode);
-        this.searchStreamOnSingleHop(curNode, this.elemsRTCAll, nodesTmp, linksTmp);
-
-        this.$store.commit('rocketTopo/SET_TOPO_DETAIL_DATA', {
-          nodes: Array.from(nodesTmp),
-          links: Array.from(linksTmp)
-        });
       },
       formatTopoData(originData, hasTracingTos) {
         let topoData = {
@@ -626,12 +582,10 @@
         this.restoreFilters();
         this.$store.commit('rocketTopo/SET_TOPO_MODE', 'specific');
         this.getRelativeElems(targetNode, this.topoData, true, () => {
-          // 查询目标节点的上下游topo,替换topoViewData
           this.$store.commit('rocketTopo/SET_VIEW_NODE', {});
-          this.$store.commit('rocketTopo/SET_NODE', {}); // 注意这里对currentNode的watch事件
+          this.$store.commit('rocketTopo/SET_NODE', {});
           this.$emit('changeTopoViewData', this.elemsRTCAll);
 
-          // 待拓扑布局稳定后,手动选中目标节点
           this.$store.commit('rocketTopo/SET_VIEW_NODE', targetNode);
           this.$store.commit('rocketTopo/SET_EXPLORE_NODE', targetNode);
           this.setCurNodeStably(targetNode);
@@ -784,7 +738,7 @@
         let lastX = curNode.x;
         let lastY = curNode.y;
         let staticNum = 0;
-        let tickTimer = setInterval(() => {
+        this.tickTimer = setInterval(() => {
           if (parseInt(curNode.x) === parseInt(lastX) && parseInt(curNode.y) === parseInt(lastY)) { // 可放宽限制，加快速度
             staticNum++;
           } else {
@@ -793,7 +747,8 @@
             staticNum = 0;
           }
           if (staticNum > 10) {
-            clearTimeout(tickTimer);
+            clearTimeout(this.tickTimer);
+            this.tickTimer = null;
             this.$store.commit('rocketTopo/SET_NODE', curNode);
           }
         }, 10);

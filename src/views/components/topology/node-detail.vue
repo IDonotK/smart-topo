@@ -23,6 +23,12 @@
 </template>
 
 <script lang="js">
+  import appIcon from './assets/APPLICATION.png';
+  import middlewareIcon from './assets/MIDDLEWARE.png';
+  import processIcon from './assets/PROCESS.png';
+  import workloadIcon from './assets/WORKLOAD.png';
+  import podIcon from './assets/POD.png';
+  import nodeIcon from './assets/NODE.png';
   import eventIcon from './assets/EVENT_LIGHT.png';
   export default {
     props: {
@@ -122,7 +128,7 @@
             });
             nodes.push({
               id: link.target.id,
-              name: link.target.shortName,
+              name: link.target.name,
               type: link.target.type,
               state: link.target.state,
               category: 1
@@ -137,7 +143,7 @@
             });
             nodes.push({
               id: link.source.id,
-              name: link.source.shortName,
+              name: link.source.name,
               type: link.source.type,
               state: link.source.state,
               category: 1
@@ -152,41 +158,50 @@
           } else if (node.category === 1) {
             node.symbolSize = 20;
           }
+          let nodeSymbol = 'image://' + appIcon + '';
           let nodeColor = '#fff';
           switch (node.type) {
             case 'Application':
+              nodeSymbol = 'image://' + appIcon + '';
               nodeColor = this.pallet[0];
               break;
-            case 'Middleware':
+            case 'MiddleWare':
+              nodeSymbol = 'image://' + middlewareIcon + '';
               nodeColor = this.pallet[1];
               break;
             case 'Process':
+              nodeSymbol = 'image://' + processIcon + '';
               nodeColor = this.pallet[2];
               break;
             case 'Workload':
+              nodeSymbol = 'image://' + workloadIcon + '';
               nodeColor = this.pallet[3];
               break;
             case 'Pod':
+              nodeSymbol = 'image://' + podIcon + '';
               nodeColor = this.pallet[4];
               break;
             case 'Node':
+              nodeSymbol = 'image://' + nodeIcon + '';
               nodeColor = this.pallet[5];
               break;
           }
-          node.itemStyle = {
-            color: nodeColor
-          };
+          node.symbol = nodeSymbol;
+          // node.itemStyle = {
+          //   color: nodeColor
+          // };
           node.label = {
-            show: true,
+            show: false,
             color: nodeColor,
-            offset: [0, 17],
+            offset: [0, -17],
             borderColor: 'transparent',
             borderWith: 0,
             textBorderColor: 'transparent',
             textBorderWith: 0,
           };
           if (node.id === this.curNodeCrossLayer.id) {
-            node.label.offset = [0, 22];
+            node.label.show = true;
+            node.label.offset = [0, -22];
           }
         });
         links.forEach(link => {
