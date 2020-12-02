@@ -169,7 +169,7 @@
           top: 0 + 'px',
         };
 
-        // console.log("topoDetailData: ", this.topoDetailData);
+        console.log("topoDetailData: ", this.topoDetailData);
 
         if (this.topoDetailData.nodes.length <= 0) {
           return;

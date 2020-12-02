@@ -133,6 +133,8 @@
   import axios, { AxiosPromise, AxiosResponse } from 'axios';
   import { cancelToken } from '@/utils/cancelToken';
 
+  import { A1_UP, A1_DOWN, A1_CL, PS2_UP, PS2_DOWN, PS2_CL } from './relative-data.js';
+
   export default {
     props: {
       topoData: {
@@ -438,7 +440,12 @@
       },
       async resetTopoDetailDataOnLine(topoData) {
         let curNode = this.currentNode;
-        let crossLayerDataTmp = await this.queryCrosslayerNodes(curNode);
+        // let crossLayerDataTmp = await this.queryCrosslayerNodes(curNode);
+        let crossLayerDataTmp = A1_CL;
+        if (curNode.id === 'ps2') {
+          crossLayerDataTmp = PS2_CL;
+        }
+
         let crossLayerData = this.formatTopoData(crossLayerDataTmp.data);
         let elemsIdsCL = {
           nodeIds: [],
@@ -493,15 +500,30 @@
           nodeIds: [],
           linkIds: []
         };
-        let upStreamData = await this.queryRelativeNodes(curNode, 'in'); // 查询上游节点
-        let downStreamData = await this.queryRelativeNodes(curNode, 'out'); // 查询下游节点
+        // let upStreamData = await this.queryRelativeNodes(curNode, 'in'); // 查询上游节点
+        // let downStreamData = await this.queryRelativeNodes(curNode, 'out'); // 查询下游节点
+
+        let upStreamData = A1_UP;
+        let downStreamData = A1_DOWN;
+        if (curNode.id === 'ps2') {
+          upStreamData = PS2_UP;
+          downStreamData = PS2_DOWN;
+        }
+
         upStreamData.data.applications.forEach(node => {
+          elemIdsRTCUpTmp.nodeIds.push(node.id);
+        });
+        upStreamData.data.middleWares.forEach(node => {
           elemIdsRTCUpTmp.nodeIds.push(node.id);
         });
         upStreamData.data.subTracingTos.forEach(link => {
           elemIdsRTCUpTmp.linkIds.push(link.id);
         });
+
         downStreamData.data.applications.forEach(node => {
+          elemIdsRTCDownTmp.nodeIds.push(node.id);
+        });
+        downStreamData.data.middleWares.forEach(node => {
           elemIdsRTCDownTmp.nodeIds.push(node.id);
         });
         downStreamData.data.subTracingTos.forEach(link => {

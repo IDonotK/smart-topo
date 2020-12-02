@@ -4,6 +4,8 @@ import * as types from '../../mutation-types';
 import axios, { AxiosPromise, AxiosResponse } from 'axios';
 import { cancelToken } from '@/utils/cancelToken';
 
+import { GES_DATA } from './ges-data.js';
+
 interface Option {
   key: string;
   label: string;
@@ -433,19 +435,30 @@ function formatTopoData(originData) {
 // actions
 const actions: ActionTree<State, any> = {
   GET_TOPO_DATA(context: { commit: Commit; state: State }, params: any) {
-    return axios
-      .get(window.location.origin + '/v1/endpoints', {
-        params,
-        cancelToken: cancelToken(),
-      })
-      .then((res: any) => {
-        let topoData = formatTopoData(res.data);
-        context.commit(types.SET_TOPO_DATA, {
-          nodes: topoData.nodes,
-          links: topoData.links,
-        });
-      })
-      .catch((err) => {});
+    context.commit(types.SET_TOPO_DATA, {
+      nodes: [],
+      links: [],
+    });
+    setTimeout(() => {
+      let topoData = formatTopoData(GES_DATA);
+      context.commit(types.SET_TOPO_DATA, {
+        nodes: topoData.nodes,
+        links: topoData.links,
+      });
+    }, 1000);
+    // return axios
+    //   .get(window.location.origin + '/v1/endpoints', {
+    //     params,
+    //     cancelToken: cancelToken(),
+    //   })
+    //   .then((res: any) => {
+    //     let topoData = formatTopoData(res.data);
+    //     context.commit(types.SET_TOPO_DATA, {
+    //       nodes: topoData.nodes,
+    //       links: topoData.links,
+    //     });
+    //   })
+    //   .catch((err) => {});
   },
   GET_SERVICES(context: { commit: Commit }, params: { duration: Duration; keyword: string }) {
     if (!params.keyword) {

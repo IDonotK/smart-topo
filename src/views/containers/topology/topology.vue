@@ -59,6 +59,7 @@
         this.$store.commit('rocketTopo/SET_IS_FIRST_TICK', true);
       },
       topoData(newVal) {
+        console.log('topoData change')
         this.$store.commit('rocketTopo/SET_IS_TOPO_NODES_UPDATED', true);
         this.$store.commit('rocketTopo/SET_IS_TOPO_LINKS_UPDATED', true);
         this.topoViewData = newVal;

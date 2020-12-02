@@ -418,6 +418,7 @@
           node.svgIcon = node.type.toUpperCase();
           node.svgIconBright = node.type.toUpperCase() + '-BRIGHT';
 
+          console.log('this.isTopoNodesUpdated: ', this.isTopoNodesUpdated);
           if (this.isTopoNodesUpdated) {
             vm.$set(node, 'showLabel', false);
             vm.$set(node, 'isDark', false);
@@ -453,6 +454,7 @@
           }
           if (this.isTopoNodesUpdated && index === nodes.length - 1) {
             this.$store.commit('rocketTopo/SET_IS_TOPO_NODES_UPDATED', false);
+            console.log('this.isTopoNodesUpdated: ', this.isTopoNodesUpdated);
           }
           return node;
         });
@@ -466,6 +468,7 @@
           link.source = link.sid;
           link.target = link.tid;
           if (!link.id) vm.$set(link, 'id', 'link-' + index);
+          console.log('this.isTopoLinksUpdated: ', this.isTopoLinksUpdated);
           if (this.isTopoLinksUpdated) {
             vm.$set(link, 'showLabel', false);
             vm.$set(link, 'isDark', false);
@@ -475,6 +478,7 @@
           }
           if (this.isTopoLinksUpdated && index === links.length - 1) {
             this.$store.commit('rocketTopo/SET_IS_TOPO_LINKS_UPDATED', false);
+            console.log('this.isTopoLinksUpdated: ', this.isTopoLinksUpdated);
           }
           return link;
         });
