@@ -16,23 +16,6 @@ export const simulationInit = (d3, data_nodes, data_links, ticked, topo_size) =>
     .on('tick', ticked)
     .stop();
   simulationSkip(d3, simulation, ticked);
-
-  // const simulation = d3
-  //   .forceSimulation(data_nodes)
-  //   .force(
-  //     "link",
-  //     d3
-  //       .forceLink(data_links)
-  //       .id(d => d.id)
-  //       .distance(50)
-  //   )
-  //   .force("charge", d3.forceManyBody().strength(-150))
-  //   .force(
-  //     "center",
-  //     d3.forceCenter(topo_size.width / 2, topo_size.height / 2)
-  //   )
-  //   .on('tick', ticked);
-
   return simulation;
 };
 

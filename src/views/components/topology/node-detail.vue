@@ -23,13 +23,13 @@
 </template>
 
 <script lang="js">
-  import appIcon from './assets/APPLICATION.png';
-  import middlewareIcon from './assets/MIDDLEWARE.png';
-  import processIcon from './assets/PROCESS.png';
-  import workloadIcon from './assets/WORKLOAD.png';
-  import podIcon from './assets/POD.png';
-  import nodeIcon from './assets/NODE.png';
-  import eventIcon from './assets/EVENT_LIGHT.png';
+  import appIcon from './assets/png/APPLICATION.png';
+  import middlewareIcon from './assets/png/MIDDLEWARE.png';
+  import processIcon from './assets/png/PROCESS.png';
+  import workloadIcon from './assets/png/WORKLOAD.png';
+  import podIcon from './assets/png/POD.png';
+  import nodeIcon from './assets/png/NODE.png';
+  import eventIcon from './assets/png/EVENT_LIGHT.png';
   export default {
     props: {
       topoViewData: {

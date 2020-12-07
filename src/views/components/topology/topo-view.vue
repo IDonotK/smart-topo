@@ -101,11 +101,6 @@
   </div>
 </template>
 <script lang="js">
-  import * as d3 from 'd3';
-  import d3tip from 'd3-tip';
-
-  import $jq from 'jquery';
-
   import TopoDetail from './topo-detail.vue';
   import NodeDetail from './node-detail.vue';
 
@@ -250,7 +245,7 @@
 
     watch: {
       topoViewData(newVal, oldVal) {
-        this.initNetTopoData();
+        // this.initNetTopoData();
       },
       topoDetailData(newVal, oldVal) {
         if (newVal.nodes.length > 0) {
@@ -268,8 +263,8 @@
     },
 
     created() {
-      this.initNetTopoData();
-      // this.reset(); // 拓扑布局测试
+      // this.initNetTopoData();
+      this.reset(); // 拓扑布局测试
     },
 
     mounted() {
@@ -359,12 +354,16 @@
         }
       },
       reset () {
-        this.selected = {}
-        this.linksSelected = {}
-        this.nodes = utils.makeRandomNodes(this.settings.maxNodes)
-        this.lastNodeId = this.nodes.length + 1
-        this.links = utils.makeRandomLinks(this.nodes, this.settings.maxLinks)
-        this.lastLinkId = this.links.length + 1
+        this.selected = {};
+        this.linksSelected = {};
+        this.nodes = utils.makeRandomNodes(this.settings.maxNodes);
+        this.lastNodeId = this.nodes.length + 1;
+        this.links = utils.makeRandomLinks(this.nodes, this.settings.maxLinks);
+        this.lastLinkId = this.links.length + 1;
+        this.netData = {
+          nodes: this.nodes,
+          links: this.links
+        }
       },
     },
   };
@@ -452,6 +451,7 @@
           background: transparent;
           opacity: 0.8;
           z-index: 8900;
+          pointer-events: none;
 
           .mti-item {
             padding: 2px 0px;
@@ -489,6 +489,7 @@
                   color: #ddd;
                   font-size: 10px;
                   cursor: pointer;
+                  pointer-events: all;
 
                   &:active {
                     color: rgb(63, 177, 227);

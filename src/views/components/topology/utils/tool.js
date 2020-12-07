@@ -1,4 +1,4 @@
-const requireComponent = require.context('./tool', false, /\.png$/);
+const requireComponent = require.context('./png', false, /\.png$/);
 
 const icons = {};
 function capitalizeFirstLetter(str) {

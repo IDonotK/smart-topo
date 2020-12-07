@@ -65,7 +65,7 @@
     padding-right: 15px;
     padding-left: 15px;
     padding-bottom: 1px;
-    z-index: 999;
+    z-index: 9999;
     color: #515a6e;
     flex-shrink: 0;
     box-shadow: 0 -1px 0px rgba(0, 0, 0, 0.08);

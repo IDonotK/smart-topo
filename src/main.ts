@@ -23,10 +23,13 @@ import VModal from 'vue-js-modal';
 import { queryOAPTimeInfo } from './utils/localtime';
 import './assets';
 
-// import ElementUI from 'element-ui';
-// import 'element-ui/lib/theme-chalk/index.css';
-// import './assets/themedark/index.css';
-// Vue.use(ElementUI);
+import * as d3 from 'd3';
+import d3tip from 'd3-tip';
+import $ from 'jquery';
+Vue.prototype.$d3 = d3;
+Vue.prototype.$d3tip = d3tip;
+Vue.prototype.$jq = $;
+
 import { Button, Dialog, MessageBox, Radio, Input, Checkbox } from 'element-ui';
 Vue.prototype.$ELEMENT = { size: 'small', zIndex: 3000 };
 Vue.use(Button);

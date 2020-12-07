@@ -84,7 +84,7 @@
               v-bind="node._svgAttrs"
             >
               <use v-show="!node.isBright" :xlink:href="'#' + node.svgIcon"></use>
-              <use v-show="node.isBright" :xlink:href="'#' + node.svgIconBright"></use>
+              <use v-show="node.isBright || node.id === currentNode.id" :xlink:href="'#' + node.svgIconBright"></use>
             </svg>
 
             <circle
@@ -160,11 +160,8 @@
   </div>
 </template>
 <script>
-  require('../../assets/iconfont-topos/iconfont.js');
-
+  require('../../assets/iconfont-topo/iconfont.js');
   import svgExport from '../lib/js/svgExport.js';
-
-  import * as d3 from 'd3';
 
   export default {
     name: 'svg-renderer',
@@ -193,7 +190,7 @@
 
     data() {
       return {
-        zoom: d3.zoom(),
+        zoom: this.$d3.zoom(),
       };
     },
 
@@ -233,17 +230,26 @@
       },
       setZoom() {
         const zoomed = () => {
-          d3.select('#zoomContainer').attr(
-            'transform',
-            'translate(' + d3.event.transform.x + ',' + d3.event.transform.y + ') scale(' + d3.event.transform.k + ')',
-          );
-          // d3.selectAll('.node-label').attr(
+          this.$d3
+            .select('#zoomContainer')
+            .attr(
+              'transform',
+              'translate(' +
+                this.$d3.event.transform.x +
+                ',' +
+                this.$d3.event.transform.y +
+                ') scale(' +
+                this.$d3.event.transform.k +
+                ')',
+            );
+          // this.$d3.selectAll('.node-label').attr(
           //   'transform',
-          //   'scale(' + 1 / d3.event.transform.k + ')' + ' translate(' + -d3.event.transform.x + ',' + -d3.event.transform.y + ')',
+          //   'scale(' + 1 / this.$d3.event.transform.k + ')' + ' translate(' + -this.$d3.event.transform.x + ',' + -this.$d3.event.transform.y + ')',
           // );
         };
         this.zoom.scaleExtent([0.1, 100]).on('zoom', zoomed);
-        d3.select('.net-svg')
+        this.$d3
+          .select('.net-svg')
           .call(this.zoom)
           .on('dblclick.zoom', null);
         this.$store.commit('rocketTopo/SET_ZOOM_CONTROLLER', this.zoom);

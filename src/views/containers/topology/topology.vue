@@ -18,6 +18,7 @@
   import { State as topoState } from '@/store/modules/topology';
   import axios from 'axios';
   import { cancelToken } from '@/utils/cancelToken';
+  import { dateFormat } from '@/utils/topo';
 
   import TopoView from '../../components/topology/topo-view.vue';
   import TopoSideNavigation from '../../components/topology/topo-side-navigation.vue';
@@ -51,7 +52,7 @@
 
     watch: {
       topoViewData(newVal) {
-        if (newVal.nodes.length === 1) {
+        if (newVal.nodes.length <= 2) {
           this.$store.commit('rocketTopo/SET_TOPO_SCALE_FIX', 2);
         } else {
           this.$store.commit('rocketTopo/SET_TOPO_SCALE_FIX', -1);
@@ -59,7 +60,6 @@
         this.$store.commit('rocketTopo/SET_IS_FIRST_TICK', true);
       },
       topoData(newVal) {
-        console.log('topoData change')
         this.$store.commit('rocketTopo/SET_IS_TOPO_NODES_UPDATED', true);
         this.$store.commit('rocketTopo/SET_IS_TOPO_LINKS_UPDATED', true);
         this.topoViewData = newVal;
@@ -71,25 +71,6 @@
     },
 
     methods: {
-      dateFormat(fmt, date) {
-        let ret;
-        const opt = {
-            "Y+": date.getFullYear().toString(),        // 年
-            "m+": (date.getMonth() + 1).toString(),     // 月
-            "d+": date.getDate().toString(),            // 日
-            "H+": date.getHours().toString(),           // 时
-            "M+": date.getMinutes().toString(),         // 分
-            "S+": date.getSeconds().toString()          // 秒
-            // 有其他格式化字符需求可以继续添加，必须转化成字符串
-        };
-        for (let k in opt) {
-            ret = new RegExp("(" + k + ")").exec(fmt);
-            if (ret) {
-                fmt = fmt.replace(ret[1], (ret[1].length == 1) ? (opt[k]) : (opt[k].padStart(ret[1].length, "0")))
-            };
-        };
-        return fmt;
-      },
       restoreFilters() {
         this.$refs.topotoolset.restoreFilters();
       },
@@ -101,8 +82,8 @@
       },
       initTopoData() {
         this.$store.dispatch('rocketTopo/GET_TOPO_DATA', {
-          start_time: this.dateFormat("YYYY-mm-dd HH:MM:SS", this.durationRow.start),
-          end_time: this.dateFormat("YYYY-mm-dd HH:MM:SS", this.durationRow.end),
+          start_time: dateFormat("YYYY-mm-dd HH:MM:SS", this.durationRow.start),
+          end_time: dateFormat("YYYY-mm-dd HH:MM:SS", this.durationRow.end),
         });
       },
     },

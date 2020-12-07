@@ -1,17 +1,8 @@
 <script>
-  // import * as forceSimulation from 'd3-force'
-  import * as d3 from 'd3';
-  import d3tip from 'd3-tip';
-  import $jq from 'jquery';
-
   import svgRenderer from './components/svgRenderer.vue';
   import saveImage from './lib/js/saveImage.js';
   import svgExport from './lib/js/svgExport.js';
   import { defaults } from 'lodash';
-
-  // const d3 = Object.assign({}, forceSimulation)
-
-  // import nodeIcon from './APPLICATION.svg';
 
   import '../assets';
 
@@ -190,16 +181,10 @@
     created() {
       this.updateOptions(this.options);
       this.buildNodes(this.netData.nodes);
-      this.links = this.buildLinks(this.netData.links);
+      this.buildLinks(this.netData.links);
       this.updateNodeSvg();
     },
     mounted() {
-      // this.tip = d3tip()
-      //   .attr('class', 'd3-tip')
-      //   .offset([-8, 0]);
-      // d3.select('#netSvg').call(this.tip);
-      // this.setLinkAnchor();
-
       this.$store.commit('rocketTopo/SET_NETWORK_INSTANCE', this);
       this.onResize();
       this.$nextTick(() => {
@@ -262,7 +247,7 @@
         this.updateOptions(this.options);
         // this.resetElemsSize();
         this.buildNodes(newVal.nodes);
-        this.links = this.buildLinks(newVal.links);
+        this.buildLinks(newVal.links);
         this.reset();
       },
       nodeSym() {
@@ -279,23 +264,20 @@
       },
     },
     methods: {
-      setLinkAnchor() {
-        d3.selectAll('.link-anchor') // 结果集为空？
-          .on('mouseover', (d) => {
-            console.log(d);
-          });
-      },
       resetElemsSize() {
         this.nodeSize = 20;
         this.linkWidth = 1;
         this.fontSize = 16;
       },
       getScaleFixForSim(nodes, fix) {
-        if (nodes.length === 1) {
+        if (nodes.length === 0) {
+          return;
+        }
+        if (nodes.length <= 2) {
           return 2;
         }
-        let centerX = $jq('#netSvg').width() / 2;
-        let centerY = $jq('#netSvg').height() / 2;
+        let centerX = this.$jq('#netSvg').width() / 2;
+        let centerY = this.$jq('#netSvg').height() / 2;
         let xMin = nodes[0].x;
         let xMax = nodes[0].x;
         let yMin = nodes[0].y;
@@ -316,12 +298,14 @@
         return scaleFix;
       },
       getScaleFixOnCurNode(nodes, fix, isOnNodeSize) {
-        if (nodes.length === 1) {
-          // 单个节点,在20基础上放大2倍
-          return 2 * this.topoScaleFix;
+        if (nodes.length === 0) {
+          return;
         }
-        let centerX = $jq('#netSvg').width() / 2;
-        let centerY = $jq('#netSvg').height() / 2;
+        if (nodes.length <= 1) {
+          return 3 * this.topoScaleFix;
+        }
+        let centerX = this.$jq('#netSvg').width() / 2;
+        let centerY = this.$jq('#netSvg').height() / 2;
         let curNodeX = this.currentNode.x;
         let curNodeY = this.currentNode.y;
 
@@ -350,9 +334,9 @@
         return scaleFix;
       },
       fixTopoScale(isSetTopoScaleFix, isEnlargeTopo) {
-        let centerX = $jq('#netSvg').width() / 2;
-        let centerY = $jq('#netSvg').height() / 2;
-        let bounds = d3
+        let centerX = this.$jq('#netSvg').width() / 2;
+        let centerY = this.$jq('#netSvg').height() / 2;
+        let bounds = this.$d3
           .select('#zoomContainer')
           .node()
           .getBBox();
@@ -361,7 +345,7 @@
         let scaleFix = Math.min(scaleFixX, scaleFixY);
         scaleFix = scaleFix <= 0 ? 1 : scaleFix;
         if (isEnlargeTopo) {
-          if (this.nodes.length <= 20) {
+          if (this.nodes.length <= this.nodeNumSmall) {
             scaleFix = this.getScaleFixForSim(this.nodes, 0.6);
           } else {
             scaleFixX = (0.8 * centerX) / (centerX - bounds.x);
@@ -369,16 +353,18 @@
             scaleFix = Math.min(scaleFixX, scaleFixY);
             scaleFix = scaleFix <= 0 ? 1 : scaleFix;
           }
-          // 布局时,放大拓扑,要同时缩小元素
-          this.nodeSize = this.defaultNodeSize / scaleFix;
-          this.linkWidth = this.defaultLinkWidth / scaleFix;
-          this.fontSize = this.defaultFontSize / scaleFix;
+          if (this.nodes.length > 2) {
+            // 布局时,放大拓扑,要同时缩小元素
+            this.nodeSize = this.defaultNodeSize / scaleFix;
+            this.linkWidth = this.defaultLinkWidth / scaleFix;
+            this.fontSize = this.defaultFontSize / scaleFix;
+          }
         }
         if (isSetTopoScaleFix) {
           this.$store.commit('rocketTopo/SET_TOPO_SCALE_FIX', scaleFix);
         }
         this.zoomController.scaleTo(
-          d3
+          this.$d3
             .select('.net-svg')
             .transition()
             .duration(200),
@@ -414,11 +400,12 @@
           if (!node.y) vm.$set(node, 'y', 0);
           // node default name, allow string 0 as name
           if (!node.name && node.name !== '0') vm.$set(node, 'name', 'node ' + node.id);
+          // node icon
+          if (node.type) {
+            node.svgIcon = node.type.toUpperCase();
+            node.svgIconBright = node.type.toUpperCase() + '-BRIGHT';
+          }
 
-          node.svgIcon = node.type.toUpperCase();
-          node.svgIconBright = node.type.toUpperCase() + '-BRIGHT';
-
-          console.log('this.isTopoNodesUpdated: ', this.isTopoNodesUpdated);
           if (this.isTopoNodesUpdated) {
             vm.$set(node, 'showLabel', false);
             vm.$set(node, 'isDark', false);
@@ -454,21 +441,19 @@
           }
           if (this.isTopoNodesUpdated && index === nodes.length - 1) {
             this.$store.commit('rocketTopo/SET_IS_TOPO_NODES_UPDATED', false);
-            console.log('this.isTopoNodesUpdated: ', this.isTopoNodesUpdated);
           }
           return node;
         });
       },
       buildLinks(links) {
         let vm = this;
-        return links.concat().map((link, index) => {
+        this.links = links.map((link, index) => {
           // link formatter option
           link = this.itemCb(this.linkCb, link);
-          // source and target for d3
+          // source and target for this.$d3
           link.source = link.sid;
           link.target = link.tid;
           if (!link.id) vm.$set(link, 'id', 'link-' + index);
-          console.log('this.isTopoLinksUpdated: ', this.isTopoLinksUpdated);
           if (this.isTopoLinksUpdated) {
             vm.$set(link, 'showLabel', false);
             vm.$set(link, 'isDark', false);
@@ -478,7 +463,6 @@
           }
           if (this.isTopoLinksUpdated && index === links.length - 1) {
             this.$store.commit('rocketTopo/SET_IS_TOPO_LINKS_UPDATED', false);
-            console.log('this.isTopoLinksUpdated: ', this.isTopoLinksUpdated);
           }
           return link;
         });
@@ -497,7 +481,7 @@
       // -- Animation
       simulate(nodes, links) {
         let forces = this.forces;
-        let sim = d3
+        let sim = this.$d3
           .forceSimulation()
           .stop()
           .alpha(0.5) // 0.5以0.01的速度衰减到0.01，控制它们，让布局更合理
@@ -507,22 +491,22 @@
           .nodes(nodes);
 
         if (forces.Center !== false) {
-          sim.force('center', d3.forceCenter(this.center.x, this.center.y));
+          sim.force('center', this.$d3.forceCenter(this.center.x, this.center.y));
         }
         if (forces.X !== false) {
-          sim.force('X', d3.forceX(this.center.x).strength(forces.X));
+          sim.force('X', this.$d3.forceX(this.center.x).strength(forces.X));
         }
         if (forces.Y !== false) {
-          sim.force('Y', d3.forceY(this.center.y).strength(forces.Y));
+          sim.force('Y', this.$d3.forceY(this.center.y).strength(forces.Y));
         }
         if (forces.ManyBody !== false) {
-          sim.force('charge', d3.forceManyBody().strength(-this.force));
+          sim.force('charge', this.$d3.forceManyBody().strength(-this.force));
         }
 
         if (forces.Link !== false) {
           sim.force(
             'link',
-            d3.forceLink(links).id(function(d) {
+            this.$d3.forceLink(links).id(function(d) {
               return d.id;
             }),
           );
@@ -530,7 +514,7 @@
         sim.on('tick', () => {
           if (this.isFirstTick) {
             if (this.nodes.length > this.nodeNumSmall) {
-              let bounds = d3
+              let bounds = this.$d3
                 .select('#zoomContainer')
                 .node()
                 .getBBox();
@@ -544,7 +528,7 @@
                   this.fixTopoScale(true, true);
                 }
               }
-            } else if (this.nodes.length > 1 && this.nodes.length <= this.nodeNumSmall) {
+            } else if (this.nodes.length > 0 && this.nodes.length <= this.nodeNumSmall) {
               this.topoTickCount++;
               if (this.topoTickCount % 3 === 0) {
                 this.fixTopoScale(true, true);
@@ -553,12 +537,12 @@
           }
         });
         sim.on('end', () => {
-          if (this.isFirstTick) {
+          if (this.isFirstTick && this.nodes.length > 0) {
             this.$store.commit('rocketTopo/SET_IS_FIRST_TICK', false);
             this.topoTickCount = 0;
             if (this.nodes.length > this.nodeNumSmall) {
               this.fixTopoScale(true, false);
-            } else if (this.nodes.length <= this.nodeNumSmall) {
+            } else if (this.nodes.length > 0 && this.nodes.length <= this.nodeNumSmall) {
               this.fixTopoScale(true, true);
             }
           }
@@ -582,7 +566,7 @@
         return sim;
       },
       getD3Func(name) {
-        let func = d3[name];
+        let func = this.$d3[name];
         if (func && typeof func === 'function') return func;
         return null;
       },
@@ -655,12 +639,12 @@
       mouseEnterNode(event, hoveredNode) {
         // 强制更新svgRenderer组件，防止mouseEnterNode后视图样式无法更新
         this.$refs.svg.$forceUpdate();
-        $jq('.link-anchor').addClass('link-anchor-static');
+        this.$jq('.link-anchor').addClass('link-anchor-static');
         this.lightAroundHoveredNode(hoveredNode);
       },
       mouseLeaveNode(event, elem) {
         this.$refs.svg.$forceUpdate();
-        $jq('.link-anchor').removeClass('link-anchor-static');
+        this.$jq('.link-anchor').removeClass('link-anchor-static');
         this.normalAroundHoveredNode();
         this.elemsAroundPreHovNodeShallow = null;
         this.elemsAroundPreHovNodeShallow = {
@@ -710,8 +694,8 @@
           return;
         }
         this.$refs.svg.$forceUpdate();
-        let offsetX = $jq('#netContent').offset().left;
-        let offsetY = $jq('#netContent').offset().top;
+        let offsetX = this.$jq('#netContent').offset().left;
+        let offsetY = this.$jq('#netContent').offset().top;
         this.linkTextStyle = {
           height: 25 + 'px',
           left: event.clientX - offsetX + 8 + 'px',
@@ -744,8 +728,8 @@
       },
       mouseEnterLinkAnchor(event, hoveredLink) {
         this.$refs.svg.$forceUpdate();
-        let offsetX = $jq('#netContent').offset().left;
-        let offsetY = $jq('#netContent').offset().top;
+        let offsetX = this.$jq('#netContent').offset().left;
+        let offsetY = this.$jq('#netContent').offset().top;
         this.linkTextContent = `
           <div class="mb-5"><span class="grey">调用方式: </span>${hoveredLink.type}</div>
           <div class="mb-5"><span class="grey">调用频率: </span>${
@@ -821,13 +805,13 @@
             this.simulation.alpha(0.5);
             let pos = this.clientPos(event);
             // 适配缩放后的拖拽
-            let zoomK = d3.zoomTransform(d3.select('#zoomContainer').node()).k;
-            let zoomX = d3.zoomTransform(d3.select('#zoomContainer').node()).x;
-            let zoomY = d3.zoomTransform(d3.select('#zoomContainer').node()).y;
-            let offsetX = $jq('#netSvg').offset().left;
-            let offsetY = $jq('#netSvg').offset().top;
-            let centerX = $jq('#netSvg').width() / 2;
-            let centerY = $jq('#netSvg').height() / 2;
+            let zoomK = this.$d3.zoomTransform(this.$d3.select('#zoomContainer').node()).k;
+            let zoomX = this.$d3.zoomTransform(this.$d3.select('#zoomContainer').node()).x;
+            let zoomY = this.$d3.zoomTransform(this.$d3.select('#zoomContainer').node()).y;
+            let offsetX = this.$jq('#netSvg').offset().left;
+            let offsetY = this.$jq('#netSvg').offset().top;
+            let centerX = this.$jq('#netSvg').width() / 2;
+            let centerY = this.$jq('#netSvg').height() / 2;
             this.nodes[this.dragging].fx =
               centerX - (centerX + offsetX - pos.x) / zoomK - (zoomX + centerX * (zoomK - 1)) / zoomK;
             this.nodes[this.dragging].fy =
@@ -888,19 +872,19 @@
           return;
         }
         this.$refs.svg.$forceUpdate();
-        let centerX = $jq('#netSvg').width() / 2;
-        let centerY = $jq('#netSvg').height() / 2;
-        let offsetX = $jq('#netSvg').offset().left;
-        let offsetY = $jq('#netSvg').offset().top;
-        let zoomK = d3.zoomTransform(d3.select('#zoomContainer').node()).k;
-        let zoomX = d3.zoomTransform(d3.select('#zoomContainer').node()).x;
-        let zoomY = d3.zoomTransform(d3.select('#zoomContainer').node()).y;
+        let centerX = this.$jq('#netSvg').width() / 2;
+        let centerY = this.$jq('#netSvg').height() / 2;
+        let offsetX = this.$jq('#netSvg').offset().left;
+        let offsetY = this.$jq('#netSvg').offset().top;
+        let zoomK = this.$d3.zoomTransform(this.$d3.select('#zoomContainer').node()).k;
+        let zoomX = this.$d3.zoomTransform(this.$d3.select('#zoomContainer').node()).x;
+        let zoomY = this.$d3.zoomTransform(this.$d3.select('#zoomContainer').node()).y;
 
         // 控制topo时要终止仿真
         this.simulation.stop();
         // 选中节点回到视口中心
         this.zoomController.translateTo(
-          d3
+          this.$d3
             .select('.net-svg')
             .transition()
             .duration(500),
@@ -942,7 +926,7 @@
           let newZoomK = this.getScaleFixOnCurNode(nodesTmp, 0.9, true);
 
           this.zoomController.scaleTo(
-            d3
+            this.$d3
               .select('.net-svg')
               .transition()
               .duration(500),
@@ -1038,7 +1022,8 @@
           }
 
           &.node-agent {
-            opacity: 0;
+            // opacity: 0;
+            fill: #ccc;
           }
 
           &.dark-node {

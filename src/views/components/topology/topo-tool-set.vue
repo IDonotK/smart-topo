@@ -118,22 +118,19 @@
 </template>
 
 <script lang="js">
-  import applicationIcon from './assets/APPLICATION.png';
-  import middlewareIcon from './assets/MIDDLEWARE.png';
-  import processIcon from './assets/PROCESS.png';
-  import workloadIcon from './assets/WORKLOAD.png';
-  import podIcon from './assets/POD.png';
-  import nodeIcon from './assets/NODE.png';
-
-  require('./assets/iconfont-toolset/iconfont.js');
-  import TopoSelect from './topo-select.vue';
-
-  import * as d3 from 'd3';
-  import $jq from 'jquery';
   import axios, { AxiosPromise, AxiosResponse } from 'axios';
   import { cancelToken } from '@/utils/cancelToken';
+  import { dateFormat } from '@/utils/topo';
+  import { formatTopoData } from '@/utils/topo';
 
-  import { A1_UP, A1_DOWN, A1_CL, PS2_UP, PS2_DOWN, PS2_CL } from './relative-data.js';
+  import applicationIcon from './assets/png/APPLICATION.png';
+  import middlewareIcon from './assets/png/MIDDLEWARE.png';
+  import processIcon from './assets/png/PROCESS.png';
+  import workloadIcon from './assets/png/WORKLOAD.png';
+  import podIcon from './assets/png/POD.png';
+  import nodeIcon from './assets/png/NODE.png';
+
+  require('./assets/iconfont-toolset/iconfont.js');
 
   export default {
     props: {
@@ -247,10 +244,6 @@
       }
     },
 
-    components: {
-      TopoSelect
-    },
-
     computed: {
       isAutoReloadTopo() {
         return this.$store.state.rocketTopo.isAutoReloadTopo;
@@ -313,25 +306,6 @@
           this.$store.commit('rocketTopo/SET_IS_AUTO_RELOAD_TOPO', false);
         }
       },
-      dateFormat(fmt, date) {
-        let ret;
-        const opt = {
-            "Y+": date.getFullYear().toString(),        // 年
-            "m+": (date.getMonth() + 1).toString(),     // 月
-            "d+": date.getDate().toString(),            // 日
-            "H+": date.getHours().toString(),           // 时
-            "M+": date.getMinutes().toString(),         // 分
-            "S+": date.getSeconds().toString()          // 秒
-            // 有其他格式化字符需求可以继续添加，必须转化成字符串
-        };
-        for (let k in opt) {
-            ret = new RegExp("(" + k + ")").exec(fmt);
-            if (ret) {
-                fmt = fmt.replace(ret[1], (ret[1].length == 1) ? (opt[k]) : (opt[k].padStart(ret[1].length, "0")))
-            };
-        };
-        return fmt;
-      },
       restoreTopoDetailData() {
         this.$store.commit('rocketTopo/SET_TOPO_DETAIL_DATA', {nodes: [], links: []});
       },
@@ -387,49 +361,13 @@
         const nodesTmp = new Set([...nodesTmpUp, ...nodesTmpDown]);
         const linksTmp = new Set([...linksTmpUp, ...linksTmpDown]);
       },
-      formatTopoData(originData, hasTracingTos) {
-        let topoData = {
-          nodes: [],
-          links: []
-        };
-        topoData.nodes = [
-          ...originData.applications,
-          ...originData.processes,
-          ...originData.workloads,
-          ...originData.pods,
-          ...originData.nodes,
-          ...originData.middleWares,
-        ];
-        if (hasTracingTos) {
-          topoData.links = [
-            ...originData.tracingTos,
-            ...originData.createOns,
-          ];
-        } else {
-          topoData.links = [
-            ...originData.createOns,
-          ];
-        }
-
-        // 字段名同步
-        topoData.nodes.forEach(node => {
-          node.type = node.label;
-          node.state = node.eventCount > 0 ? 'Abnormal' : 'Normal';
-        });
-        topoData.links.forEach(link => {
-          link.type = link.label;
-          link.sid = link.source;
-          link.tid = link.target;
-        });
-
-        return topoData;
-      },
       queryCrosslayerNodes(curNode) {
         const params = {
           id: curNode.id,
-          start_time: this.dateFormat("YYYY-mm-dd HH:MM:SS", this.durationRow.start),
-          end_time: this.dateFormat("YYYY-mm-dd HH:MM:SS", this.durationRow.end),
+          start_time: dateFormat("YYYY-mm-dd HH:MM:SS", this.durationRow.start),
+          end_time: dateFormat("YYYY-mm-dd HH:MM:SS", this.durationRow.end),
         };
+        // return this.$store.dispatch('rocketTopo/GET_RELYON_DATA', params);
         return axios.get(
           window.location.origin + '/v1/underlying-resources',
           {
@@ -440,13 +378,8 @@
       },
       async resetTopoDetailDataOnLine(topoData) {
         let curNode = this.currentNode;
-        // let crossLayerDataTmp = await this.queryCrosslayerNodes(curNode);
-        let crossLayerDataTmp = A1_CL;
-        if (curNode.id === 'ps2') {
-          crossLayerDataTmp = PS2_CL;
-        }
-
-        let crossLayerData = this.formatTopoData(crossLayerDataTmp.data);
+        let crossLayerDataTmp = await this.queryCrosslayerNodes(curNode);
+        let crossLayerData = formatTopoData(crossLayerDataTmp.data, true);
         let elemsIdsCL = {
           nodeIds: [],
           linkIds: []
@@ -479,9 +412,10 @@
         const params = {
           application_id: curNode.id,
           direction: direction,
-          start_time: this.dateFormat("YYYY-mm-dd HH:MM:SS", this.durationRow.start),
-          end_time: this.dateFormat("YYYY-mm-dd HH:MM:SS", this.durationRow.end),
+          start_time: dateFormat("YYYY-mm-dd HH:MM:SS", this.durationRow.start),
+          end_time: dateFormat("YYYY-mm-dd HH:MM:SS", this.durationRow.end),
         };
+        // return this.$store.dispatch('rocketTopo/GET_RELATIVE_DATA', params);
         return axios.get(
           window.location.origin + '/v1/applications',
           {
@@ -500,33 +434,20 @@
           nodeIds: [],
           linkIds: []
         };
-        // let upStreamData = await this.queryRelativeNodes(curNode, 'in'); // 查询上游节点
-        // let downStreamData = await this.queryRelativeNodes(curNode, 'out'); // 查询下游节点
-
-        let upStreamData = A1_UP;
-        let downStreamData = A1_DOWN;
-        if (curNode.id === 'ps2') {
-          upStreamData = PS2_UP;
-          downStreamData = PS2_DOWN;
-        }
-
-        upStreamData.data.applications.forEach(node => {
+        let upStreamDataTmp = await this.queryRelativeNodes(curNode, 'in');
+        let downStreamDataTmp = await this.queryRelativeNodes(curNode, 'out');
+        let upStreamData = formatTopoData(upStreamDataTmp, false);
+        let downStreamData = formatTopoData(downStreamDataTmp, false);
+        upStreamData.nodes.forEach(node => {
           elemIdsRTCUpTmp.nodeIds.push(node.id);
         });
-        upStreamData.data.middleWares.forEach(node => {
-          elemIdsRTCUpTmp.nodeIds.push(node.id);
-        });
-        upStreamData.data.subTracingTos.forEach(link => {
+        upStreamData.links.forEach(link => {
           elemIdsRTCUpTmp.linkIds.push(link.id);
         });
-
-        downStreamData.data.applications.forEach(node => {
+        downStreamData.nodes.forEach(node => {
           elemIdsRTCDownTmp.nodeIds.push(node.id);
         });
-        downStreamData.data.middleWares.forEach(node => {
-          elemIdsRTCDownTmp.nodeIds.push(node.id);
-        });
-        downStreamData.data.subTracingTos.forEach(link => {
+        downStreamData.links.forEach(link => {
           elemIdsRTCDownTmp.linkIds.push(link.id);
         });
 
@@ -804,7 +725,7 @@
       // 控制
       handleEnlargeTopo() {
         this.resetIsAutoReloadTopo();
-        let zoomTimes = d3.zoomTransform(d3.select('#zoomContainer').node()).k;
+        let zoomTimes = this.$d3.zoomTransform(this.$d3.select('#zoomContainer').node()).k;
         if (zoomTimes < 1) {
           zoomTimes = Number((Number(zoomTimes.toFixed(1)) + 0.1).toFixed(1));
         } else if (zoomTimes >= 1) {
@@ -814,11 +735,11 @@
           zoomTimes = zoomTimes - 1;
           return;
         }
-        this.zoomController.scaleTo(d3.select('.net-svg').transition().duration(750), zoomTimes);
+        this.zoomController.scaleTo(this.$d3.select('.net-svg').transition().duration(750), zoomTimes);
       },
       handleNarrowTopo() {
         this.resetIsAutoReloadTopo();
-        let zoomTimes = d3.zoomTransform(d3.select('#zoomContainer').node()).k;
+        let zoomTimes = this.$d3.zoomTransform(this.$d3.select('#zoomContainer').node()).k;
         if (zoomTimes <= 1) {
           zoomTimes = Number((Number(zoomTimes.toFixed(1)) - 0.1).toFixed(1));
         } else if (zoomTimes > 1) {
@@ -828,7 +749,7 @@
           zoomTimes = Number((Number(zoomTimes.toFixed(1)) + 0.1).toFixed(1));
           return;
         }
-        this.zoomController.scaleTo(d3.select('.net-svg').transition().duration(750), zoomTimes);
+        this.zoomController.scaleTo(this.$d3.select('.net-svg').transition().duration(750), zoomTimes);
       },
       restoreFilters() {
         this.moreToolState = false;
@@ -843,12 +764,12 @@
         });
       },
       restoreTopoViewPort(duration) {
-        let centerX = $jq('#netSvg').width() / 2;
-        let centerY = $jq('#netSvg').height() / 2;
-        let zoomK = d3.zoomTransform(d3.select('#zoomContainer').node()).k;
+        let centerX = this.$jq('#netSvg').width() / 2;
+        let centerY = this.$jq('#netSvg').height() / 2;
+        let zoomK = this.$d3.zoomTransform(this.$d3.select('#zoomContainer').node()).k;
         if (zoomK > this.topoScaleFix) {
           this.zoomController.scaleTo(
-            d3
+            this.$d3
               .select('.net-svg')
               .transition()
               .duration(duration),
@@ -856,7 +777,7 @@
           );
           setTimeout(() => {
             this.zoomController.translateTo(
-              d3
+              this.$d3
                 .select('.net-svg')
                 .transition()
                 .duration(duration),
@@ -866,7 +787,7 @@
           }, duration);
         } else if (zoomK === this.topoScaleFix) {
           this.zoomController.translateTo(
-            d3
+            this.$d3
               .select('.net-svg')
               .transition()
               .duration(duration),
@@ -875,7 +796,7 @@
           );
         } else {
           this.zoomController.translateTo(
-            d3
+            this.$d3
               .select('.net-svg')
               .transition()
               .duration(duration),
@@ -884,7 +805,7 @@
           );
           setTimeout(() => {
             this.zoomController.scaleTo(
-              d3
+              this.$d3
                 .select('.net-svg')
                 .transition()
                 .duration(duration),
@@ -1118,6 +1039,7 @@
       padding: 8px 10px;
       margin-top: 8px;
       background-color: transparent;
+      pointer-events: none;
 
       .tb-item {
         width: 100%;
@@ -1145,6 +1067,10 @@
           .item-title {
             color: #ddd;
             margin-right: 10px;
+          }
+
+          .item-checkbox {
+            pointer-events: all;
           }
 
           .item-icon {

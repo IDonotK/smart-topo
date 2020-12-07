@@ -36,6 +36,7 @@
   import { Vue, Component, Watch } from 'vue-property-decorator';
   import { Mutation, Action, State, Getter } from 'vuex-class';
   import timeFormat from '@/utils/timeFormat';
+  import { dateFormat } from '@/utils/topo';
 
   @Component
   export default class Header extends Vue {
@@ -63,26 +64,6 @@
       this.$router.push('/topology');
     }
 
-    private dateFormat(fmt, date) {
-      let ret;
-      const opt = {
-        'Y+': date.getFullYear().toString(), // 年
-        'm+': (date.getMonth() + 1).toString(), // 月
-        'd+': date.getDate().toString(), // 日
-        'H+': date.getHours().toString(), // 时
-        'M+': date.getMinutes().toString(), // 分
-        'S+': date.getSeconds().toString(), // 秒
-        // 有其他格式化字符需求可以继续添加，必须转化成字符串
-      };
-      for (let k in opt) {
-        ret = new RegExp('(' + k + ')').exec(fmt);
-        if (ret) {
-          fmt = fmt.replace(ret[1], ret[1].length == 1 ? opt[k] : opt[k].padStart(ret[1].length, '0'));
-        }
-      }
-      return fmt;
-    }
-
     private handleReload() {
       this.rocketTopo.toolSetInstance.refreshTopo(false);
       const params = {
@@ -95,12 +76,12 @@
         const time: Date[] = [new Date(new Date().getTime() - gap), new Date()];
         this.SET_DURATION(timeFormat(time));
 
-        params.start_time = this.dateFormat('YYYY-mm-dd HH:MM:SS', time[0]);
-        params.end_time = this.dateFormat('YYYY-mm-dd HH:MM:SS', time[1]);
+        params.start_time = dateFormat('YYYY-mm-dd HH:MM:SS', time[0]);
+        params.end_time = dateFormat('YYYY-mm-dd HH:MM:SS', time[1]);
       } else {
         // 关闭轮询，可以查询任意时间段
-        params.start_time = this.dateFormat('YYYY-mm-dd HH:MM:SS', this.duration.start);
-        params.end_time = this.dateFormat('YYYY-mm-dd HH:MM:SS', this.duration.end);
+        params.start_time = dateFormat('YYYY-mm-dd HH:MM:SS', this.duration.start);
+        params.end_time = dateFormat('YYYY-mm-dd HH:MM:SS', this.duration.end);
       }
       this.GET_TOPO_DATA(params);
     }

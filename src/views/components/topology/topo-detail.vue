@@ -20,21 +20,9 @@
 </template>
 
 <script lang="js">
-  import * as d3 from 'd3';
-  import d3tip from 'd3-tip';
-  import $jq from 'jquery';
-
-  import appIcon from './assets/APPLICATION.png';
-  import middlewareIcon from './assets/MIDDLEWARE.png';
-  import processIcon from './assets/PROCESS.png';
-  import workloadIcon from './assets/WORKLOAD.png';
-  import podIcon from './assets/POD.png';
-  import nodeIcon from './assets/NODE.png';
-  import eventIcon from './assets/EVENT_LIGHT.png';
-
-  import icons from './chart/utils/icons';
-  import tool from './chart/utils/tool';
-  require('./assets/iconfont-topos/iconfont.js');
+  import icons from './utils/icons';
+  import tool from './utils/tool';
+  require('./assets/iconfont-topo/iconfont.js');
 
   export default {
     props: {
@@ -151,7 +139,7 @@
         }, 10);
       },
       drawDetailTopoCrossLayer() {
-        d3.select("#tdt-view-cross-layer svg").remove();
+        this.$d3.select("#tdt-view-cross-layer svg").remove();
 
         if (this.tip) {
           this.tip.hide(this);
@@ -169,15 +157,13 @@
           top: 0 + 'px',
         };
 
-        console.log("topoDetailData: ", this.topoDetailData);
-
         if (this.topoDetailData.nodes.length <= 0) {
           return;
         }
 
         const graph = this.topoDetailData;
 
-        const topoHeight = $jq("#tdtId").height();
+        const topoHeight = this.$jq("#tdtId").height();
         const deltah = topoHeight / 6;
         // #tdw最大宽度为主拓扑视口#tvcc的一半
         const tdwWidthMax = document.getElementById('tvccId').clientWidth * 0.6;
@@ -216,9 +202,9 @@
         let topoWidth = 50 + maxNum * deltaw + 50;
         let tdwWidth = topoWidth > tdwWidthMax ? tdwWidthMax : topoWidth;
         // 设置tvcl宽度
-        $jq('#tdwId').width(tdwWidth);
+        this.$jq('#tdwId').width(tdwWidth);
         // 设置topoDetail宽度
-        $jq('#tdId').width(topoWidth);
+        this.$jq('#tdId').width(topoWidth);
 
         // 计算起点坐标
         let appStartX = 50 + (maxNum - appNum) / 2 * 50;
@@ -246,21 +232,20 @@
         const linksOption = [];
         const anchorOption = [];
         // 计算节点坐标
-        function setNodePositonNormalLayer(nNum, nObj, startX, factorY, nIcon, nSize) {
+        function setNodePositonNormalLayer(nNum, nObj, startX, factorY, nSize) {
           nObj.x = startX + (nNum - 1) * deltaw;
           nObj.y = factorY * deltah;
           nObj.fx = nObj.x;
           nObj.fy = nObj.y;
-          nObj.symbol = 'image://' + nIcon + '';
           nObj.symbolSize = nSize;
         }
-        function setNodePositonCurNodeLayer(nNum, cNum, nObj, startX, factorY, nIcon, nSize) {
+        function setNodePositonCurNodeLayer(nNum, cNum, nObj, startX, factorY, nSize) {
           if (nNum === 1) { // 选中节点居中
-            setNodePositonNormalLayer((cNum + 1) / 2, nObj, startX, factorY, nIcon, nSize);
+            setNodePositonNormalLayer((cNum + 1) / 2, nObj, startX, factorY, nSize);
           } else if (nNum > 1 && nNum <= (cNum + 1) / 2) {
-            setNodePositonNormalLayer(nNum - 1, nObj, startX, factorY, nIcon, nSize - 8);
+            setNodePositonNormalLayer(nNum - 1, nObj, startX, factorY, nSize - 8);
           } else if (nNum > (cNum + 1) / 2) {
-            setNodePositonNormalLayer(nNum, nObj, startX, factorY, nIcon, nSize - 8);
+            setNodePositonNormalLayer(nNum, nObj, startX, factorY, nSize - 8);
           }
         }
         graph.nodes.forEach(node => {
@@ -276,49 +261,49 @@
             case 'Application': {
                 appNum++;
                 if (this.currentNode.type === 'Application') {
-                  setNodePositonCurNodeLayer(appNum, curTypeNum, itemTmp, appStartX, 0.5, appIcon, 28);
+                  setNodePositonCurNodeLayer(appNum, curTypeNum, itemTmp, appStartX, 0.5, 28);
                 } else {
-                  setNodePositonNormalLayer(appNum, itemTmp, appStartX, 0.5, appIcon, 28);
+                  setNodePositonNormalLayer(appNum, itemTmp, appStartX, 0.5, 28);
                 }
               } break;
             case 'MiddleWare': {
                 middlewareNum++;
                 if (this.currentNode.type === 'MiddleWare') {
-                  setNodePositonCurNodeLayer(middlewareNum, curTypeNum, itemTmp, middlewareStartX, 1.5, middlewareIcon, 28);
+                  setNodePositonCurNodeLayer(middlewareNum, curTypeNum, itemTmp, middlewareStartX, 1.5, 28);
                 } else {
-                  setNodePositonNormalLayer(middlewareNum, itemTmp, middlewareStartX, 1.5, middlewareIcon, 28);
+                  setNodePositonNormalLayer(middlewareNum, itemTmp, middlewareStartX, 1.5, 28);
                 }
               } break;
             case 'Process': {
                 processNum++;
                 if (this.currentNode.type === 'Process') {
-                  setNodePositonCurNodeLayer(processNum, curTypeNum, itemTmp, processStartX, 2.5, processIcon, 28);
+                  setNodePositonCurNodeLayer(processNum, curTypeNum, itemTmp, processStartX, 2.5, 28);
                 } else {
-                  setNodePositonNormalLayer(processNum, itemTmp, processStartX, 2.5, processIcon, 28);
+                  setNodePositonNormalLayer(processNum, itemTmp, processStartX, 2.5, 28);
                 }
               } break;
             case 'Workload': {
                 workloadNum++;
                 if (this.currentNode.type === 'Workload') {
-                  setNodePositonCurNodeLayer(workloadNum, curTypeNum, itemTmp, workloadStartX, 3.5, workloadIcon, 28);
+                  setNodePositonCurNodeLayer(workloadNum, curTypeNum, itemTmp, workloadStartX, 3.5, 28);
                 } else {
-                  setNodePositonNormalLayer(workloadNum, itemTmp, workloadStartX, 3.5, workloadIcon, 28);
+                  setNodePositonNormalLayer(workloadNum, itemTmp, workloadStartX, 3.5, 28);
                 }
               } break;
             case 'Pod': {
                 podNum++;
                 if (this.currentNode.type === 'Pod') {
-                  setNodePositonCurNodeLayer(podNum, curTypeNum, itemTmp, podStartX, 4.5, podIcon, 28);
+                  setNodePositonCurNodeLayer(podNum, curTypeNum, itemTmp, podStartX, 4.5, 28);
                 } else {
-                  setNodePositonNormalLayer(podNum, itemTmp, podStartX, 4.5, podIcon, 28);
+                  setNodePositonNormalLayer(podNum, itemTmp, podStartX, 4.5, 28);
                 }
               } break;
             case 'Node': {
                 nodeNum++;
                 if (this.currentNode.type === 'Node') {
-                  setNodePositonCurNodeLayer(nodeNum, curTypeNum, itemTmp, nodeStartX, 5.5, nodeIcon, 28);
+                  setNodePositonCurNodeLayer(nodeNum, curTypeNum, itemTmp, nodeStartX, 5.5, 28);
                 } else {
-                  setNodePositonNormalLayer(nodeNum, itemTmp, nodeStartX, 5.5, nodeIcon, 28);
+                  setNodePositonNormalLayer(nodeNum, itemTmp, nodeStartX, 5.5, 28);
                 }
               } break;
             default: break;
@@ -351,14 +336,14 @@
           }
         });
 
-        const svg = d3
+        const svg = this.$d3
           .select('#tdt-view-cross-layer')
           .append('svg')
           .attr('class', 'topo-svg')
           .attr('height', topoHeight);
 
         // 设置提示
-        this.tip = d3tip()
+        this.tip = this.$d3tip()
           .attr('class', 'd3-tip')
           // .offset([-8, 0]);
         svg.call(this.tip);
@@ -378,9 +363,9 @@
             return `translate(${(d.source.x + d.target.x) / 2}, ${(d.target.y + d.source.y) / 2 + 22.5})`;
           });
         };
-        const force = d3
+        const force = this.$d3
           .forceSimulation(nodesOption)
-          .force("link", d3.forceLink(linksOption).id(d => d.id))
+          .force("link", this.$d3.forceLink(linksOption).id(d => d.id))
           .on("tick", tick);
 
         let nodeEles = svg.append('g').attr("class", "topo-nodes").selectAll('.topo-node');
@@ -411,23 +396,23 @@
           .attr('style', 'cursor: pointer;')
           .attr('xlink:href', d => icons[d.type.toUpperCase()])
           .on('mouseenter', (data, index, element) => {
-            d3.event.stopPropagation();
-            d3.event.preventDefault();
+            this.$d3.event.stopPropagation();
+            this.$d3.event.preventDefault();
 
             // 处理点边重叠的情况
-            $jq('.topo-line').addClass('tl-static');
+            this.$jq('.topo-line').addClass('tl-static');
 
             this.tip.html((data) => `<div>${data.name}</div>`).show(data, element[index]);
           })
           .on('mouseleave', d => {
-            d3.event.stopPropagation();
-            d3.event.preventDefault();
-            $jq('.topo-line').removeClass('tl-static');
+            this.$d3.event.stopPropagation();
+            this.$d3.event.preventDefault();
+            this.$jq('.topo-line').removeClass('tl-static');
             this.tip.hide(this);
           })
           .on('click', d => {
-            d3.event.stopPropagation();
-            d3.event.preventDefault();
+            this.$d3.event.stopPropagation();
+            this.$d3.event.preventDefault();
             this.$emit('toggleNodeDetail', false);
             this.$store.commit('rocketTopo/SET_NODE_CROSS_LAYER', {});
             if (this.nodeSingleClickTimer !== null) {
@@ -444,11 +429,11 @@
             }, 300);
           })
           .on('dblclick', d => {
-            d3.event.stopPropagation();
-            d3.event.preventDefault();
+            this.$d3.event.stopPropagation();
+            this.$d3.event.preventDefault();
             this.$emit('toggleNodeDetail', false);
             this.$store.commit('rocketTopo/SET_NODE_CROSS_LAYER', {});
-            $jq('.topo-line').removeClass('tl-static');
+            this.$jq('.topo-line').removeClass('tl-static');
             this.tip.hide(this);
             this.usedTool.attr('style', 'display: none');
             this.handleNodeDblclicked(d);
@@ -467,21 +452,21 @@
           .attr("class", "topo-line")
           .attr("stroke-dasharray", d => d.isTracingTo ? '13 7' : 'none')
           .on('mouseover', d => {
-            d3.event.stopPropagation();
-            d3.event.preventDefault();
-            let offsetX = $jq('#tdt-view-cross-layer').offset().left;
-            let offsetY = $jq('#tdt-view-cross-layer').offset().top;
+            this.$d3.event.stopPropagation();
+            this.$d3.event.preventDefault();
+            let offsetX = this.$jq('#tdt-view-cross-layer').offset().left;
+            let offsetY = this.$jq('#tdt-view-cross-layer').offset().top;
             this.linkTextStyle = {
               height: 25 + 'px',
-              left: d3.event.clientX - offsetX + 10 + 'px',
-              top: d3.event.clientY - offsetY - 25 + 'px',
+              left: this.$d3.event.clientX - offsetX + 10 + 'px',
+              top: this.$d3.event.clientY - offsetY - 25 + 'px',
             };
             this.linkTextContent = d.type;
             this.linkTextVisible = true;
           })
           .on('mouseout', d => {
-            d3.event.stopPropagation();
-            d3.event.preventDefault();
+            this.$d3.event.stopPropagation();
+            this.$d3.event.preventDefault();
             this.linkTextVisible = false;
             this.linkTextContent = '';
             this.linkTextStyle = {
@@ -499,10 +484,10 @@
           .attr('r', 5)
           .attr('fill', (d) => '#217EF25f')
           .on('mouseover', (data, index, element) => {
-            d3.event.stopPropagation();
-            d3.event.preventDefault();
+            this.$d3.event.stopPropagation();
+            this.$d3.event.preventDefault();
 
-            $jq('.topo-line').addClass('tl-static');
+            this.$jq('.topo-line').addClass('tl-static');
 
             if (data.source.type === 'Application' || data.target.type === 'Application') {
               this.tip.direction('e');
@@ -516,39 +501,12 @@
                 <div><span class="grey">平均响应时间: </span>${data.responseTimePerMin  === undefined ? ' ' : data.responseTimePerMin + ' 毫秒/分钟'}</div>
               `
             ).show(data, element[index]);
-
-            // let offsetX = $jq('#tdt-view-cross-layer').offset().left;
-            // let offsetY = $jq('#tdt-view-cross-layer').offset().top;
-            // this.linkTextContent =
-            // `
-            //   <div class="mb-5"><span class="grey">调用方式: </span>${data.type}</div>
-            //   <div class="mb-5"><span class="grey">调用频率: </span>${
-            //     data.callPerMinute === undefined ? ' ' : data.callPerMinute + ' 次/分钟'
-            //   }</div>
-            //   <div><span class="grey">平均响应时间: </span>${
-            //     data.responseTimePerMin === undefined ? ' ' : data.responseTimePerMin + ' 毫秒/分钟'
-            //   }</div>
-            // `;
-            // this.linkTextVisible = true;
-            // this.linkTextStyle = {
-            //   height: 75 + 'px',
-            //   left: d3.event.clientX - offsetX + 8 + 'px',
-            //   top: d3.event.clientY - offsetY + 'px',
-            // };
           })
           .on('mouseout', () => {
-            d3.event.stopPropagation();
-            d3.event.preventDefault();
+            this.$d3.event.stopPropagation();
+            this.$d3.event.preventDefault();
 
-            $jq('.topo-line').removeClass('tl-static');
-
-            // this.linkTextContent = '';
-            // this.linkTextVisible = false;
-            // this.linkTextStyle = {
-            //   height: 0 + 'px',
-            //   left: 0 + 'px',
-            //   top: 0 + 'px',
-            // };
+            this.$jq('.topo-line').removeClass('tl-static');
 
             this.tip.direction('n');
             this.tip.hide(this);
@@ -556,8 +514,8 @@
 
 
         svg.on('click', (d, i) => {
-          d3.event.stopPropagation();
-          d3.event.preventDefault();
+          this.$d3.event.stopPropagation();
+          this.$d3.event.preventDefault();
           this.$emit('toggleNodeDetail', false);
           this.$store.commit('rocketTopo/SET_NODE_CROSS_LAYER', {});
           this.usedTool.attr('style', 'display: none');
