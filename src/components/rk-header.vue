@@ -40,6 +40,7 @@
 
   @Component
   export default class Header extends Vue {
+    @State('rocketbot') private rocketbot: any;
     @State('rocketTopo') private rocketTopo: any;
     @Getter('duration') private duration: any;
     @Action('SET_DURATION') private SET_DURATION: any;
@@ -52,11 +53,20 @@
     private get isAutoReloadTopo() {
       return this.rocketTopo.isAutoReloadTopo;
     }
-
     @Watch('isAutoReloadTopo')
     private changeIsAutoReloadTopo(newVal) {
       if (newVal === false) {
         clearInterval(this.timer);
+      }
+    }
+
+    private get durationRow() {
+      return this.rocketbot.durationRow;
+    }
+    @Watch('durationRow')
+    private onDurationRow() {
+      if (!this.isAutoReloadTopo) {
+        this.handleReload();
       }
     }
 
@@ -65,7 +75,7 @@
     }
 
     private handleReload() {
-      this.rocketTopo.toolSetInstance.refreshTopo(false);
+      this.rocketTopo.toolSetInstance.refreshTopoView();
       const params = {
         start_time: '',
         end_time: '',

@@ -10,9 +10,23 @@
       <div
         class="info-item"
         v-for="(value, key) in curNodeCrossLayer"
-        :key="key"
-        v-show="nodeDetailItems.includes(key)"
-        :class="{ large: largeItems.includes(key) }"
+        :key="'large' + key"
+        v-show="largeDetailItems.includes(key)"
+        :class="{ large: largeDetailItems.includes(key) }"
+      >
+        <span class="item-title" :title="key">{{ key }} :</span>
+        <span class="item-content" :title="value">{{ value }}</span>
+      </div>
+      <div
+        class="info-item"
+        v-for="(value, key) in curNodeCrossLayer"
+        :key="'small' + key"
+        v-show="
+          smallDetailItems.includes(key) ||
+            (key === 'eventCount' && !stateExLabels.includes(curNodeCrossLayer['label'])) ||
+            (key === 'state' && !stateExLabels.includes(curNodeCrossLayer['label']))
+        "
+        :class="{ small: smallDetailItems.includes(key) || key === 'eventCount' || key === 'state' }"
       >
         <span class="item-title" :title="key">{{ key }} :</span>
         <span class="item-content" :title="value">{{ value }}</span>
@@ -32,7 +46,7 @@
   import eventIcon from './assets/png/EVENT_LIGHT.png';
   export default {
     props: {
-      topoViewData: {
+      topoData: {
         type: Object,
         default() {
           return {
@@ -45,26 +59,25 @@
     data() {
       return {
         smallTopoOption: {},
-        nodeDetailItems: [
+        largeDetailItems: [
           'id',
           'name',
-          'label',
-          'state',
-          'eventCount',
           'createTime',
           'updateTime',
+          'hostName'
+        ],
+        smallDetailItems: [
+          'label',
           'podIp',
           'nodeIp',
-          'hostName',
           'processNo',
           'middlewareType',
           'kind',
         ],
-        largeItems: [
-          'id',
-          'name',
-          'createTime',
-          'updateTime'
+        stateExLabels: [
+          'Application',
+          'MiddleWare',
+          'Process',
         ],
         pallet: [
           '#3fb1e3',
@@ -117,7 +130,7 @@
           state: this.curNodeCrossLayer.state,
           category: 0
         });
-        this.topoViewData.links.forEach(link => {
+        this.topoData.links.forEach(link => {
           if (link.sid === this.curNodeCrossLayer.id) {
             links.push({
               id: link.id,
@@ -150,6 +163,19 @@
             });
           }
         });
+
+        // 设置点坐标
+        nodes[0].value = [0, 0];
+        if (nodes.length > 1) {
+          let r = 50; // 动态适应视口？
+          let detalAngle = (360 / (nodes.length - 1)).toFixed(2);
+          for (let i = 1; i < nodes.length; i++) {
+            let angle = detalAngle * i + 90;
+            let x = (Math.cos(angle * Math.PI / 180)).toFixed(2) * r;
+            let y = (Math.sin(angle * Math.PI / 180)).toFixed(2) * r;
+            nodes[i].value = [x.toFixed(2), y.toFixed(2)];
+          }
+        }
 
         // 特别设置
         nodes.forEach(node => {
@@ -192,15 +218,16 @@
           // };
           node.label = {
             show: false,
+            position: parseFloat(node.value[0]) === 0.00 ? 'insideTop' : (node.value[0] > 0 ? 'insideRight' : 'insideLeft'),
             color: nodeColor,
-            offset: [0, -17],
+            offset: [0, -20],
             borderColor: 'transparent',
             borderWith: 0,
             textBorderColor: 'transparent',
             textBorderWith: 0,
           };
           if (node.id === this.curNodeCrossLayer.id) {
-            node.label.show = true;
+            node.label.show = false;
             node.label.offset = [0, -22];
           }
         });
@@ -218,19 +245,6 @@
             },
           };
         });
-
-        // 设置点坐标
-        nodes[0].value = [0, 0];
-        if (nodes.length > 0) {
-          let r = 50; // 动态适应视口？
-          let detalAngle = (360 / (nodes.length - 1)).toFixed(2);
-          for (let i = 1; i < nodes.length; i++) {
-            let angle = detalAngle * i + 90;
-            let x = (Math.cos(angle * Math.PI / 180)).toFixed(2) * r;
-            let y = (Math.sin(angle * Math.PI / 180)).toFixed(2) * r;
-            nodes[i].value = [x.toFixed(2), y.toFixed(2)];
-          }
-        }
 
         // 提取事件节点
         let eventNodes = [];
@@ -349,27 +363,25 @@
 
       .info-item {
         float: left;
-        width: 30%;
         height: 30px;
-        display: flex;
-        justify-content: flex-start;
-        align-items: center;
         color: #ccc;
+        display: flex;
 
         &.large {
           width: 100%;
         }
 
+        &.small {
+          width: 30%;
+        }
+
         .item-title {
           margin-right: 5px;
           text-align: left;
-          overflow: hidden;
-          text-overflow: ellipsis;
           white-space: nowrap;
         }
 
         .item-content {
-          flex-grow: 1;
           text-align: left;
           overflow: hidden;
           text-overflow: ellipsis;

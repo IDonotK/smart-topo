@@ -4,7 +4,8 @@ import axios, { AxiosPromise, AxiosResponse } from 'axios';
 import { cancelToken } from '@/utils/cancelToken';
 import { formatTopoData } from '@/utils/topo';
 
-import { generateGesData } from './ges-data.js';
+import { generateGesData } from './ges-data';
+import { getA1Up, getA1Down, getA1Cl, PS2_UP, PS2_DOWN, PS2_CL } from './relative-data';
 
 export interface Duration {
   start: string;
@@ -35,8 +36,6 @@ export interface State {
   topoDetailData: any;
   isAutoReloadTopo: boolean;
 }
-
-const PercentileItem: string[] = ['p50', 'p75', 'p90', 'p95', 'p99'];
 
 const initState: State = {
   currentNode: {},
@@ -151,7 +150,8 @@ const actions: ActionTree<State, any> = {
         cancelToken: cancelToken(),
       })
       .then((res: any) => {
-        let relyonData = formatTopoData(res.data, true);
+        // let relyonData = formatTopoData(res, true);
+        let relyonData = formatTopoData(getA1Cl(), true);
         return relyonData;
       })
       .catch((err) => {});
@@ -163,30 +163,35 @@ const actions: ActionTree<State, any> = {
         cancelToken: cancelToken(),
       })
       .then((res: any) => {
-        let relativeData = formatTopoData(res.data, false);
+        // let relativeData = formatTopoData(res, false);
+        let relativeData = {
+          nodes: [],
+          links: [],
+        };
+        if (params.direction == 'in') {
+          relativeData = formatTopoData(getA1Up(), true);
+        } else {
+          relativeData = formatTopoData(getA1Down(), true);
+        }
         return relativeData;
       })
       .catch((err) => {});
   },
   GET_TOPO_DATA(context: { commit: Commit; state: State }, params: any) {
-    let topoData = formatTopoData(generateGesData(), true);
-    context.commit(types.SET_TOPO_DATA, {
-      nodes: topoData.nodes,
-      links: topoData.links,
-    });
-    // return axios
-    //   .get(window.location.origin + '/v1/endpoints', {
-    //     params,
-    //     cancelToken: cancelToken(),
-    //   })
-    //   .then((res: any) => {
-    //     let topoData = formatTopoData(res.data, true);
-    //     context.commit(types.SET_TOPO_DATA, {
-    //       nodes: topoData.nodes,
-    //       links: topoData.links,
-    //     });
-    //   })
-    //   .catch((err) => {});
+    return axios
+      .get(window.location.origin + '/v1/endpoints', {
+        params,
+        cancelToken: cancelToken(),
+      })
+      .then((res: any) => {
+        // let topoData = formatTopoData(res, true);
+        let topoData = formatTopoData(generateGesData(), true);
+        context.commit(types.SET_TOPO_DATA, {
+          nodes: topoData.nodes,
+          links: topoData.links,
+        });
+      })
+      .catch((err) => {});
   },
 };
 

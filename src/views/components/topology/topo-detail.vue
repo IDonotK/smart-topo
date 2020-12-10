@@ -26,7 +26,7 @@
 
   export default {
     props: {
-      topoViewData: {
+      topoData: {
         type: Object,
         default() {
           return {
@@ -526,7 +526,7 @@
         if (nodeTmp.id === this.currentNode.id) {
           return;
         }
-        let node = this.topoViewData.nodes.find(node => node.id === nodeTmp.id); // 对应主拓扑的节点对象
+        let node = this.topoData.nodes.find(node => node.id === nodeTmp.id); // 对应主拓扑的节点对象
         this.$store.commit('rocketTopo/SET_VIEW_NODE', node);
         this.setCurNodeStably(node);
         // this.$store.commit('rocketTopo/SET_NODE', node);

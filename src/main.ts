@@ -2,6 +2,7 @@ import Vue from 'vue';
 import moment from 'dayjs';
 import clickout from '@/utils/clickout';
 import tooltip from '@/utils/tooltip';
+import '@/utils/http';
 import zh from '@/assets/lang/zh';
 import en from '@/assets/lang/en';
 import VueI18n from 'vue-i18n';
@@ -20,7 +21,6 @@ import 'echarts/lib/component/legend';
 import 'echarts/lib/component/tooltip';
 import 'echarts/lib/component/title';
 import VModal from 'vue-js-modal';
-import { queryOAPTimeInfo } from './utils/localtime';
 import './assets';
 
 import * as d3 from 'd3';
@@ -30,14 +30,17 @@ Vue.prototype.$d3 = d3;
 Vue.prototype.$d3tip = d3tip;
 Vue.prototype.$jq = $;
 
-import { Button, Dialog, MessageBox, Radio, Input, Checkbox } from 'element-ui';
+import { Button, Dialog, MessageBox, Radio, Input, Checkbox, Message, Form, FormItem } from 'element-ui';
 Vue.prototype.$ELEMENT = { size: 'small', zIndex: 3000 };
 Vue.use(Button);
 Vue.use(Dialog);
 Vue.use(Radio);
 Vue.use(Input);
 Vue.use(Checkbox);
+Vue.use(Form);
+Vue.use(FormItem);
 Vue.prototype.$confirm = MessageBox.confirm;
+Vue.prototype.$message = Message;
 
 import 'overlayscrollbars/css/OverlayScrollbars.css';
 import OverlayScrollbars from 'overlayscrollbars';
@@ -51,7 +54,6 @@ Vue.use(components);
 Vue.use(VModal, { dialog: true });
 Vue.directive('clickout', clickout);
 Vue.directive('tooltip', tooltip);
-
 Vue.filter('dateformat', (dataStr: any, pattern: string = 'YYYY-MM-DD HH:mm:ss') => moment(dataStr).format(pattern));
 
 const savedLanguage = window.localStorage.getItem('lang');

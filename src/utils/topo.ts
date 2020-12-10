@@ -20,17 +20,18 @@ const dateFormat = (fmt: string, date: Date) => {
   return fmt;
 };
 
-const formatTopoData = (originData: any, isNeedFixField: boolean) => {
+const formatTopoData = (originResponse: any, isNeedFixField: boolean) => {
   let topoData = {
     nodes: [],
     links: [],
   };
-  if (!originData) {
+  if (!originResponse || !originResponse.data) {
     return topoData;
   }
 
   let nodesTmp = [];
   let linksTmp = [];
+  let originData = originResponse.data;
 
   if (originData.applications) {
     nodesTmp = [...nodesTmp, ...originData.applications];

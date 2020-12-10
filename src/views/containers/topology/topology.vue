@@ -1,14 +1,8 @@
 <template>
   <div class="rk-topo">
-    <TopoView :topoData="topoData" :topoViewData="topoViewData" :isMatch="isMatch" @restoreFilters="restoreFilters" />
-    <TopoSideNavigation :topoViewData="topoViewData" />
-    <TopoToolSet
-      ref="topotoolset"
-      :topoData="topoData"
-      :topoViewData="topoViewData"
-      @onSearchResult="onSearchResult"
-      @changeTopoViewData="changeTopoViewData"
-    />
+    <TopoView :topoData="topoData" :isMatch="isMatch" @restoreFilters="restoreFilters" />
+    <TopoSideNavigation :topoData="topoData" />
+    <TopoToolSet ref="topotoolset" :topoData="topoData" @onSearchResult="onSearchResult" />
   </div>
 </template>
 <script lang="js">
@@ -27,10 +21,6 @@
   export default {
     data() {
       return {
-        topoViewData: { // 展示的拓扑数据
-          nodes: [],
-          links: []
-        },
         isMatch: true,
       }
     },
@@ -51,18 +41,15 @@
     },
 
     watch: {
-      topoViewData(newVal) {
-        if (newVal.nodes.length <= 2) {
-          this.$store.commit('rocketTopo/SET_TOPO_SCALE_FIX', 2);
-        } else {
-          this.$store.commit('rocketTopo/SET_TOPO_SCALE_FIX', -1);
-        }
-        this.$store.commit('rocketTopo/SET_IS_FIRST_TICK', true);
-      },
       topoData(newVal) {
         this.$store.commit('rocketTopo/SET_IS_TOPO_NODES_UPDATED', true);
         this.$store.commit('rocketTopo/SET_IS_TOPO_LINKS_UPDATED', true);
-        this.topoViewData = newVal;
+        if (newVal.nodes.length <= 2) {
+          this.$store.commit('rocketTopo/SET_TOPO_SCALE_FIX', 2);
+        } else {
+          this.$store.commit('rocketTopo/SET_TOPO_SCALE_FIX', 1);
+        }
+        this.$store.commit('rocketTopo/SET_IS_FIRST_TICK', true);
       },
     },
 
@@ -73,9 +60,6 @@
     methods: {
       restoreFilters() {
         this.$refs.topotoolset.restoreFilters();
-      },
-      changeTopoViewData(newTopoViewData) {
-       this.topoViewData = newTopoViewData;
       },
       onSearchResult(isMatch) {
         this.isMatch = isMatch;

@@ -15,7 +15,7 @@
           <span class="item-title" title="All">All : </span>
           <span class="item-content" :title="item.total">{{ item.total }}</span>
         </div>
-        <div class="tsnic-item">
+        <div class="tsnic-item" v-show="!['Application', 'MiddleWare', 'Process'].includes(item.id)">
           <span class="item-title" title="All">Abnormal : </span>
           <span class="item-content abnormal-number" :title="item.abnormal">{{ item.abnormal }}</span>
         </div>
@@ -34,7 +34,7 @@
 
   export default {
     props: {
-      topoViewData: {
+      topoData: {
         type: Object,
         default() {
           return {
@@ -101,7 +101,7 @@
     },
 
     watch: {
-      topoViewData() {
+      topoData() {
         this.initNavList();
       }
     },
@@ -116,7 +116,7 @@
           nav.total = 0;
           nav.abnormal = 0;
         });
-        this.topoViewData.nodes.forEach(node => {
+        this.topoData.nodes.forEach(node => {
           let navItem = this.navList.find(item => item.id === node.type);
           if (navItem) {
             navItem.total++;

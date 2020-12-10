@@ -153,6 +153,11 @@
       value() {
         this.dates = this.vi(this.value);
       },
+      show(newVal) {
+        if (newVal) {
+          this.$store.commit('rocketTopo/SET_IS_AUTO_RELOAD_TOPO', false);
+        }
+      }
     },
     methods: {
       get() {

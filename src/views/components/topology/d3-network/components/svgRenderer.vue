@@ -29,10 +29,10 @@
             :key="index"
             :id="'arrow' + link.id"
             markerUnits="userSpaceOnUse"
-            :markerWidth="nodeSize / 2"
-            :markerHeight="nodeSize / 2"
+            :markerWidth="(1.5 * nodeSize) / 2"
+            :markerHeight="(1.5 * nodeSize) / 2"
             viewBox="0 0 10 10"
-            refX="18"
+            refX="16"
             refY="6"
             orient="auto"
           >

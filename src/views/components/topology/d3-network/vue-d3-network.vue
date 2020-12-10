@@ -333,41 +333,25 @@
         scaleFix = scaleFix <= 0 ? 1 : scaleFix;
         return scaleFix;
       },
-      fixTopoScale(isSetTopoScaleFix, isEnlargeTopo) {
-        let centerX = this.$jq('#netSvg').width() / 2;
-        let centerY = this.$jq('#netSvg').height() / 2;
-        let bounds = this.$d3
-          .select('#zoomContainer')
-          .node()
-          .getBBox();
-        let scaleFixX = (0.8 * centerX) / (centerX - bounds.x);
-        let scaleFixY = (0.8 * centerY) / (centerY - bounds.y);
-        let scaleFix = Math.min(scaleFixX, scaleFixY);
-        scaleFix = scaleFix <= 0 ? 1 : scaleFix;
-        if (isEnlargeTopo) {
-          if (this.nodes.length <= this.nodeNumSmall) {
-            scaleFix = this.getScaleFixForSim(this.nodes, 0.6);
-          } else {
-            scaleFixX = (0.8 * centerX) / (centerX - bounds.x);
-            scaleFixY = (0.8 * centerY) / (centerY - bounds.y);
-            scaleFix = Math.min(scaleFixX, scaleFixY);
-            scaleFix = scaleFix <= 0 ? 1 : scaleFix;
-          }
-          if (this.nodes.length > 2) {
-            // 布局时,放大拓扑,要同时缩小元素
-            this.nodeSize = this.defaultNodeSize / scaleFix;
-            this.linkWidth = this.defaultLinkWidth / scaleFix;
-            this.fontSize = this.defaultFontSize / scaleFix;
-          }
+      fixTopoScaleOnBound() {},
+      fixTopoScaleOnCoord() {
+        let scaleFix = 1;
+        if (this.nodes.length <= this.nodeNumSmall) {
+          scaleFix = this.getScaleFixForSim(this.nodes, 0.6);
+        } else {
+          scaleFix = this.getScaleFixForSim(this.nodes, 0.8);
         }
-        if (isSetTopoScaleFix) {
-          this.$store.commit('rocketTopo/SET_TOPO_SCALE_FIX', scaleFix);
+        if (this.nodes.length > 2 && scaleFix > 1) {
+          this.nodeSize = this.defaultNodeSize / scaleFix;
+          this.linkWidth = this.defaultLinkWidth / scaleFix;
+          this.fontSize = this.defaultFontSize / scaleFix;
         }
+        this.$store.commit('rocketTopo/SET_TOPO_SCALE_FIX', scaleFix);
         this.zoomController.scaleTo(
           this.$d3
             .select('.net-svg')
             .transition()
-            .duration(200),
+            .duration(10),
           scaleFix,
         );
       },
@@ -512,39 +496,17 @@
           );
         }
         sim.on('tick', () => {
-          if (this.isFirstTick) {
-            if (this.nodes.length > this.nodeNumSmall) {
-              let bounds = this.$d3
-                .select('#zoomContainer')
-                .node()
-                .getBBox();
-              if (bounds.x !== 0 && bounds.y !== 0) {
-                this.topoTickCount++;
-              }
-              if (this.topoTickCount % 5 === 1) {
-                if (bounds.x < 0 || bounds.y < 0) {
-                  this.fixTopoScale(true, false);
-                } else {
-                  this.fixTopoScale(true, true);
-                }
-              }
-            } else if (this.nodes.length > 0 && this.nodes.length <= this.nodeNumSmall) {
-              this.topoTickCount++;
-              if (this.topoTickCount % 3 === 0) {
-                this.fixTopoScale(true, true);
-              }
+          if (this.isFirstTick && this.nodes.length > 0) {
+            this.topoTickCount++;
+            if (this.topoTickCount % 2 === 0) {
+              this.fixTopoScaleOnCoord();
             }
           }
         });
         sim.on('end', () => {
           if (this.isFirstTick && this.nodes.length > 0) {
             this.$store.commit('rocketTopo/SET_IS_FIRST_TICK', false);
-            this.topoTickCount = 0;
-            if (this.nodes.length > this.nodeNumSmall) {
-              this.fixTopoScale(true, false);
-            } else if (this.nodes.length > 0 && this.nodes.length <= this.nodeNumSmall) {
-              this.fixTopoScale(true, true);
-            }
+            this.fixTopoScaleOnCoord();
           }
         });
 
@@ -1022,8 +984,7 @@
           }
 
           &.node-agent {
-            // opacity: 0;
-            fill: #ccc;
+            opacity: 0;
           }
 
           &.dark-node {

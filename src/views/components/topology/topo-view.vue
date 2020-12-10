@@ -6,7 +6,7 @@
         <overlay-scrollbars id="tdwId" style="height:100%" :options="scrollOptions" v-show="!foldTopoDetail">
           <TopoDetail
             v-if="topoDetailData.nodes.length > 0"
-            :topoViewData="topoViewData"
+            :topoData="topoData"
             @toggleNodeDetail="toggleNodeDetail"
           />
         </overlay-scrollbars>
@@ -19,13 +19,13 @@
         </div>
         <!-- 节点详情 -->
         <div class="node-detail-wrapper" v-if="showNodeDetail">
-          <NodeDetail :topoViewData="topoViewData" @toggleNodeDetail="toggleNodeDetail" />
+          <NodeDetail :topoData="topoData" @toggleNodeDetail="toggleNodeDetail" />
         </div>
       </div>
       <!-- 右侧主拓扑图 -->
       <div class="tvc-r" id="tvcrId" ref="tvcr">
         <!-- 拓扑标题 -->
-        <div class="main-topo-info" v-show="topoViewData.nodes.length > 0 && isMatch">
+        <div class="main-topo-info" v-show="topoData.nodes.length > 0 && isMatch">
           <div class="mti-item topo-mode">
             <span class="title">拓扑探索模式：</span>
             <span class="content" v-show="topoMode === 'global'">全部节点</span>
@@ -50,7 +50,16 @@
           <!-- 查看节点详情 -->
           <div class="mti-item view-node-info" v-show="viewNode.id !== undefined">
             <div class="info-title">当前查看的节点信息:</div>
-            <div class="info-item" v-for="(value, key) in viewNode" :key="key" v-show="nodeDetailItems.includes(key)">
+            <div
+              class="info-item"
+              v-for="(value, key) in viewNode"
+              :key="key"
+              v-show="
+                nodeDetailItems.includes(key) ||
+                  (key === 'eventCount' && !stateExLabels.includes(viewNode['label'])) ||
+                  (key === 'state' && !stateExLabels.includes(viewNode['label']))
+              "
+            >
               <span class="item-title">{{ key }} :</span>
               <span class="item-content">
                 {{ value }}
@@ -61,7 +70,7 @@
         </div>
         <!-- 拓扑图 -->
         <d3-network
-          v-show="topoViewData.nodes.length > 0 && isMatch"
+          v-show="topoData.nodes.length > 0 && isMatch"
           ref="net"
           :net-data="netData"
           :options="options"
@@ -72,24 +81,20 @@
           @link-click="linkClick"
         />
         <!-- 鼠标右键探索弹框 -->
-        <el-dialog
-          class="explore-dialog"
-          :title="'确定探索节点 ' + nodeToExplore.id + '？'"
-          :visible.sync="isShowExplore"
-          width="30%"
-        >
-          <!-- <div class="modes-wrapper">
+        <el-dialog class="explore-dialog" :title="'确定探索该节点？'" :visible.sync="isShowExplore" width="30%">
+          <div class="modes-wrapper">
             <div class="mw-item">
-             
+              <span class="item-title">节点ID：</span>
+              <span class="item-content">{{ nodeToExplore.id }}</span>
             </div>
-          </div> -->
+          </div>
           <span slot="footer" class="dialog-footer">
             <el-button @click="isShowExplore = false">取 消</el-button>
             <el-button type="primary" @click="handleConfirmExplore">确 定</el-button>
           </span>
         </el-dialog>
         <!-- 加载样式 -->
-        <div class="main-topo-loading" v-show="topoViewData.nodes.length === 0">
+        <div class="main-topo-loading" v-show="topoData.nodes.length === 0">
           <svg class="icon loading">
             <use xlink:href="#spinner-light"></use>
           </svg>
@@ -110,15 +115,6 @@
   export default {
     props: {
       topoData: {
-        type: Object,
-        default() {
-          return {
-            nodes: [],
-            links: [],
-          };
-        },
-      },
-      topoViewData: {
         type: Object,
         default() {
           return {
@@ -184,8 +180,6 @@
           'id',
           'name',
           'label',
-          'state',
-          'eventCount',
           'createTime',
           'updateTime',
           'podIp',
@@ -194,6 +188,11 @@
           'processNo',
           'middlewareType',
           'kind',
+        ],
+        stateExLabels: [
+          'Application',
+          'MiddleWare',
+          'Process',
         ],
         isShowExplore: false,
         nodeToExplore: {},
@@ -244,8 +243,8 @@
     },
 
     watch: {
-      topoViewData(newVal, oldVal) {
-        // this.initNetTopoData();
+      topoData(newVal, oldVal) {
+        this.initNetTopoData();
       },
       topoDetailData(newVal, oldVal) {
         if (newVal.nodes.length > 0) {
@@ -263,8 +262,8 @@
     },
 
     created() {
-      // this.initNetTopoData();
-      this.reset(); // 拓扑布局测试
+      this.initNetTopoData();
+      // this.reset(); // 拓扑布局测试
     },
 
     mounted() {
@@ -327,7 +326,7 @@
         this.options.size.h = this.$refs.tvcr.clientHeight;
       },
       initNetTopoData() {
-        this.netData = this.topoViewData;
+        this.netData = this.topoData;
       },
       nodeRightClick(event, node) {
         this.isShowExplore = true;
@@ -515,31 +514,14 @@
             }
 
             .el-dialog__body {
-              display: none;
               .modes-wrapper {
                 .mw-item {
-                  display: flex;
-                  align-items: center;
-                  justify-content: flex-start;
+                  color: #ddd;
+                  text-align: left;
 
-                  .el-radio {
-                    color: #ccc;
-                    margin-right: 10px;
-                  }
-
-                  .el-input {
-                    &.is-disabled {
-                      opacity: 0.5;
-                    }
-                  }
-
-                  .el-input__inner {
-                    background-color: #ddd;
-
-                    &::-webkit-input-placeholder {
-                      color: #252a2f;
-                      opacity: 0.5;
-                    }
+                  .item-title {
+                    color: #409eff;
+                    width: 60px;
                   }
                 }
               }
