@@ -45,7 +45,7 @@
         class="sw-input"
         v-model="inputId"
         placeholder="请输入节点ID"
-        @focus="handelFocusInputId"
+        @focus="handleFocusInputId"
         @keyup.prevent.enter="handleMouseUp"
       />
       <span class="sw-clear">
@@ -704,7 +704,7 @@
           }
         }, 10);
       },
-      handelFocusInputId() {
+      handleFocusInputId() {
         this.resetIsAutoReloadTopo();
       },
       handleMouseUp() {
