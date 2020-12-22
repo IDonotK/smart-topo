@@ -6,7 +6,7 @@
         <overlay-scrollbars id="tdwId" style="height:100%" :options="scrollOptions" v-show="!foldTopoDetail">
           <TopoDetail
             v-if="topoDetailData.nodes.length > 0"
-            :topoData="topoData"
+            :topoViewData="topoViewData"
             @toggleNodeDetail="toggleNodeDetail"
           />
         </overlay-scrollbars>
@@ -19,13 +19,13 @@
         </div>
         <!-- 节点详情 -->
         <div class="node-detail-wrapper" v-if="showNodeDetail">
-          <NodeDetail :topoData="topoData" @toggleNodeDetail="toggleNodeDetail" />
+          <NodeDetail :topoViewData="topoViewData" @toggleNodeDetail="toggleNodeDetail" />
         </div>
       </div>
       <!-- 右侧主拓扑图 -->
       <div class="tvc-r" id="tvcrId" ref="tvcr">
         <!-- 拓扑标题 -->
-        <div class="main-topo-info" v-show="topoData.nodes.length > 0 && isMatch">
+        <div class="main-topo-info" v-show="topoViewData.nodes.length > 0 && isMatch">
           <div class="mti-item topo-mode">
             <span class="title">拓扑探索模式：</span>
             <span class="content" v-show="topoMode === 'global'">全部节点</span>
@@ -63,14 +63,27 @@
               <span class="item-title">{{ key }} :</span>
               <span class="item-content">
                 {{ value }}
-                <span v-if="key === 'id'" class="copy-btn" @click.prevent.stop="copyNodeId(value)">复制</span>
+                <!-- 复制按钮 -->
+                <span v-if="key === 'id'" class="item-btn" @click.prevent.stop="copyNodeId(value)" title="复制">
+                  <svg class="icon sm vm copy-btn-icon">
+                    <use xlink:href="#COPY-GRAY"></use>
+                  </svg>
+                </span>
+                <!-- 查看事件按钮 -->
+                <!-- @todo: 查看事件 -->
+                <span v-if="key === 'eventCount'" class="item-btn" @click.prevent.stop="showEvents()" title="查看事件">
+                  <!-- <span v-if="false" class="item-btn" @click.prevent.stop="showEvents()" title="查看事件"> -->
+                  <svg class="icon sm vm event-btn-icon">
+                    <use xlink:href="#DETAIL-PAGE-GRAY"></use>
+                  </svg>
+                </span>
               </span>
             </div>
           </div>
         </div>
         <!-- 拓扑图 -->
         <d3-network
-          v-show="topoData.nodes.length > 0 && isMatch"
+          v-show="topoViewData.nodes.length > 0 && isMatch && !isLoadingTopo"
           ref="net"
           :net-data="netData"
           :options="options"
@@ -80,6 +93,10 @@
           @node-click="nodeClick"
           @link-click="linkClick"
         />
+        <!-- 查看事件列表 -->
+        <el-drawer class="events-drawer" title="事件列表" :visible.sync="isShowEvents" direction="rtl" size="720px">
+          <node-events v-if="isShowEvents" :viewNodeId="viewNode.id" />
+        </el-drawer>
         <!-- 鼠标右键探索弹框 -->
         <el-dialog class="explore-dialog" :title="'确定探索该节点？'" :visible.sync="isShowExplore" width="30%">
           <div class="modes-wrapper">
@@ -93,28 +110,48 @@
             <el-button type="primary" @click="handleConfirmExplore">确 定</el-button>
           </span>
         </el-dialog>
-        <!-- 加载样式 -->
-        <div class="main-topo-loading" v-show="topoData.nodes.length === 0">
+        <!-- 加载过程样式 -->
+        <div class="main-topo-loading" v-show="isLoadingTopo">
           <svg class="icon loading">
             <use xlink:href="#spinner-light"></use>
           </svg>
         </div>
+        <!-- 加载结果为空样式 -->
+        <div class="main-topo-empty" v-show="topoViewData.nodes.length === 0 && !isLoadingTopo">
+          暂无数据！
+        </div>
         <!-- 搜索无匹配结果样式 -->
-        <div class="main-topo-not-match" v-show="!isMatch">Not Match !</div>
+        <div class="main-topo-not-match" v-show="!isMatch && !isLoadingTopo && topoViewData.nodes.length > 0">
+          无匹配节点！
+        </div>
       </div>
     </div>
   </div>
 </template>
 <script lang="js">
+  import { dateFormat } from '@/utils/topo';
+
   import TopoDetail from './topo-detail.vue';
   import NodeDetail from './node-detail.vue';
+  import NodeEvents from './node-events.vue';
 
   import * as utils from './d3-network/utils.js';
   import D3Network from './d3-network/vue-d3-network.vue';
 
+  import './assets';
+
   export default {
     props: {
       topoData: {
+        type: Object,
+        default() {
+          return {
+            nodes: [],
+            links: [],
+          };
+        },
+      },
+      topoViewData: {
         type: Object,
         default() {
           return {
@@ -195,6 +232,7 @@
           'Process',
         ],
         isShowExplore: false,
+        isShowEvents: false,
         nodeToExplore: {},
         tickTimer: null,
       }
@@ -203,10 +241,17 @@
     components: {
       TopoDetail,
       NodeDetail,
+      NodeEvents,
       D3Network
     },
 
     computed: {
+      durationRow() {
+        return this.$store.state.rocketbot.durationRow;
+      },
+      isLoadingTopo() {
+        return this.$store.state.rocketTopo.isLoadingTopo;
+      },
       exploreNode() {
         return this.$store.state.rocketTopo.exploreNode;
       },
@@ -243,7 +288,7 @@
     },
 
     watch: {
-      topoData(newVal, oldVal) {
+      topoViewData(newVal, oldVal) {
         this.initNetTopoData();
       },
       topoDetailData(newVal, oldVal) {
@@ -296,6 +341,9 @@
         }
         document.body.removeChild(input);
       },
+      showEvents() {
+        this.isShowEvents = true;
+      },
       toggleNodeDetail(state) {
         this.showNodeDetail = state;
       },
@@ -326,7 +374,7 @@
         this.options.size.h = this.$refs.tvcr.clientHeight;
       },
       initNetTopoData() {
-        this.netData = this.topoData;
+        this.netData = this.topoViewData;
       },
       nodeRightClick(event, node) {
         this.isShowExplore = true;
@@ -337,8 +385,8 @@
           return;
         }
         if (event && node) {
+          this.$store.commit('rocketTopo/SET_VIEW_NODE', node);
           this.setCurNodeStably(node);
-          // this.$store.commit('rocketTopo/SET_NODE', node);
         }
       },
       nodeClick(event, node) {
@@ -459,6 +507,10 @@
 
           .view-node-info {
             margin-top: 20px;
+            .info-title {
+              color: deepskyblue;
+            }
+
             .info-item {
               height: 20px;
               display: flex;
@@ -483,12 +535,21 @@
                 display: flex;
                 align-items: center;
 
-                .copy-btn {
-                  margin-left: 5px;
+                .item-btn {
                   color: #ddd;
                   font-size: 10px;
                   cursor: pointer;
                   pointer-events: all;
+
+                  .copy-btn-icon {
+                    width: 20px;
+                    height: 20px;
+                  }
+
+                  .event-btn-icon {
+                    width: 22px;
+                    height: 22px;
+                  }
 
                   &:active {
                     color: rgb(63, 177, 227);
@@ -498,10 +559,67 @@
             }
           }
         }
+        .events-drawer {
+          /deep/ :focus {
+            outline: 0;
+          }
+          .el-drawer {
+            overflow-y: auto !important;
+            background-color: #252a2f;
+
+            .el-drawer__header {
+              text-align: left;
+              color: #ddd;
+              font-size: 16px;
+              font-weight: 500;
+            }
+          }
+
+          .el-drawer__body {
+            padding: 0 20px;
+          }
+
+          .table-wrapper {
+            width: 100%;
+            overflow: hidden;
+            border-right: solid 1px #ebeef5;
+
+            .events-table {
+              margin-left: 2px;
+
+              .cell {
+                overflow: hidden;
+                text-overflow: ellipsis;
+                white-space: nowrap;
+              }
+
+              .el-table__expanded-cell {
+                padding: 20px 20px !important;
+
+                .el-form-item__content {
+                  overflow: hidden;
+                  text-overflow: ellipsis;
+                  white-space: nowrap;
+                }
+              }
+
+              .events-table-expand {
+                font-size: 0;
+              }
+              .events-table-expand label {
+                width: 90px;
+                color: #99a9bf;
+              }
+              .events-table-expand .el-form-item {
+                margin-right: 0;
+                margin-bottom: 0;
+                width: 100%;
+              }
+            }
+          }
+        }
 
         .explore-dialog {
-          z-index: 99999 !important;
-
           .el-dialog {
             background-color: #333840;
 
@@ -544,6 +662,9 @@
         }
 
         .main-topo-loading {
+          position: absolute;
+          top: 0;
+          left: 0;
           width: 100%;
           height: 100%;
           display: flex;
@@ -555,7 +676,11 @@
             height: 50px;
           }
         }
+        .main-topo-empty,
         .main-topo-not-match {
+          position: absolute;
+          top: 0;
+          left: 0;
           width: 100%;
           height: 100%;
           display: flex;

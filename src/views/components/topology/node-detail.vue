@@ -46,7 +46,7 @@
   import eventIcon from './assets/png/EVENT_LIGHT.png';
   export default {
     props: {
-      topoData: {
+      topoViewData: {
         type: Object,
         default() {
           return {
@@ -130,7 +130,7 @@
           state: this.curNodeCrossLayer.state,
           category: 0
         });
-        this.topoData.links.forEach(link => {
+        this.topoViewData.links.forEach(link => {
           if (link.sid === this.curNodeCrossLayer.id) {
             links.push({
               id: link.id,

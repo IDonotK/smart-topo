@@ -26,12 +26,6 @@
       >
         <template v-if="range">
           <div class="datepicker-popup__sidebar">
-            <button type="button" class="datepicker-popup__shortcut" @click="quickPick('tenSeconds')">
-              {{ this.local.tenSecondsCutTip }}
-            </button>
-            <button type="button" class="datepicker-popup__shortcut" @click="quickPick('thirtySeconds')">
-              {{ this.local.thirtySecondsCutTip }}
-            </button>
             <button type="button" class="datepicker-popup__shortcut" @click="quickPick('oneMinute')">
               {{ this.local.oneMinuteCutTip }}
             </button>
@@ -40,6 +34,9 @@
             </button>
             <button type="button" class="datepicker-popup__shortcut" @click="quickPick('fiveMinutes')">
               {{ this.local.fiveMinutesCutTip }}
+            </button>
+            <button type="button" class="datepicker-popup__shortcut" @click="quickPick('tenMinutes')">
+              {{ this.local.tenMinutesCutTip }}
             </button>
           </div>
           <div class="datepicker-popup__body">
@@ -128,11 +125,10 @@
           weeks: this.$t('weeks').split('_'), // weeks
           cancelTip: this.$t('cancel'), // default text for cancel button
           submitTip: this.$t('confirm'), // default text for submit button
-          tenSecondsCutTip: this.$t('tenSecondsCutTip'),
-          thirtySecondsCutTip: this.$t('thirtySecondsCutTip'),
           oneMinuteCutTip: this.$t('oneMinuteCutTip'),
           threeMinutesCutTip: this.$t('threeMinutesCutTip'),
           fiveMinutesCutTip: this.$t('fiveMinutesCutTip'),
+          tenMinutesCutTip: this.$t('tenMinutesCutTip'),
         };
       },
       range() {
@@ -223,12 +219,6 @@
         const end = new Date();
         const start = new Date();
         switch (type) {
-          case 'tenSeconds':
-            start.setTime(start.getTime() - 10 * 1000);
-            break;
-          case 'thirtySeconds':
-            start.setTime(start.getTime() - 30 * 1000);
-            break;
           case 'oneMinute':
             start.setTime(start.getTime() - 60 * 1000);
             break;
@@ -237,6 +227,9 @@
             break;
           case 'fiveMinutes':
             start.setTime(start.getTime() - 5 * 60 * 1000);
+            break;
+          case 'tenMinutes':
+            start.setTime(start.getTime() - 10 * 60 * 1000);
             break;
           default:
             break;

@@ -24,9 +24,22 @@
   import tool from './utils/tool';
   require('./assets/iconfont-topo/iconfont.js');
 
+  import applicationIcon from './assets/png/APPLICATION.png';
+  import middlewareIcon from './assets/png/MIDDLEWARE.png';
+  import processIcon from './assets/png/PROCESS.png';
+  import workloadIcon from './assets/png/WORKLOAD.png';
+  import podIcon from './assets/png/POD.png';
+  import nodeIcon from './assets/png/NODE.png';
+  import applicationBrightIcon from './assets/png/APPLICATION-BRIGHT.png';
+  import middlewareBrightIcon from './assets/png/MIDDLEWARE-BRIGHT.png';
+  import processBrightIcon from './assets/png/PROCESS-BRIGHT.png';
+  import workloadBrightIcon from './assets/png/WORKLOAD-BRIGHT.png';
+  import podBrightIcon from './assets/png/POD-BRIGHT.png';
+  import nodeBrightIcon from './assets/png/NODE-BRIGHT.png';
+
   export default {
     props: {
-      topoData: {
+      topoViewData: {
         type: Object,
         default() {
           return {
@@ -45,7 +58,7 @@
           },
           {
             id: 'MiddleWare',
-            name: 'Middlewares',
+            name: 'MiddleWares',
           },
           {
             id: 'Process',
@@ -138,9 +151,7 @@
           }
         }, 10);
       },
-      drawDetailTopoCrossLayer() {
-        this.$d3.select("#tdt-view-cross-layer svg").remove();
-
+      clearInfoTips() {
         if (this.tip) {
           this.tip.hide(this);
           this.tip = null;
@@ -156,20 +167,48 @@
           left: 0 + 'px',
           top: 0 + 'px',
         };
-
+      },
+      getNodeIcon(type, isBright) {
+        let iconTmp = null;
+        switch (type) {
+          case 'Application': iconTmp = isBright ? applicationBrightIcon : applicationIcon; break;
+          case 'MiddleWare': iconTmp = isBright ? middlewareBrightIcon : middlewareIcon; break;
+          case 'Process': iconTmp = isBright ? processBrightIcon : processIcon; break;
+          case 'Workload': iconTmp = isBright ? workloadBrightIcon : workloadIcon; break;
+          case 'Pod': iconTmp = isBright ? podBrightIcon : podIcon; break;
+          case 'Node': iconTmp = isBright ? nodeBrightIcon : nodeIcon; break;
+          default: break;
+        }
+        return iconTmp;
+      },
+      setNodePositonNormalLayer(nNum, nObj, startX, factorY, nSize, deltaw, deltah) {
+        nObj.x = startX + (nNum - 1) * deltaw;
+        nObj.y = factorY * deltah;
+        nObj.fx = nObj.x;
+        nObj.fy = nObj.y;
+        nObj.symbolSize = nSize;
+      },
+      setNodePositonCurNodeLayer(nNum, cNum, nObj, startX, factorY, nSize, deltaw, deltah) {
+        if (nNum === 1) { // 选中节点居中
+          this.setNodePositonNormalLayer((cNum + 1) / 2, nObj, startX, factorY, nSize, deltaw, deltah);
+        } else if (nNum > 1 && nNum <= (cNum + 1) / 2) {
+          this.setNodePositonNormalLayer(nNum - 1, nObj, startX, factorY, nSize - 8, deltaw, deltah);
+        } else if (nNum > (cNum + 1) / 2) {
+          this.setNodePositonNormalLayer(nNum, nObj, startX, factorY, nSize - 8, deltaw, deltah);
+        }
+      },
+      drawDetailTopoCrossLayer() {
+        this.$d3.select("#tdt-view-cross-layer svg").remove();
+        this.clearInfoTips();
         if (this.topoDetailData.nodes.length <= 0) {
           return;
         }
-
         const graph = this.topoDetailData;
-
         const topoHeight = this.$jq("#tdtId").height();
         const deltah = topoHeight / 6;
-        // #tdw最大宽度为主拓扑视口#tvcc的一半
-        const tdwWidthMax = document.getElementById('tvccId').clientWidth * 0.6;
         const deltaw = 50;
 
-        // 计算拓扑宽度
+        // 计算起点坐标
         let appNum = 0;
         let middlewareNum = 0;
         let processNum = 0;
@@ -187,6 +226,7 @@
             default: break;
           }
         });
+
         // 选中节点类型 偶补成奇
         let curTypeNum = 0;
         switch (this.currentNode.type) {
@@ -199,55 +239,32 @@
           default: break;
         }
         let maxNum = Math.max(appNum, middlewareNum, processNum, workloadNum, podNum, nodeNum);
-        let topoWidth = 50 + maxNum * deltaw + 50;
-        let tdwWidth = topoWidth > tdwWidthMax ? tdwWidthMax : topoWidth;
-        // 设置tvcl宽度
-        this.$jq('#tdwId').width(tdwWidth);
-        // 设置topoDetail宽度
-        this.$jq('#tdId').width(topoWidth);
+        let appStartX = 45 + (maxNum - appNum) / 2 * 50;
+        let middlewareStartX = 45 + (maxNum - middlewareNum) / 2 * 50;
+        let processStartX = 45 + (maxNum - processNum) / 2 * 50;
+        let workloadStartX = 45 + (maxNum - workloadNum) / 2 * 50;
+        let podStartX = 45 + (maxNum - podNum) / 2 * 50;
+        let nodeStartX = 45 + (maxNum - nodeNum) / 2 * 50;
 
-        // 计算起点坐标
-        let appStartX = 50 + (maxNum - appNum) / 2 * 50;
-        let middlewareStartX = 50 + (maxNum - middlewareNum) / 2 * 50;
-        let processStartX = 50 + (maxNum - processNum) / 2 * 50;
-        let workloadStartX = 50 + (maxNum - workloadNum) / 2 * 50;
-        let podStartX = 50 + (maxNum - podNum) / 2 * 50;
-        let nodeStartX = 50 + (maxNum - nodeNum) / 2 * 50;
-
-        // 调整曲线
+        // 调整曲线1
         let isAppLine2Src = appNum >= middlewareNum ? true : false;
         let isMiddlewareLine2Src = middlewareNum >= processNum ? true : false;
         let isProcessLine2Src = processNum >= workloadNum ? true : false;
         let isWorkloadLine2Src = workloadNum >= podNum ? true : false;
         let isPodLine2Src = podNum >= nodeNum ? true : false;
-
         appNum = 0;
         middlewareNum = 0;
         processNum = 0;
         workloadNum = 0;
         podNum = 0;
         nodeNum = 0;
-
         const nodesOption = [];
         const linksOption = [];
-        const anchorOption = [];
+        const anchorsOption = [];
+        const arrowsOption = [];
+
         // 计算节点坐标
-        function setNodePositonNormalLayer(nNum, nObj, startX, factorY, nSize) {
-          nObj.x = startX + (nNum - 1) * deltaw;
-          nObj.y = factorY * deltah;
-          nObj.fx = nObj.x;
-          nObj.fy = nObj.y;
-          nObj.symbolSize = nSize;
-        }
-        function setNodePositonCurNodeLayer(nNum, cNum, nObj, startX, factorY, nSize) {
-          if (nNum === 1) { // 选中节点居中
-            setNodePositonNormalLayer((cNum + 1) / 2, nObj, startX, factorY, nSize);
-          } else if (nNum > 1 && nNum <= (cNum + 1) / 2) {
-            setNodePositonNormalLayer(nNum - 1, nObj, startX, factorY, nSize - 8);
-          } else if (nNum > (cNum + 1) / 2) {
-            setNodePositonNormalLayer(nNum, nObj, startX, factorY, nSize - 8);
-          }
-        }
+        let existingTypes = new Set();
         graph.nodes.forEach(node => {
           let itemTmp = {};
           Object.keys(node).forEach(key => {
@@ -255,55 +272,56 @@
               itemTmp[key] = node[key];
             }
           });
+          existingTypes.add(node.type);
           itemTmp.type = node.type;
           itemTmp.shortName = node.shortName;
           switch (node.type) {
             case 'Application': {
                 appNum++;
                 if (this.currentNode.type === 'Application') {
-                  setNodePositonCurNodeLayer(appNum, curTypeNum, itemTmp, appStartX, 0.5, 28);
+                  this.setNodePositonCurNodeLayer(appNum, curTypeNum, itemTmp, appStartX, 0.5, 28, deltaw, deltah);
                 } else {
-                  setNodePositonNormalLayer(appNum, itemTmp, appStartX, 0.5, 28);
+                  this.setNodePositonNormalLayer(appNum, itemTmp, appStartX, 0.5, 28, deltaw, deltah);
                 }
               } break;
             case 'MiddleWare': {
                 middlewareNum++;
                 if (this.currentNode.type === 'MiddleWare') {
-                  setNodePositonCurNodeLayer(middlewareNum, curTypeNum, itemTmp, middlewareStartX, 1.5, 28);
+                  this.setNodePositonCurNodeLayer(middlewareNum, curTypeNum, itemTmp, middlewareStartX, 1.5, 28, deltaw, deltah);
                 } else {
-                  setNodePositonNormalLayer(middlewareNum, itemTmp, middlewareStartX, 1.5, 28);
+                  this.setNodePositonNormalLayer(middlewareNum, itemTmp, middlewareStartX, 1.5, 28, deltaw, deltah);
                 }
               } break;
             case 'Process': {
                 processNum++;
                 if (this.currentNode.type === 'Process') {
-                  setNodePositonCurNodeLayer(processNum, curTypeNum, itemTmp, processStartX, 2.5, 28);
+                  this.setNodePositonCurNodeLayer(processNum, curTypeNum, itemTmp, processStartX, 2.5, 28, deltaw, deltah);
                 } else {
-                  setNodePositonNormalLayer(processNum, itemTmp, processStartX, 2.5, 28);
+                  this.setNodePositonNormalLayer(processNum, itemTmp, processStartX, 2.5, 28, deltaw, deltah);
                 }
               } break;
             case 'Workload': {
                 workloadNum++;
                 if (this.currentNode.type === 'Workload') {
-                  setNodePositonCurNodeLayer(workloadNum, curTypeNum, itemTmp, workloadStartX, 3.5, 28);
+                  this.setNodePositonCurNodeLayer(workloadNum, curTypeNum, itemTmp, workloadStartX, 3.5, 28, deltaw, deltah);
                 } else {
-                  setNodePositonNormalLayer(workloadNum, itemTmp, workloadStartX, 3.5, 28);
+                  this.setNodePositonNormalLayer(workloadNum, itemTmp, workloadStartX, 3.5, 28, deltaw, deltah);
                 }
               } break;
             case 'Pod': {
                 podNum++;
                 if (this.currentNode.type === 'Pod') {
-                  setNodePositonCurNodeLayer(podNum, curTypeNum, itemTmp, podStartX, 4.5, 28);
+                  this.setNodePositonCurNodeLayer(podNum, curTypeNum, itemTmp, podStartX, 4.5, 28, deltaw, deltah);
                 } else {
-                  setNodePositonNormalLayer(podNum, itemTmp, podStartX, 4.5, 28);
+                  this.setNodePositonNormalLayer(podNum, itemTmp, podStartX, 4.5, 28, deltaw, deltah);
                 }
               } break;
             case 'Node': {
                 nodeNum++;
                 if (this.currentNode.type === 'Node') {
-                  setNodePositonCurNodeLayer(nodeNum, curTypeNum, itemTmp, nodeStartX, 5.5, 28);
+                  this.setNodePositonCurNodeLayer(nodeNum, curTypeNum, itemTmp, nodeStartX, 5.5, 28, deltaw, deltah);
                 } else {
-                  setNodePositonNormalLayer(nodeNum, itemTmp, nodeStartX, 5.5, 28);
+                  this.setNodePositonNormalLayer(nodeNum, itemTmp, nodeStartX, 5.5, 28, deltaw, deltah);
                 }
               } break;
             default: break;
@@ -313,12 +331,16 @@
         graph.links.forEach(link => {
           let itemTmp = {
             id: link.id,
+            sid: link.sid,
+            tid: link.tid,
             source: link.sid,
             target: link.tid,
             type: link.type,
             isTracingTo: (link.type === 'TracingTo' || link.type === 'SubTracingTo')? true : false,
             callPerMinute: link.callPerMinute,
             responseTimePerMin: link.responseTimePerMin,
+            isVertical: false,
+            fixX: 0,
           };
           switch (link.source.type) {
             case 'Application': itemTmp.isLine2Src = isAppLine2Src; break;
@@ -332,46 +354,137 @@
         });
         linksOption.forEach(link => {
           if (link.type === 'TracingTo' || link.type === 'SubTracingTo') {
-            anchorOption.push(link);
+            anchorsOption.push(link);
           }
+          arrowsOption.push(link);
         });
 
+        // 调整曲线2
+        // 1.标记垂直边
+        let xSet = new Set();
+        linksOption.forEach(link => {
+          let sNode = nodesOption.find(node => node.id === link.sid);
+          let tNode = nodesOption.find(node => node.id === link.tid);
+          if (sNode && tNode && sNode.x === tNode.x) {
+            link.isVertical = true;
+            xSet.add(sNode.x);
+          } else {
+            link.isVertical = false;
+          }
+        });
+        // 2.垂直边分组
+        let sortMap = new Map();
+        for (let xVal of xSet) {
+          sortMap.set(xVal, []);
+        }
+        let verticalLinks = linksOption.filter(link => link.isVertical);
+        let typesOption = ['Application', 'MiddleWare', 'Process', 'Workload', 'Pod', 'Node'];
+        verticalLinks.forEach(link => {
+          let sNode = nodesOption.find(node => node.id === link.sid);
+          let tNode = nodesOption.find(node => node.id === link.tid);
+          // 两个点只有一条边，只需要处理 跨层&&中间有其它类型且同横坐标点 的边
+          if ((tNode.y - sNode.y + 2) > (2 * deltah)) { // 满足跨层
+            let stIndex = typesOption.indexOf(sNode.type);
+            let ttIndex = typesOption.indexOf(tNode.type);
+            let middleTypes = [];
+            let hasMidTypes = false;
+            if (stIndex > -1 && ttIndex > -1 && stIndex < ttIndex) {
+              middleTypes = typesOption.slice(stIndex + 1, ttIndex);
+            }
+            for (let i = 0; i < middleTypes.length; i++) {
+              let curType = middleTypes[i];
+              if (existingTypes.has(curType)) {
+                let midNode = nodesOption.find(node => node.type === curType && node.x === sNode.x);
+                if (midNode && midNode.id !== undefined) {
+                  hasMidTypes = true;
+                  break;
+                }
+              }
+            }
+            if (hasMidTypes) { // 满足中间有其它类型且同横坐标点
+              sortMap.get(sNode.x).push(link);
+            }
+          }
+        });
+        // 3. 设置曲率
+        const startFixX = 45;
+        const deltaFixX = 45;
+        let startFixTopoWidthMax = 0;
+        let endFixTopoWidthMax = 0;
+        for (let sortVal of sortMap.values()) {
+          // 1. 排序：长度由小到大
+          sortVal.sort((a, b) => {
+            let sNodeA = nodesOption.find(node => node.id === a.sid);
+            let tNodeA = nodesOption.find(node => node.id === a.tid);
+            let sNodeB = nodesOption.find(node => node.id === b.sid);
+            let tNodeB = nodesOption.find(node => node.id === b.tid);
+            return (tNodeA.y - sNodeA.y) - (tNodeB.y - sNodeB.y);
+          });
+          let lCount = 0;
+          let rCount = 0;
+          // 2. 奇左偶右
+          let startFixTopoWidthTmp = 0;
+          let endFixTopoWidthTmp = 0;
+          sortVal.forEach((link, index) => {
+            if (index % 2 === 0) {
+              link.fixX = -(startFixX + lCount * deltaFixX);
+              //@todo: 只找头
+              startFixTopoWidthTmp = -link.fixX;
+              lCount++;
+            } else {
+              link.fixX = startFixX + rCount * deltaFixX;
+              //@todo: 只找尾
+              endFixTopoWidthTmp = link.fixX;
+              rCount++;
+            }
+          });
+          if (startFixTopoWidthTmp > startFixTopoWidthMax) {
+            startFixTopoWidthMax = startFixTopoWidthTmp;
+          }
+          if (endFixTopoWidthTmp > endFixTopoWidthMax) {
+            endFixTopoWidthMax = endFixTopoWidthTmp;
+          }
+        }
+        // 4. 校正节点坐标
+        nodesOption.forEach(node => {
+          node.x += startFixTopoWidthMax;
+          node.fx = node.x;
+        });
+
+        // 计算拓扑宽度
+        const tdwWidthMax = document.getElementById('tvccId').clientWidth * 0.6;
+        let topoWidth = startFixTopoWidthMax + 45 + maxNum * deltaw + 30 + endFixTopoWidthMax;
+        let tdwWidth = topoWidth > tdwWidthMax ? tdwWidthMax : topoWidth;
+        this.$jq('#tdwId').width(tdwWidth);
+        this.$jq('#tdId').width(topoWidth);
+        this.drawTopo(topoWidth, topoHeight, nodesOption, linksOption, arrowsOption, anchorsOption);
+      },
+      drawTopo(topoWidth, topoHeight, nodesOption, linksOption, arrowsOption, anchorsOption) {
         const svg = this.$d3
           .select('#tdt-view-cross-layer')
           .append('svg')
           .attr('class', 'topo-svg')
           .attr('height', topoHeight);
-
-        // 设置提示
         this.tip = this.$d3tip()
           .attr('class', 'd3-tip')
           // .offset([-8, 0]);
         svg.call(this.tip);
-
-        function tick() {
-          nodeEles.attr('transform', d => `translate(${d.fx}, ${d.fy})`);
-          linkEles.attr('d', d => {
-            if (d.isLine2Src) {
-              return `M ${d.source.fx} ${d.source.fy} Q ${(d.source.fx + d.target.fx) / 2} ${(d.source.fy + d.target.fy) / 2 - 45} ${d.target.fx} ${d.target.fy}`;
-            }
-            return `M ${d.source.fx} ${d.source.fy} Q ${(d.source.fx + d.target.fx) / 2} ${(d.source.fy + d.target.fy) / 2 + 45 } ${d.target.fx} ${d.target.fy}`;
-          });
-          anchorEles.attr('transform', d => {
-             if (d.isLine2Src) {
-              return `translate(${(d.source.x + d.target.x) / 2}, ${(d.target.y + d.source.y) / 2 - 22.5})`;
-            }
-            return `translate(${(d.source.x + d.target.x) / 2}, ${(d.target.y + d.source.y) / 2 + 22.5})`;
-          });
-        };
         const force = this.$d3
           .forceSimulation(nodesOption)
           .force("link", this.$d3.forceLink(linksOption).id(d => d.id))
-          .on("tick", tick);
-
+          .on("tick", () => { this.simulationTick(nodeEles, linkEles, anchorEles); });
         let nodeEles = svg.append('g').attr("class", "topo-nodes").selectAll('.topo-node');
         let linkEles = svg.append('g').attr("class", "topo-lines").selectAll('.topo-line');
         let anchorEles = svg.append('g').attr("class", "topo-line-anchors").selectAll('.topo-line-anchor');
-
+        let arrowEles = svg.append('defs').attr("class", "topo-line-arrows").selectAll('.topo-line-arrow');
+        this.setUseTool(svg);
+        nodeEles = this.getNodeEles(nodeEles, nodesOption);
+        arrowEles = this.getArrowEles(arrowEles, arrowsOption);
+        linkEles = this.getLinkEles(linkEles, linksOption);
+        anchorEles= this.getAnchorEles(anchorEles, anchorsOption);
+        svg.on('click', (d, i) => { this.handleSvgClicked(d, i); });
+      },
+      setUseTool(svg) {
         let shapeOption = {
           side: 3,
           centerRadius: 25,
@@ -384,61 +497,23 @@
           {icon: ''},
           {icon: ''},
         ], shapeOption);
-
-        nodeEles = nodeEles.data(nodesOption)
+      },
+      getNodeEles(nodeEles, nodesOption) {
+        let nodeElesTmp = nodeEles.data(nodesOption)
           .enter().append("g")
           .attr("class", "topo-node");
-        nodeEles.append('image')
+        nodeElesTmp.append('image')
           .attr('width', d => d.symbolSize)
           .attr('height', d => d.symbolSize)
           .attr('x', d => -d.symbolSize / 2)
           .attr('y', d => -d.symbolSize / 2)
           .attr('style', 'cursor: pointer;')
           .attr('xlink:href', d => icons[d.type.toUpperCase()])
-          .on('mouseenter', (data, index, element) => {
-            this.$d3.event.stopPropagation();
-            this.$d3.event.preventDefault();
-
-            // 处理点边重叠的情况
-            this.$jq('.topo-line').addClass('tl-static');
-
-            this.tip.html((data) => `<div>${data.name}</div>`).show(data, element[index]);
-          })
-          .on('mouseleave', d => {
-            this.$d3.event.stopPropagation();
-            this.$d3.event.preventDefault();
-            this.$jq('.topo-line').removeClass('tl-static');
-            this.tip.hide(this);
-          })
-          .on('click', d => {
-            this.$d3.event.stopPropagation();
-            this.$d3.event.preventDefault();
-            this.$emit('toggleNodeDetail', false);
-            this.$store.commit('rocketTopo/SET_NODE_CROSS_LAYER', {});
-            if (this.nodeSingleClickTimer !== null) {
-              clearTimeout(this.nodeSingleClickTimer);
-              this.nodeSingleClickTimer = null;
-              return;
-            }
-            this.nodeSingleClickTimer = setTimeout(() => {
-              this.nodeSingleClickTimer = null;
-              this.$store.commit('rocketTopo/SET_NODE_CROSS_LAYER', d);
-              this.usedTool
-                .attr('transform', `translate(${d.x}, ${d.y})`)
-                .attr('style', 'display: block');
-            }, 300);
-          })
-          .on('dblclick', d => {
-            this.$d3.event.stopPropagation();
-            this.$d3.event.preventDefault();
-            this.$emit('toggleNodeDetail', false);
-            this.$store.commit('rocketTopo/SET_NODE_CROSS_LAYER', {});
-            this.$jq('.topo-line').removeClass('tl-static');
-            this.tip.hide(this);
-            this.usedTool.attr('style', 'display: none');
-            this.handleNodeDblclicked(d);
-          });
-        nodeEles.append('svg')
+          .on('mouseenter', (data, index, element) => { this.handleNodeMouseenter(data, index, element); })
+          .on('mouseleave', d => { this.handleNodeMouseleave(d); })
+          .on('click', d => { this.handleNodeClicked(d); })
+          .on('dblclick', d => { this.handleNodeDblclicked(d); });
+        nodeElesTmp.append('svg')
           .attr("class", "event-node-cross-topo")
           .attr('width', d => d.symbolSize === 28 ? 18 : 12)
           .attr('height', d => d.symbolSize === 28 ? 18 : 12)
@@ -446,48 +521,56 @@
           .attr('y', d => d.symbolSize === 28 ? -25 : -18)
           .append('use')
           .attr('xlink:href', d => d.state === 'Abnormal' ? '#icon-tanhao' : '');
-
-        linkEles = linkEles.data(linksOption)
+        return nodeElesTmp;
+      },
+      getArrowEles(arrowEles, arrowsOption) {
+        return arrowEles.data(arrowsOption, (d) => d.id)
+          .enter().append('marker')
+          .attr('id', d => 'arrow_detail' + d.id)
+          .attr('markerUnits', 'userSpaceOnUse')
+          .attr('markerWidth', 1.0 * 28 / 2)
+          .attr('markerHeight', 1.0 * 28 / 2)
+          .attr('viewBox', '0 0 10 10')
+          .attr('refX', 20)
+          .attr('refY', 6)
+          .attr('orient', "auto")
+          .append("path")
+          .attr('class', 'topo-line-arrow')
+          .attr('d', "M2,3 L10,6 L2,9 L5,6 L2,3")
+          .attr('fill', '#217EF25f');
+      },
+      getLinkEles(linkEles, linksOption) {
+        return linkEles.data(linksOption)
           .enter().append("path")
           .attr("class", "topo-line")
           .attr("stroke-dasharray", d => d.isTracingTo ? '13 7' : 'none')
-          .on('mouseover', d => {
-            this.$d3.event.stopPropagation();
-            this.$d3.event.preventDefault();
-            let offsetX = this.$jq('#tdt-view-cross-layer').offset().left;
-            let offsetY = this.$jq('#tdt-view-cross-layer').offset().top;
-            this.linkTextStyle = {
-              height: 25 + 'px',
-              left: this.$d3.event.clientX - offsetX + 10 + 'px',
-              top: this.$d3.event.clientY - offsetY - 25 + 'px',
-            };
-            this.linkTextContent = d.type;
-            this.linkTextVisible = true;
-          })
-          .on('mouseout', d => {
-            this.$d3.event.stopPropagation();
-            this.$d3.event.preventDefault();
-            this.linkTextVisible = false;
-            this.linkTextContent = '';
-            this.linkTextStyle = {
-              height: 0 + 'px',
-              left: 0 + 'px',
-              top: 0 + 'px',
-            };
-          })
+          // @todo: 加上箭头
+          // .attr("marker-end", d => 'url(#arrow_detail' + d.id + ')')
+          .on('mouseover', d => { this.handleLinkMouseover(d); })
+          .on('mouseout', d => { this.handleLinkMouseout(d); })
           .style("stroke", "#217EF25f");
-
-        anchorEles= anchorEles.data(anchorOption, (d) => d.id)
+      },
+      getAnchorEles(anchorEles, anchorsOption) {
+        return anchorEles.data(anchorsOption, (d) => d.id)
           .enter().append("circle")
           .attr('class', 'topo-line-anchor')
           .attr('stroke', 'none')
           .attr('r', 5)
-          .attr('fill', (d) => '#217EF25f')
+          .attr('fill', '#217EF25f')
           .on('mouseover', (data, index, element) => {
             this.$d3.event.stopPropagation();
             this.$d3.event.preventDefault();
-
             this.$jq('.topo-line').addClass('tl-static');
+            this.$jq(this.$d3.event.target).addClass('topo-line-anchor-light');
+            this.$jq(this.$jq('.topo-line')[data.index]).addClass('topo-line-light');
+            let sNode = this.$jq('.topo-node')[data.source.index];
+            let tNode = this.$jq('.topo-node')[data.target.index];
+            this.$jq(sNode)
+              .children('image')
+              .attr('href', this.getNodeIcon(data.source.type, true));
+            this.$jq(tNode)
+              .children('image')
+              .attr('href', this.getNodeIcon(data.target.type, true));
 
             if (data.source.type === 'Application' || data.target.type === 'Application') {
               this.tip.direction('e');
@@ -496,40 +579,154 @@
             }
             this.tip.html(data =>
               `
-                <div class="mb-5"><span class="grey">调用方式: </span>${data.type}</div>
+                <div class="mb-5"><span class="grey">链路类型: </span>${data.type}</div>
                 <div class="mb-5"><span class="grey">调用频率: </span>${data.callPerMinute === undefined ? ' ' : data.callPerMinute + ' 次/分钟'}</div>
                 <div><span class="grey">平均响应时间: </span>${data.responseTimePerMin  === undefined ? ' ' : data.responseTimePerMin + ' 毫秒/分钟'}</div>
               `
             ).show(data, element[index]);
           })
-          .on('mouseout', () => {
+          .on('mouseout', (data) => {
             this.$d3.event.stopPropagation();
             this.$d3.event.preventDefault();
-
             this.$jq('.topo-line').removeClass('tl-static');
+            this.$jq(this.$d3.event.target).removeClass('topo-line-anchor-light');
+            this.$jq(this.$jq('.topo-line')[data.index]).removeClass('topo-line-light');
+            let sNode = this.$jq('.topo-node')[data.source.index];
+            let tNode = this.$jq('.topo-node')[data.target.index];
+            this.$jq(sNode)
+              .children('image')
+              .attr('href', this.getNodeIcon(data.source.type, false));
+            this.$jq(tNode)
+              .children('image')
+              .attr('href', this.getNodeIcon(data.target.type, false));
 
             this.tip.direction('n');
             this.tip.hide(this);
           });
-
-
-        svg.on('click', (d, i) => {
-          this.$d3.event.stopPropagation();
-          this.$d3.event.preventDefault();
-          this.$emit('toggleNodeDetail', false);
-          this.$store.commit('rocketTopo/SET_NODE_CROSS_LAYER', {});
-          this.usedTool.attr('style', 'display: none');
+      },
+      simulationTick(nodeEles, linkEles, anchorEles) {
+        nodeEles.attr('transform', d => `translate(${d.fx}, ${d.fy})`);
+        linkEles.attr('d', d => {
+          if (d.isVertical) {
+            return `M ${d.source.fx} ${d.source.fy} Q ${(d.source.fx + d.target.fx) / 2 + d.fixX} ${(d.source.fy + d.target.fy) / 2} ${d.target.fx} ${d.target.fy}`;
+          } else {
+            if (d.isLine2Src) {
+              return `M ${d.source.fx} ${d.source.fy} Q ${(d.source.fx + d.target.fx) / 2} ${(d.source.fy + d.target.fy) / 2 - 45} ${d.target.fx} ${d.target.fy}`;
+            } else {
+              return `M ${d.source.fx} ${d.source.fy} Q ${(d.source.fx + d.target.fx) / 2} ${(d.source.fy + d.target.fy) / 2 + 45 } ${d.target.fx} ${d.target.fy}`;
+            }
+          }
         });
-
+        anchorEles.attr('transform', d => {
+          if (d.isVertical) {
+            return `translate(${(d.source.x + d.target.x) / 2}, ${(d.target.y + d.source.y) / 2})`;
+          } else {
+            if (d.isLine2Src) {
+              return `translate(${(d.source.x + d.target.x) / 2}, ${(d.target.y + d.source.y) / 2 - 22.5})`;
+            } else {
+              return `translate(${(d.source.x + d.target.x) / 2}, ${(d.target.y + d.source.y) / 2 + 22.5})`;
+            }
+          }
+        });
+      },
+      handleLinkMouseout(d) {
+        this.$d3.event.stopPropagation();
+        this.$d3.event.preventDefault();
+        if (!d.isTracingTo) {
+          this.linkTextVisible = false;
+          this.linkTextContent = '';
+          this.linkTextStyle = {
+            height: 0 + 'px',
+            left: 0 + 'px',
+            top: 0 + 'px',
+          };
+          this.$jq(this.$d3.event.target).removeClass('topo-line-light');
+          let sNode = this.$jq('.topo-node')[d.source.index];
+          let tNode = this.$jq('.topo-node')[d.target.index];
+          this.$jq(sNode)
+            .children('image')
+            .attr('href', this.getNodeIcon(d.source.type, false));
+          this.$jq(tNode)
+            .children('image')
+            .attr('href', this.getNodeIcon(d.target.type, false));
+        }
+      },
+      handleLinkMouseover(d) {
+        this.$d3.event.stopPropagation();
+        this.$d3.event.preventDefault();
+        if (!d.isTracingTo) {
+          let offsetX = this.$jq('#tdt-view-cross-layer').offset().left;
+          let offsetY = this.$jq('#tdt-view-cross-layer').offset().top;
+          this.linkTextStyle = {
+            height: 25 + 'px',
+            left: this.$d3.event.clientX - offsetX + 10 + 'px',
+            top: this.$d3.event.clientY - offsetY - 25 + 'px',
+          };
+          this.linkTextContent = d.type;
+          this.linkTextVisible = true;
+          this.$jq(this.$d3.event.target).addClass('topo-line-light');
+          let sNode = this.$jq('.topo-node')[d.source.index];
+          let tNode = this.$jq('.topo-node')[d.target.index];
+          this.$jq(sNode)
+            .children('image')
+            .attr('href', this.getNodeIcon(d.source.type, true));
+          this.$jq(tNode)
+            .children('image')
+            .attr('href', this.getNodeIcon(d.target.type, true));
+        }
       },
       handleNodeDblclicked(nodeTmp) {
+        this.$d3.event.stopPropagation();
+        this.$d3.event.preventDefault();
+        this.$emit('toggleNodeDetail', false);
+        this.$store.commit('rocketTopo/SET_NODE_CROSS_LAYER', {});
+        this.$jq('.topo-line').removeClass('tl-static');
+        this.tip.hide(this);
+        this.usedTool.attr('style', 'display: none');
         if (nodeTmp.id === this.currentNode.id) {
           return;
         }
-        let node = this.topoData.nodes.find(node => node.id === nodeTmp.id); // 对应主拓扑的节点对象
+        let node = this.topoViewData.nodes.find(node => node.id === nodeTmp.id); // 对应主拓扑的节点对象
         this.$store.commit('rocketTopo/SET_VIEW_NODE', node);
         this.setCurNodeStably(node);
-        // this.$store.commit('rocketTopo/SET_NODE', node);
+      },
+      handleNodeClicked(d) {
+        this.$d3.event.stopPropagation();
+        this.$d3.event.preventDefault();
+        this.$emit('toggleNodeDetail', false);
+        this.$store.commit('rocketTopo/SET_NODE_CROSS_LAYER', {});
+        if (this.nodeSingleClickTimer !== null) {
+          clearTimeout(this.nodeSingleClickTimer);
+          this.nodeSingleClickTimer = null;
+          return;
+        }
+        this.nodeSingleClickTimer = setTimeout(() => {
+          this.nodeSingleClickTimer = null;
+          this.$store.commit('rocketTopo/SET_NODE_CROSS_LAYER', d);
+          this.usedTool
+            .attr('transform', `translate(${d.x}, ${d.y})`)
+            .attr('style', 'display: block');
+        }, 300);
+      },
+      handleNodeMouseleave(d) {
+        this.$d3.event.stopPropagation();
+        this.$d3.event.preventDefault();
+        this.$jq('.topo-line').removeClass('tl-static');
+        this.tip.hide(this);
+      },
+      handleNodeMouseenter(data, index, element) {
+        this.$d3.event.stopPropagation();
+        this.$d3.event.preventDefault();
+        // 处理点边重叠的情况
+        this.$jq('.topo-line').addClass('tl-static');
+        this.tip.html((data) => `<div>${data.name}</div>`).show(data, element[index]);
+      },
+      handleSvgClicked(d, i) {
+        this.$d3.event.stopPropagation();
+        this.$d3.event.preventDefault();
+        this.$emit('toggleNodeDetail', false);
+        this.$store.commit('rocketTopo/SET_NODE_CROSS_LAYER', {});
+        this.usedTool.attr('style', 'display: none');
       },
       handleGoNodeDetail() {
         event.stopPropagation();
@@ -609,10 +806,18 @@
             // stroke-dasharray: 13 7;
             fill: none;
             animation: topo-dash 1s linear infinite !important;
+
+            &.topo-line-light {
+              stroke: yellow !important;
+            }
           }
 
           .topo-line-anchor {
             cursor: pointer;
+
+            &.topo-line-anchor-light {
+              fill: yellow !important;
+            }
           }
 
           .tl-static {

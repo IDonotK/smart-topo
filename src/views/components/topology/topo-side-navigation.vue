@@ -34,7 +34,7 @@
 
   export default {
     props: {
-      topoData: {
+      topoViewData: {
         type: Object,
         default() {
           return {
@@ -57,7 +57,7 @@
           },
           {
             id: 'MiddleWare',
-            name: 'Middlewares',
+            name: 'MiddleWares',
             imgUrl: middlewareIcon,
             abnormal: 0,
             total: 0
@@ -101,7 +101,7 @@
     },
 
     watch: {
-      topoData() {
+      topoViewData() {
         this.initNavList();
       }
     },
@@ -116,7 +116,7 @@
           nav.total = 0;
           nav.abnormal = 0;
         });
-        this.topoData.nodes.forEach(node => {
+        this.topoViewData.nodes.forEach(node => {
           let navItem = this.navList.find(item => item.id === node.type);
           if (navItem) {
             navItem.total++;

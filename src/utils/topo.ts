@@ -20,6 +20,32 @@ const dateFormat = (fmt: string, date: Date) => {
   return fmt;
 };
 
+/**
+ * utc时间转北京时间
+ * @param utc_datetime 2020-12-11T12:15:27.000+00:00
+ * @return peking_datetime 2017-03-31 16:02:06
+ */
+const utc2Peking = (utc_datetime) => {
+  var T_pos = utc_datetime.indexOf('T');
+  var T_pos = utc_datetime.indexOf('T');
+  var Z_pos = utc_datetime.indexOf('+');
+  var year_month_day = utc_datetime.substr(0, T_pos);
+  var hour_minute_second = utc_datetime.substr(T_pos + 1, Z_pos - T_pos - 1);
+  var new_datetime = year_month_day + ' ' + hour_minute_second;
+
+  // 处理成为时间戳
+  timestamp = new Date(Date.parse(new_datetime));
+  timestamp = timestamp.getTime();
+  timestamp = timestamp / 1000;
+
+  // 增加8个小时，北京时间比utc时间多八个时区
+  var timestamp = timestamp + 8 * 60 * 60;
+
+  // 时间戳转为时间
+  var peking_datetime = dateFormat('YYYY-mm-dd HH:MM:SS', new Date(parseInt(timestamp) * 1000));
+  return peking_datetime + ' +08:00';
+};
+
 const formatTopoData = (originResponse: any, isNeedFixField: boolean) => {
   let topoData = {
     nodes: [],
@@ -73,6 +99,10 @@ const formatTopoData = (originResponse: any, isNeedFixField: boolean) => {
       }
       node.type = node.label;
       node.state = node.eventCount > 0 ? 'Abnormal' : 'Normal';
+      // utc时间转北京时间
+      console.log(node.id);
+      node.createTime = utc2Peking(node.createTime);
+      node.updateTime = utc2Peking(node.updateTime);
     });
     topoData.links.forEach((link) => {
       link.type = link.label;
@@ -84,4 +114,4 @@ const formatTopoData = (originResponse: any, isNeedFixField: boolean) => {
   return topoData;
 };
 
-export { dateFormat, formatTopoData };
+export { dateFormat, utc2Peking, formatTopoData };

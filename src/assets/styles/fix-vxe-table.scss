@@ -1,0 +1,36 @@
+@import 'vxe-table/styles/variable.scss';
+
+$vxe-font-color: rgba(221, 221, 221, 1);
+
+$light-background-color: rgba(51, 56, 64, 1);
+$dark-background-color: rgba(37, 42, 47, 1);
+
+$vxe-table-background-color: $dark-background-color;
+$vxe-table-header-background-color: $dark-background-color;
+$vxe-table-body-background-color: $dark-background-color;
+$vxe-table-font-color: $vxe-font-color;
+$vxe-table-border-color: rgba(204, 204, 204, 0.1);
+$vxe-table-row-hover-background-color: rgba(36, 36, 36, 0.5);
+$vxe-table-row-current-background-color: rgba(36, 36, 36, 0.8);
+$vxe-table-row-hover-current-background-color: rgba(36, 36, 36, 1);
+
+$vxe-form-background-color: $dark-background-color;
+$vxe-toolbar-background-color: $dark-background-color;
+
+$vxe-pager-background-color: $dark-background-color;
+
+$vxe-input-border-color: rgba(204, 204, 204, 0.1) !important;
+$vxe-input-disabled-color: rgba(204, 204, 204, 0.1) !important;
+$vxe-input-background-color: $light-background-color;
+$vxe-input-placeholder-color: rgba(221, 221, 221, .5);
+
+$vxe-select-panel-background-color: $light-background-color;
+$vxe-select-option-hover-background-color: rgba(36, 36, 36, 0.8);
+
+$vxe-button-default-background-color: $light-background-color;
+
+$vxe-modal-header-background-color: $light-background-color;
+$vxe-modal-body-background-color: $light-background-color;
+$vxe-modal-border-color: $light-background-color;
+
+@import 'vxe-table/styles/modules.scss';

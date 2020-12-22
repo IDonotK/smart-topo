@@ -693,7 +693,7 @@
         let offsetX = this.$jq('#netContent').offset().left;
         let offsetY = this.$jq('#netContent').offset().top;
         this.linkTextContent = `
-          <div class="mb-5"><span class="grey">调用方式: </span>${hoveredLink.type}</div>
+          <div class="mb-5"><span class="grey">链路类型: </span>${hoveredLink.type}</div>
           <div class="mb-5"><span class="grey">调用频率: </span>${
             hoveredLink.callPerMinute === undefined ? ' ' : hoveredLink.callPerMinute + ' 次/分钟'
           }</div>
@@ -802,8 +802,6 @@
         if (node && this.currentNode && node.id === this.currentNode.id) {
           return;
         }
-        // this.dragging = nodeKey;
-        // this.setMouseOffset(event, this.nodes[nodeKey]);
       },
       dragNodeEnd(event, nodeKey, node) {
         // 鼠标右键点击节点
@@ -1036,6 +1034,18 @@
           animation: topo-dash 1s linear infinite !important;
         }
 
+        .link-indicator {
+          pointer-events: none;
+          fill: #ccc;
+          &.dark-link-indicator {
+            opacity: 0.1;
+          }
+
+          // &.bright-link-indicator {
+          //   fill: rgba(255, 255, 0, 1) !important;
+          // }
+        }
+
         .link-anchor {
           &.dark-link-anchor {
             opacity: 0.1;
@@ -1077,7 +1087,7 @@
           }
 
           // &.bright-node-label {
-          //   color: yellow;
+          //   fill: yellow;
           // }
         }
 

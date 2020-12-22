@@ -7,7 +7,7 @@
   @Component
   export default class App extends Vue {}
 </script>
-<style>
+<style lang="scss">
   @import './assets/styles/reset.scss';
   @import './assets/styles/lib.scss';
   @import './assets/styles/style.scss';

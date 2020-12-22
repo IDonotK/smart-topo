@@ -759,8 +759,8 @@ export const generateGesData = () => {
         {
           id: 'n1',
           name: 'n1',
-          create_time: '2020-09-09T05:56:46.000+00:00',
-          update_time: '2020-11-25T09:37:32.000+00:00',
+          createTime: '2020-09-09T05:56:46.000+00:00',
+          updateTime: '2020-11-25T09:37:32.000+00:00',
           label: 'Node',
           event_count: 0,
           node_ip: '125.1.0.2',
@@ -768,8 +768,8 @@ export const generateGesData = () => {
         {
           id: 'n2',
           name: 'n2',
-          create_time: '2020-09-09T05:56:46.000+00:00',
-          update_time: '2020-11-25T09:37:32.000+00:00',
+          createTime: '2020-09-09T05:56:46.000+00:00',
+          updateTime: '2020-11-25T09:37:32.000+00:00',
           label: 'Node',
           event_count: 0,
           node_ip: '125.1.0.2',
@@ -777,8 +777,8 @@ export const generateGesData = () => {
         {
           id: 'n3',
           name: 'n3',
-          create_time: '2020-09-09T05:56:46.000+00:00',
-          update_time: '2020-11-25T09:37:32.000+00:00',
+          createTime: '2020-09-09T05:56:46.000+00:00',
+          updateTime: '2020-11-25T09:37:32.000+00:00',
           label: 'Node',
           event_count: 0,
           node_ip: '125.1.0.2',
@@ -786,8 +786,8 @@ export const generateGesData = () => {
         {
           id: 'n4',
           name: 'n4',
-          create_time: '2020-09-09T05:56:46.000+00:00',
-          update_time: '2020-11-25T09:37:32.000+00:00',
+          createTime: '2020-09-09T05:56:46.000+00:00',
+          updateTime: '2020-11-25T09:37:32.000+00:00',
           label: 'Node',
           event_count: 0,
           node_ip: '125.1.0.2',
@@ -1189,57 +1189,3 @@ export const generateGesData = () => {
     },
   };
 };
-// export const GES_DATA = {
-//   applications: [
-//     {
-//       id: 'a1',
-//       name: 'a1aaaaaaaaaaaaaaaa',
-//       createTime: '2020-12-01T07:01:02.000+00:00',
-//       updateTime: '2020-12-01T08:16:16.000+00:00',
-//       label: 'Application',
-//       eventCount: 1,
-//     },
-//     {
-//       id: 'a2',
-//       name: 'a2',
-//       createTime: '2020-12-01T07:01:02.000+00:00',
-//       updateTime: '2020-12-01T08:16:16.000+00:00',
-//       label: 'Application',
-//       eventCount: 0,
-//     },
-//     {
-//       id: 'a3',
-//       name: 'a3',
-//       createTime: '2020-12-01T07:01:02.000+00:00',
-//       updateTime: '2020-12-01T08:16:16.000+00:00',
-//       label: 'Application',
-//       eventCount: 0,
-//     },
-//   ],
-//   middleWares: [],
-//   processes: [],
-//   workloads: [],
-//   pods: [],
-//   nodes: [],
-//   tracingTos: [
-//     {
-//       id: 't1',
-//       name: 't1',
-//       source: 'a1',
-//       target: 'a2',
-//       label: 'TracingTo',
-//       responseTimePerMin: 1,
-//       callPerMinute: 120,
-//       type: 'kafka-producer',
-//     },
-//   ],
-//   createOns: [
-//     {
-//       id: 'c1',
-//       name: 'c1',
-//       label: 'CreateOn',
-//       source: 'a1',
-//       target: 'ps1',
-//     },
-//   ],
-// };

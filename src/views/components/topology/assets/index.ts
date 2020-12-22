@@ -11,3 +11,8 @@ import './svg/NODE-BRIGHT.svg';
 import './svg/POD-BRIGHT.svg';
 import './svg/PROCESS-BRIGHT.svg';
 import './svg/WORKLOAD-BRIGHT.svg';
+
+import './svg/COPY.svg';
+import './svg/COPY-GRAY.svg';
+import './svg/DETAIL-EYE-GRAY.svg';
+import './svg/DETAIL-PAGE-GRAY.svg';

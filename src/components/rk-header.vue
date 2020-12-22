@@ -75,7 +75,7 @@
     }
 
     private handleReload() {
-      this.rocketTopo.toolSetInstance.refreshTopoView();
+      this.rocketTopo.toolSetInstance.refreshTopoView(false);
       const params = {
         start_time: '',
         end_time: '',
@@ -163,7 +163,12 @@
       background-color: #333844;
     }
 
+    .rk-btn.ghost {
+      background-color: darkslategrey;
+    }
+
     .auto-time {
+      margin-right: 3px;
       .rk-auto-select {
         input {
           width: 38px;

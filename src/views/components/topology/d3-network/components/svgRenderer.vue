@@ -137,6 +137,32 @@
             @mouseleave.stop.prevent="emit('mouseLeaveLinkAnchor', [$event, link])"
           ></circle>
         </g>
+        <!-- Link Indicators -->
+        <g class="indicators" id="link-indicators">
+          <defs>
+            <path v-for="(link, index) in links" :key="index" :d="linkPath(link)" :id="'link' + link.id" />
+          </defs>
+          <text
+            v-for="(link, index) in links"
+            v-show="link.label === 'TracingTo' || link.label === 'SubTracingTo'"
+            :x="Math.sqrt(Math.pow(link.target.y - link.source.y, 2) + Math.pow(link.target.x - link.source.x, 2)) / 2"
+            text-anchor="middle"
+            :dy="-nodeSize / 6"
+            :key="index"
+            :font-size="fontSize / 4"
+            :class="
+              linkIndicatorClass(link, [
+                link.isDark ? 'dark-link-indicator' : '',
+                link.isBright ? 'bright-link-indicator' : '',
+              ])
+            "
+            :stroke-width="fontSize / 8"
+          >
+            <textPath :xlink:href="'#link' + link.id">
+              {{ 'Qps: ' + link.callPerMinute + ' 次/分钟' }}
+            </textPath>
+          </text>
+        </g>
 
         <!-- Node Labels -->
         <g class="labels" id="node-labels" v-if="nodeLabels">
@@ -311,6 +337,13 @@
       },
       warnClass(node, classes = []) {
         let cssClass = ['warn-icon-in-main-topo'];
+        classes.forEach((c) => cssClass.push(c));
+        return cssClass;
+      },
+      linkIndicatorClass(link, classes = []) {
+        let cssClass = link._labelClass ? link._labelClass : [];
+        if (!Array.isArray(cssClass)) cssClass = [cssClass];
+        cssClass.push('link-indicator');
         classes.forEach((c) => cssClass.push(c));
         return cssClass;
       },

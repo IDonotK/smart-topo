@@ -228,8 +228,8 @@ export const getA1Cl = () => {
         {
           id: 'n1',
           name: 'n1',
-          create_time: '2020-09-09T05:56:46.000+00:00',
-          update_time: '2020-11-25T09:37:32.000+00:00',
+          createTime: '2020-09-09T05:56:46.000+00:00',
+          updateTime: '2020-11-25T09:37:32.000+00:00',
           label: 'Node',
           event_count: 0,
           node_ip: '125.1.0.2',
@@ -237,8 +237,8 @@ export const getA1Cl = () => {
         {
           id: 'n2',
           name: 'n2',
-          create_time: '2020-09-09T05:56:46.000+00:00',
-          update_time: '2020-11-25T09:37:32.000+00:00',
+          createTime: '2020-09-09T05:56:46.000+00:00',
+          updateTime: '2020-11-25T09:37:32.000+00:00',
           label: 'Node',
           event_count: 0,
           node_ip: '125.1.0.2',
@@ -433,8 +433,8 @@ export const PS2_CL = {
       {
         id: 'n1',
         name: 'n1',
-        create_time: '2020-09-09T05:56:46.000+00:00',
-        update_time: '2020-11-25T09:37:32.000+00:00',
+        createTime: '2020-09-09T05:56:46.000+00:00',
+        updateTime: '2020-11-25T09:37:32.000+00:00',
         label: 'Node',
         event_count: 0,
         node_ip: '125.1.0.2',
@@ -442,8 +442,8 @@ export const PS2_CL = {
       {
         id: 'n2',
         name: 'n2',
-        create_time: '2020-09-09T05:56:46.000+00:00',
-        update_time: '2020-11-25T09:37:32.000+00:00',
+        createTime: '2020-09-09T05:56:46.000+00:00',
+        updateTime: '2020-11-25T09:37:32.000+00:00',
         label: 'Node',
         event_count: 0,
         node_ip: '125.1.0.2',
