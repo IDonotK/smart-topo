@@ -270,6 +270,9 @@
     },
 
     computed: {
+      sceneConfig() {
+        return this.$store.state.rocketTopo.sceneConfig;
+      },
       isAutoReloadTopo() {
         return this.$store.state.rocketTopo.isAutoReloadTopo;
       },
@@ -559,33 +562,38 @@
           }
         });
 
-        // 需刷新边：label、call_per_minute 次/min、response_time_per_minute 次/min
         topoData.links.forEach(link => {
           if (elemIdsRTCUpTmp.linkIds.includes(link.id)) {
             this.elemIdsRTCUp.linkIds.push(link.id);
-
-            let linkCopy = JSON.parse(JSON.stringify(link));
-            let linkTmp = upStreamData.links.find(slink => slink.id === link.id);
-            if (linkTmp) {
-              linkCopy.type = linkTmp.label;
-              linkCopy.label = linkTmp.label;
-              linkCopy.callPerMinute = linkTmp.callPerMinute;
-              linkCopy.responseTimePerMin = linkTmp.responseTimePerMin;
+            if (this.sceneConfig.agentMode === "customised") { // 需刷新边：label、call_per_minute 次/min、response_time_per_minute 次/min
+              let linkCopy = JSON.parse(JSON.stringify(link));
+              let linkTmp = upStreamData.links.find(slink => slink.id === link.id);
+              if (linkTmp) {
+                linkCopy.type = linkTmp.label;
+                linkCopy.label = linkTmp.label;
+                linkCopy.callPerMinute = linkTmp.callPerMinute;
+                linkCopy.responseTimePerMin = linkTmp.responseTimePerMin;
+              }
+              this.elemsRTCUp.links.push(linkCopy);
+            } else {
+              this.elemsRTCUp.links.push(link);
             }
-            this.elemsRTCUp.links.push(linkCopy);
           }
           if (elemIdsRTCDownTmp.linkIds.includes(link.id)) {
             this.elemIdsRTCDown.linkIds.push(link.id);
-
-            let linkCopy = JSON.parse(JSON.stringify(link));
-            let linkTmp = downStreamData.links.find(slink => slink.id === link.id);
-            if (linkTmp) {
-              linkCopy.type = linkTmp.label;
-              linkCopy.label = linkTmp.label;
-              linkCopy.callPerMinute = linkTmp.callPerMinute;
-              linkCopy.responseTimePerMin = linkTmp.responseTimePerMin;
+            if (this.sceneConfig.agentMode === "customised") {
+              let linkCopy = JSON.parse(JSON.stringify(link));
+              let linkTmp = downStreamData.links.find(slink => slink.id === link.id);
+              if (linkTmp) {
+                linkCopy.type = linkTmp.label;
+                linkCopy.label = linkTmp.label;
+                linkCopy.callPerMinute = linkTmp.callPerMinute;
+                linkCopy.responseTimePerMin = linkTmp.responseTimePerMin;
+              }
+              this.elemsRTCDown.links.push(linkCopy);
+            } else {
+              this.elemsRTCDown.links.push(link);
             }
-            this.elemsRTCDown.links.push(linkCopy);
           }
         });
 
@@ -862,6 +870,12 @@
           return;
         }
         this.zoomController.scaleTo(this.$d3.select('.net-svg').transition().duration(750), zoomTimes);
+      },
+      setNodeTypesFilter(type) {
+        this.nodeTypesOption.data.forEach(item => {
+          item.checked = item.label === type ? true : false;
+        });
+        this.filterTopo();
       },
       restoreFilters() {
         this.moreToolState = false;

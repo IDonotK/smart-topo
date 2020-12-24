@@ -1,4 +1,4 @@
-import { SHORT_NAME_LENGTH } from '@/constants/topo';
+import { SHORT_NAME_LENGTH, LINK_QPS_LEVELS } from '@/constants/topo';
 
 const dateFormat = (fmt: string, date: Date) => {
   let ret: any;
@@ -44,6 +44,17 @@ const utc2Peking = (utc_datetime) => {
   // 时间戳转为时间
   var peking_datetime = dateFormat('YYYY-mm-dd HH:MM:SS', new Date(parseInt(timestamp) * 1000));
   return peking_datetime + ' +08:00';
+};
+
+const getLinkQpsLevel = (link) => {
+  if (link.label !== 'TracingTo' && link.label !== 'SubTracingTo') {
+    return 1;
+  }
+  let levelTmp = LINK_QPS_LEVELS.find((level) => {
+    return link.callPerMinute >= level.min && link.callPerMinute < level.max;
+  });
+  let qpsLevel = levelTmp === undefined ? 1 : Number(levelTmp.id) * 0.8;
+  return qpsLevel;
 };
 
 const formatTopoData = (originResponse: any, isNeedFixField: boolean) => {
@@ -100,7 +111,6 @@ const formatTopoData = (originResponse: any, isNeedFixField: boolean) => {
       node.type = node.label;
       node.state = node.eventCount > 0 ? 'Abnormal' : 'Normal';
       // utc时间转北京时间
-      console.log(node.id);
       node.createTime = utc2Peking(node.createTime);
       node.updateTime = utc2Peking(node.updateTime);
     });
@@ -108,9 +118,9 @@ const formatTopoData = (originResponse: any, isNeedFixField: boolean) => {
       link.type = link.label;
       link.sid = link.source;
       link.tid = link.target;
+      link.qpsLevel = getLinkQpsLevel(link);
     });
   }
-
   return topoData;
 };
 

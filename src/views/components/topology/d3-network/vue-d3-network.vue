@@ -1031,7 +1031,15 @@
           &.selected {
             stroke: rgba(202, 164, 85, 0.6);
           }
-          animation: topo-dash 1s linear infinite !important;
+          animation: topo-dash 0.5s linear infinite !important;
+        }
+        @keyframes topo-dash {
+          from {
+            stroke-dashoffset: 12;
+          }
+          to {
+            stroke-dashoffset: 0;
+          }
         }
 
         .link-indicator {
@@ -1060,19 +1068,12 @@
           pointer-events: none;
         }
 
-        @keyframes topo-dash {
-          from {
-            stroke-dashoffset: 20;
-          }
-          to {
-            stroke-dashoffset: 0;
-          }
-        }
-
-        .node,
-        .link {
+        .node {
           stroke-linecap: round;
         }
+        // .link {
+        //   stroke-linecap: round;
+        // }
 
         .curve {
           fill: none;

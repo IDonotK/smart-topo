@@ -18,7 +18,7 @@
             <vxe-select v-model="formData.severity" placeholder="请选择等级" clearable>
               <vxe-option value="critical" label="critical"></vxe-option>
               <vxe-option value="Major" label="Major"></vxe-option>
-              <vxe-option value="Normal" label="Normal"></vxe-option>
+              <vxe-option value="Minor" label="Minor"></vxe-option>
               <vxe-option value="Warning" label="Warning"></vxe-option>
             </vxe-select>
           </template>
@@ -26,8 +26,12 @@
         <vxe-form-item span="6" title-align="right" title="来源" field="severity" class="source-options">
           <template v-slot>
             <vxe-select v-model="formData.eventSource" placeholder="请选择来源" clearable>
-              <vxe-option value="k8s" label="k8s"></vxe-option>
-              <vxe-option value="Meeting" label="Meeting"></vxe-option>
+              <vxe-option
+                v-for="(item, index) in eventSources"
+                :key="'event-source' + index"
+                :value="item"
+                :label="item"
+              ></vxe-option>
             </vxe-select>
           </template>
         </vxe-form-item>
@@ -198,6 +202,7 @@
           createTimeRange: [],
           updateTimeRange: [],
         },
+        eventSources: ['k8s'],
         datePickerOptions: {
           shortcuts: [
             {
@@ -259,9 +264,19 @@
       durationRow() {
         return this.$store.state.rocketbot.durationRow;
       },
+      sceneConfig() {
+        return this.$store.state.rocketTopo.sceneConfig;
+      },
+    },
+
+    watch: {
+      sceneConfig() {
+        this.setEventSources();
+      }
     },
 
     created() {
+      this.setEventSources();
       this.getViewNodeEvents();
     },
 
@@ -272,6 +287,13 @@
     },
 
     methods: {
+      setEventSources() {
+        if (this.sceneConfig.eventSource) {
+          this.eventSources = this.sceneConfig.eventSource.split(',');
+        } else {
+          this.eventSources = ['k8s'];
+        }
+      },
       toggleTimeFilter() {
         this.showTimeFilter = !this.showTimeFilter;
         this.tableData = JSON.parse(JSON.stringify(this.tableData));

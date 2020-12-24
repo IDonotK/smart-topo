@@ -5,6 +5,7 @@
       v-for="(item, index) in navList"
       :key="index"
       :class="{ 'tsni-odd': index % 2 != 0, 'tsni-even': index % 2 == 0, 'tsni-select': item.id == currentNode.type }"
+      @click="handleClickSideNav(item.id)"
     >
       <div class="tsni-h">
         <img :src="item.imgUrl" alt="" width="20" height="20" />
@@ -98,6 +99,9 @@
       currentNode() {
         return this.$store.state.rocketTopo.currentNode;
       },
+      toolSetInstance() {
+        return this.$store.state.rocketTopo.toolSetInstance;
+      },
     },
 
     watch: {
@@ -111,6 +115,10 @@
     },
 
     methods: {
+      handleClickSideNav(type) {
+        this.toolSetInstance.resetIsAutoReloadTopo();
+        this.toolSetInstance.setNodeTypesFilter(type);
+      },
       initNavList() {
         this.navList.forEach(nav => {
           nav.total = 0;
@@ -147,6 +155,11 @@
       flex-direction: column;
       justify-content: center;
       padding: 0 48px 0 30px;
+      cursor: pointer;
+
+      &:active {
+        background-color: #333840 !important;
+      }
 
       &.tsni-odd {
         background-color: #252a2f;

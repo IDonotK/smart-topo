@@ -54,7 +54,7 @@
             v-bind="linkAttrs(link)"
             :class="linkClass(link.id, [link.isDark ? 'dark-link' : '', link.isBright ? 'bright-link' : ''])"
             :style="linkStyle(link)"
-            :stroke-dasharray="link.label === 'TracingTo' || link.label === 'SubTracingTo' ? '13 7' : 'none'"
+            :stroke-dasharray="link.label === 'TracingTo' || link.label === 'SubTracingTo' ? '7 5' : 'none'"
             :marker-end="'url(#arrow' + link.id + ')'"
             @click.stop.prevent="emit('linkClick', [$event, link])"
             @mouseenter.stop.prevent="emit('mouseEnterLink', [$event, link])"
@@ -159,7 +159,7 @@
             :stroke-width="fontSize / 8"
           >
             <textPath :xlink:href="'#link' + link.id">
-              {{ 'Qps: ' + link.callPerMinute + ' 次/分钟' }}
+              {{ link.callPerMinute + ' r/min' }}
             </textPath>
           </text>
         </g>
@@ -390,7 +390,8 @@
       },
       linkAttrs(link) {
         let attrs = link._svgAttrs || {};
-        attrs['stroke-width'] = attrs['stroke-width'] || this.linkWidth;
+        let linkWidthOnQps = Number(link.qpsLevel) * this.linkWidth;
+        attrs['stroke-width'] = attrs['stroke-width'] || linkWidthOnQps;
         return attrs;
       },
     },

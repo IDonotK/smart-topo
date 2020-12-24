@@ -14,6 +14,12 @@ axios.interceptors.response.use(
         targetUrl = urlArr[urlArr.length - 1];
       }
       switch (targetUrl) {
+        case 'scene-config':
+          res.data.errorMessage = '获取场景配置数据错误：' + res.data.errorMessage;
+          break;
+        case 'events':
+          res.data.errorMessage = '获取事件数据错误：' + res.data.errorMessage;
+          break;
         case 'endpoints':
           res.data.errorMessage = '获取全部拓扑数据错误：' + res.data.errorMessage;
           break;
@@ -84,6 +90,12 @@ axios.interceptors.response.use(
         targetUrl = urlArr[urlArr.length - 1];
       }
       switch (targetUrl) {
+        case 'scene-config':
+          err.message = '获取场景配置数据错误：' + err.message;
+          break;
+        case 'events':
+          err.message = '获取事件数据错误：' + err.message;
+          break;
         case 'endpoints':
           err.message = '获取全部拓扑数据错误：' + err.message;
           break;

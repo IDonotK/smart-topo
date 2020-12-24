@@ -70,9 +70,7 @@
                   </svg>
                 </span>
                 <!-- 查看事件按钮 -->
-                <!-- @todo: 查看事件 -->
                 <span v-if="key === 'eventCount'" class="item-btn" @click.prevent.stop="showEvents()" title="查看事件">
-                  <!-- <span v-if="false" class="item-btn" @click.prevent.stop="showEvents()" title="查看事件"> -->
                   <svg class="icon sm vm event-btn-icon">
                     <use xlink:href="#DETAIL-PAGE-GRAY"></use>
                   </svg>

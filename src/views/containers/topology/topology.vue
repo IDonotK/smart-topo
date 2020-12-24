@@ -71,6 +71,9 @@
     },
 
     methods: {
+      querySceneConfig() {
+        return this.$store.dispatch('rocketTopo/GET_SCENE_CONFIG', {});
+      },
       restoreFilters() {
         this.$refs.topotoolset.restoreFilters();
       },
@@ -80,7 +83,8 @@
       onSearchResult(isMatch) {
         this.isMatch = isMatch;
       },
-      initTopoData() {
+      async initTopoData() {
+        let sceneConfig = await this.querySceneConfig();
         this.$store.dispatch('rocketTopo/GET_TOPO_DATA', {
           start_time: dateFormat("YYYY-mm-dd HH:MM:SS", this.durationRow.start),
           end_time: dateFormat("YYYY-mm-dd HH:MM:SS", this.durationRow.end),
