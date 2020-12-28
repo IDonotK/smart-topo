@@ -2,7 +2,6 @@
   <div id="app">
     <RkHeader @reloadFooter="reloadFooter" />
     <router-view></router-view>
-    <RkFooter ref="footer" />
   </div>
 </template>
 

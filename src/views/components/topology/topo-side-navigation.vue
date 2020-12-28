@@ -154,7 +154,7 @@
       display: flex;
       flex-direction: column;
       justify-content: center;
-      padding: 0 48px 0 40px;
+      padding: 0 48px 0 0;
       cursor: pointer;
 
       &:active {

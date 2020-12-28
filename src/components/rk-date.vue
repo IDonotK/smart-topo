@@ -246,7 +246,7 @@
   .datepicker {
     display: inline-block;
     position: relative;
-    // color: #3d444f;
+    color: #ddd;
   }
 
   .datepicker-icon {
@@ -386,7 +386,7 @@
   }
 
   .datepicker-range {
-    min-width: 240px;
+    min-width: 256px;
   }
 
   .datepicker-range .datepicker-popup {

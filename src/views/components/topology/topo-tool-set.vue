@@ -1,6 +1,9 @@
 <template>
   <div class="topo-tool-set">
     <!-- 拓扑探索 -->
+    <div class="time-pick-wrapper">
+      <RkToolTime />
+    </div>
     <div class="explore-topo-wrapper">
       <svg class="icon topo-icon" @click="handleClickExploreBtn">
         <use xlink:href="#explore"></use>
@@ -997,6 +1000,7 @@
     justify-content: flex-end;
     align-items: center;
 
+    .time-pick-wrapper,
     .explore-topo-wrapper,
     .search-wrapper,
     .size-controller,
@@ -1162,7 +1166,7 @@
 
     .tool-bar {
       position: fixed;
-      bottom: 40px;
+      bottom: 0px;
       left: 220px;
       padding: 8px 10px;
       margin-top: 8px;

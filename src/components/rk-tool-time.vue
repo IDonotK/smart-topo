@@ -6,9 +6,6 @@
       <a class="rk-btn mr-5 sm qpw-item" @click="quickPick('oneMinute')">
         <span class="vm">{{ this.oneMinuteCutTip }}</span>
       </a>
-      <a class="rk-btn mr-5 sm qpw-item" @click="quickPick('threeMinutes')">
-        <span class="vm">{{ this.threeMinutesCutTip }}</span>
-      </a>
       <a class="rk-btn mr-5 sm qpw-item" @click="quickPick('fiveMinutes')">
         <span class="vm">{{ this.fiveMinutesCutTip }}</span>
       </a>
