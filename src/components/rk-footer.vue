@@ -3,7 +3,7 @@
     <div class="rk-footer-inner">
       <div class="flex-h"></div>
       <div class="sm flex-h">
-        <RkFooterTime />
+        <RkToolTime />
         <!-- <span class="mr-15 cp" @click="setLang">{{ lang === 'zh' ? '中' : 'En' }}</span> -->
         <!-- <span>{{ $t('serverZone') }} UTC {{ utc >= 0 ? '+' : '' }}</span
         ><input v-model="utc" min="-12" max="14" class="rk-footer-utc" type="number" /> -->
@@ -58,7 +58,7 @@
 <style scoped>
   .rk-footer {
     position: fixed;
-    height: 30px;
+    height: 40px;
     bottom: 0;
     left: 0;
     right: 0;
@@ -91,5 +91,6 @@
   .rk-footer-inner {
     justify-content: space-between;
     display: flex;
+    height: 100%;
   }
 </style>

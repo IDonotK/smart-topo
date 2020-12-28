@@ -24,10 +24,14 @@
                   v-model="specificForm.specificId"
                   placeholder="请输入节点ID"
                   value-key="id"
+                  :select-when-unmatched="true"
                   :disabled="exploreMode === 'global'"
                   :fetch-suggestions="queryExplore"
                   @select="handleExploreOnId"
                 >
+                  <template slot-scope="{ item }">
+                    <span :title="item.id">{{ item.id }}</span>
+                  </template>
                 </el-autocomplete>
               </el-form-item>
             </el-form>
@@ -60,6 +64,9 @@
         <svg class="topo-icon" aria-hidden="true" @click="handleMouseUp" slot="prefix">
           <use xlink:href="#icon-sousuo"></use>
         </svg>
+        <template slot-scope="{ item }">
+          <span :title="item.id">{{ item.id }}</span>
+        </template>
       </el-autocomplete>
     </div>
     <!-- 缩放控制 -->
@@ -91,7 +98,7 @@
     <!-- 工具集合 -->
     <!-- <div class="more-tool-wrapper" v-show="moreToolState"></div> -->
     <!-- 工具栏 -->
-    <div class="tool-bar">
+    <div ref="toolBar" class="tool-bar">
       <div class="tb-item node-types-filter">
         <div
           class="ntf-item"
@@ -99,11 +106,10 @@
           :key="index"
           :class="{ unchecked: !item.checked }"
         >
-          <span class="item-wrapper item-icon"><img :src="item.imgUrl" alt=""/></span>
-          <span class="item-wrapper item-title">{{ item.label }}</span>
           <span class="item-wrapper item-checkbox">
             <input type="checkbox" v-model="item.checked" @change="toggleNodeTypeChecked" />
           </span>
+          <span class="item-wrapper item-icon" :title="item.label"><img :src="item.imgUrl" alt=""/></span>
         </div>
       </div>
       <div class="tb-item state-types-filter">
@@ -113,10 +119,10 @@
           :key="index"
           :class="{ unchecked: !item.checked }"
         >
-          <span class="item-wrapper item-title">{{ item.label }}</span>
           <span class="item-wrapper item-checkbox">
             <input type="checkbox" v-model="item.checked" @change="toggleStateTypeChecked" />
           </span>
+          <span class="item-wrapper item-title">{{ item.label }}</span>
         </div>
       </div>
       <div class="tb-item relative-types-filter" v-show="currentNode.id !== undefined">
@@ -126,10 +132,10 @@
           :key="index"
           :class="{ unchecked: !item.checked }"
         >
-          <span class="item-wrapper item-title">{{ item.label }}</span>
           <span class="item-wrapper item-checkbox">
             <input type="checkbox" v-model="item.checked" @change="toggleRelativeTypeChecked" />
           </span>
+          <span class="item-wrapper item-title">{{ item.label }}</span>
         </div>
       </div>
     </div>
@@ -981,7 +987,7 @@
 <style lang="scss">
   .topo-tool-set {
     position: absolute;
-    right: 2px;
+    right: 262px;
     top: 2px;
     height: 40px;
     padding-left: 10px;
@@ -1155,9 +1161,9 @@
     }
 
     .tool-bar {
-      position: absolute;
-      top: 100%;
-      right: 0;
+      position: fixed;
+      bottom: 40px;
+      left: 220px;
       padding: 8px 10px;
       margin-top: 8px;
       background-color: transparent;
@@ -1175,7 +1181,7 @@
           margin-bottom: 8px;
           display: flex;
           align-items: center;
-          justify-content: flex-end;
+          justify-content: flex-start;
 
           &.unchecked {
             opacity: 0.5;
@@ -1196,7 +1202,8 @@
           }
 
           .item-icon {
-            margin-right: 5px;
+            pointer-events: auto;
+            margin-left: 10px;
             img {
               width: 20px;
               height: 20px;

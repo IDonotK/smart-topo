@@ -24,61 +24,6 @@
       </div>
       <!-- 右侧主拓扑图 -->
       <div class="tvc-r" id="tvcrId" ref="tvcr">
-        <!-- 拓扑标题 -->
-        <div class="main-topo-info" v-show="topoViewData.nodes.length > 0 && isMatch">
-          <div class="mti-item topo-mode">
-            <span class="title">拓扑探索模式：</span>
-            <span class="content" v-show="topoMode === 'global'">全部节点</span>
-            <span class="content" v-show="topoMode === 'specific'">目标节点({{ exploreNode.id }})</span>
-          </div>
-          <div class="mti-item show-node-type">
-            <span class="title">显示的节点类型：</span>
-            <span class="content">{{ showNodeTypes.join(', ') }}</span>
-          </div>
-          <div class="mti-item node-state-type">
-            <span class="title">显示的节点状态：</span>
-            <span class="content">{{ showStateTypes.join(', ') }}</span>
-          </div>
-          <div class="mti-item current-node" v-show="currentNode.id !== undefined">
-            <span class="title">选中节点的名称：</span>
-            <span class="content">{{ currentNode.name }}</span>
-          </div>
-          <div class="mti-item relative-node-type" v-show="currentNode.id !== undefined">
-            <span class="title">选中节点的关联节点类型：</span>
-            <span class="content">{{ showRelativeTypes.join(', ') }}</span>
-          </div>
-          <!-- 查看节点详情 -->
-          <div class="mti-item view-node-info" v-show="viewNode.id !== undefined">
-            <div class="info-title">当前查看的节点信息:</div>
-            <div
-              class="info-item"
-              v-for="(value, key) in viewNode"
-              :key="key"
-              v-show="
-                nodeDetailItems.includes(key) ||
-                  (key === 'eventCount' && !stateExLabels.includes(viewNode['label'])) ||
-                  (key === 'state' && !stateExLabels.includes(viewNode['label']))
-              "
-            >
-              <span class="item-title">{{ key }} :</span>
-              <span class="item-content">
-                {{ value }}
-                <!-- 复制按钮 -->
-                <span v-if="key === 'id'" class="item-btn" @click.prevent.stop="copyNodeId(value)" title="复制">
-                  <svg class="icon sm vm copy-btn-icon">
-                    <use xlink:href="#COPY-GRAY"></use>
-                  </svg>
-                </span>
-                <!-- 查看事件按钮 -->
-                <span v-if="key === 'eventCount'" class="item-btn" @click.prevent.stop="showEvents()" title="查看事件">
-                  <svg class="icon sm vm event-btn-icon">
-                    <use xlink:href="#DETAIL-PAGE-GRAY"></use>
-                  </svg>
-                </span>
-              </span>
-            </div>
-          </div>
-        </div>
         <!-- 拓扑图 -->
         <d3-network
           v-show="topoViewData.nodes.length > 0 && isMatch && !isLoadingTopo"
@@ -91,10 +36,6 @@
           @node-click="nodeClick"
           @link-click="linkClick"
         />
-        <!-- 查看事件列表 -->
-        <el-drawer class="events-drawer" title="事件列表" :visible.sync="isShowEvents" direction="rtl" size="720px">
-          <node-events v-if="isShowEvents" :viewNodeId="viewNode.id" />
-        </el-drawer>
         <!-- 鼠标右键探索弹框 -->
         <el-dialog class="explore-dialog" :title="'确定探索该节点？'" :visible.sync="isShowExplore" width="30%">
           <div class="modes-wrapper">
@@ -211,24 +152,6 @@
           }
         },
         showNodeDetail: false,
-        nodeDetailItems: [
-          'id',
-          'name',
-          'label',
-          'createTime',
-          'updateTime',
-          'podIp',
-          'nodeIp',
-          'hostName',
-          'processNo',
-          'middlewareType',
-          'kind',
-        ],
-        stateExLabels: [
-          'Application',
-          'MiddleWare',
-          'Process',
-        ],
         isShowExplore: false,
         isShowEvents: false,
         nodeToExplore: {},
@@ -250,29 +173,8 @@
       isLoadingTopo() {
         return this.$store.state.rocketTopo.isLoadingTopo;
       },
-      exploreNode() {
-        return this.$store.state.rocketTopo.exploreNode;
-      },
-      topoMode() {
-        return this.$store.state.rocketTopo.topoMode;
-      },
-      showNodeTypes() { // 左侧栏显示点类型过滤
-        return this.$store.state.rocketTopo.showNodeTypes;
-      },
-      showStateTypes() { // 右上角点状态类型过滤
-        return this.$store.state.rocketTopo.showStateTypes;
-      },
-      showEdgeTypes() { // 右上角显示边类型过滤
-        return this.$store.state.rocketTopo.showEdgeTypes;
-      },
-      showRelativeTypes() { // 右上角关联点类型过滤
-        return this.$store.state.rocketTopo.showRelativeTypes;
-      },
       currentNode() { // 当前选中节点
         return this.$store.state.rocketTopo.currentNode;
-      },
-      viewNode() { // 当前查看节点
-        return this.$store.state.rocketTopo.viewNode;
       },
       topoDetailData() {
         return this.$store.state.rocketTopo.topoDetailData;
@@ -301,6 +203,12 @@
           this.showNodeDetail = false;
           this.$store.commit('rocketTopo/SET_NODE_CROSS_LAYER', {});
         }
+      },
+      foldTopoDetail(newVal, oldVal) { // 控制 toolBar 左偏移距离
+        this.handleToolBarOffsetLeft(this.showNodeDetail);
+      },
+      showNodeDetail(newVal, oldVal) { // 控制 toolBar 左偏移距离
+        this.handleToolBarOffsetLeft(newVal);
       }
     },
 
@@ -328,19 +236,6 @@
         this.isShowExplore = false;
         this.toolSetInstance.goToExploreNode(this.nodeToExplore);
         this.nodeToExplore = {};
-      },
-      copyNodeId(id) {
-        const input = document.createElement('input');
-        document.body.appendChild(input)
-        input.setAttribute('value', id);
-        input.select()
-        if (document.execCommand('copy')) {
-          document.execCommand('copy')
-        }
-        document.body.removeChild(input);
-      },
-      showEvents() {
-        this.isShowEvents = true;
       },
       toggleNodeDetail(state) {
         this.showNodeDetail = state;
@@ -410,6 +305,15 @@
           links: this.links
         }
       },
+      handleToolBarOffsetLeft(showNodeDetail) {
+        this.$nextTick(() => {
+          let nodeDetailWidth = showNodeDetail ? this.$jq('#tdt-view-node-detail').width() : 0;
+          let topoDetailWidth = this.$jq('#tvclId').width();
+          let width = Math.max(topoDetailWidth, nodeDetailWidth);
+
+          this.toolSetInstance.$refs.toolBar.style.left = 220 +  width + 'px';
+        });
+      }
     },
   };
 </script>
@@ -418,7 +322,7 @@
     position: absolute;
     top: 2px;
     left: 220px;
-    right: 0;
+    right: 260px;
     bottom: 2px;
     background-color: #333840;
     text-align: center;
@@ -483,139 +387,6 @@
         transition: 0.1s width;
         height: 100%;
         position: relative;
-
-        .main-topo-info {
-          position: absolute;
-          left: 2px;
-          padding: 5px 5px;
-          border-radius: 2px;
-          background-color: #242424;
-          display: flex;
-          flex-direction: column;
-          color: #ccc;
-          background: transparent;
-          opacity: 0.8;
-          z-index: 8900;
-          pointer-events: none;
-
-          .mti-item {
-            padding: 2px 0px;
-            text-align: left;
-          }
-
-          .view-node-info {
-            margin-top: 20px;
-            .info-title {
-              color: deepskyblue;
-            }
-
-            .info-item {
-              height: 20px;
-              display: flex;
-              justify-content: flex-start;
-              align-items: center;
-              color: #ccc;
-
-              .item-title {
-                margin-right: 8px;
-                text-align: left;
-                overflow: hidden;
-                text-overflow: ellipsis;
-                white-space: nowrap;
-              }
-
-              .item-content {
-                // flex-grow: 1;
-                text-align: left;
-                overflow: hidden;
-                text-overflow: ellipsis;
-                white-space: nowrap;
-                display: flex;
-                align-items: center;
-
-                .item-btn {
-                  color: #ddd;
-                  font-size: 10px;
-                  cursor: pointer;
-                  pointer-events: all;
-
-                  .copy-btn-icon {
-                    width: 20px;
-                    height: 20px;
-                  }
-
-                  .event-btn-icon {
-                    width: 22px;
-                    height: 22px;
-                  }
-
-                  &:active {
-                    color: rgb(63, 177, 227);
-                  }
-                }
-              }
-            }
-          }
-        }
-        .events-drawer {
-          /deep/ :focus {
-            outline: 0;
-          }
-          .el-drawer {
-            overflow-y: auto !important;
-            background-color: #252a2f;
-
-            .el-drawer__header {
-              text-align: left;
-              color: #ddd;
-              font-size: 16px;
-              font-weight: 500;
-            }
-          }
-
-          .el-drawer__body {
-            padding: 0 20px;
-          }
-
-          .table-wrapper {
-            width: 100%;
-            overflow: hidden;
-            border-right: solid 1px #ebeef5;
-
-            .events-table {
-              margin-left: 2px;
-
-              .cell {
-                overflow: hidden;
-                text-overflow: ellipsis;
-                white-space: nowrap;
-              }
-
-              .el-table__expanded-cell {
-                padding: 20px 20px !important;
-
-                .el-form-item__content {
-                  overflow: hidden;
-                  text-overflow: ellipsis;
-                  white-space: nowrap;
-                }
-              }
-
-              .events-table-expand {
-                font-size: 0;
-              }
-              .events-table-expand label {
-                width: 90px;
-                color: #99a9bf;
-              }
-              .events-table-expand .el-form-item {
-                margin-right: 0;
-                margin-bottom: 0;
-                width: 100%;
-              }
-            }
-          }
-        }
 
         .explore-dialog {
           .el-dialog {

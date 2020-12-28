@@ -19,6 +19,7 @@ import noty from './noty';
 import RkHeader from './rk-header.vue';
 import RkFooter from './rk-footer.vue';
 import RkFooterTime from './rk-footer-time.vue';
+import RkToolTime from './rk-tool-time.vue';
 import RkProgress from './rk-progress.vue';
 import RkPage from './rk-page.vue';
 import RkDate from './rk-date.vue';
@@ -43,6 +44,7 @@ const components: any = {
   RkPage,
   RkSidebox,
   RkFooterTime,
+  RkToolTime,
   RkSelect,
   RkPopper,
   RkDropdown,

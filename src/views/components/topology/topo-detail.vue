@@ -25,13 +25,19 @@
   require('./assets/iconfont-topo/iconfont.js');
 
   import applicationIcon from './assets/png/APPLICATION.png';
-  import middlewareIcon from './assets/png/MIDDLEWARE.png';
+  import middleWareIcon from './assets/png/MIDDLEWARE.png';
+  import middleWareCacheIcon from './assets/png/MIDDLEWARE_CACHE.png';
+  import middleWareDatabaseIcon from './assets/png/MIDDLEWARE_DATABASE.png';
+  import middleWareMQIcon from './assets/png/MIDDLEWARE_MQ.png';
   import processIcon from './assets/png/PROCESS.png';
   import workloadIcon from './assets/png/WORKLOAD.png';
   import podIcon from './assets/png/POD.png';
   import nodeIcon from './assets/png/NODE.png';
   import applicationBrightIcon from './assets/png/APPLICATION-BRIGHT.png';
   import middlewareBrightIcon from './assets/png/MIDDLEWARE-BRIGHT.png';
+  import middleWareCacheBrightIcon from './assets/png/MIDDLEWARE_CACHE-BRIGHT.png';
+  import middleWareDatabaseBrightIcon from './assets/png/MIDDLEWARE_DATABASE-BRIGHT.png';
+  import middleWareMQBrightIcon from './assets/png/MIDDLEWARE_MQ-BRIGHT.png';
   import processBrightIcon from './assets/png/PROCESS-BRIGHT.png';
   import workloadBrightIcon from './assets/png/WORKLOAD-BRIGHT.png';
   import podBrightIcon from './assets/png/POD-BRIGHT.png';
@@ -97,9 +103,19 @@
           'nodeIp',
           'hostName',
           'processNo',
-          'middlewareType',
+          'middleWareType',
           'kind',
         ],
+        middleWareIcons: {
+          'MQ': middleWareMQIcon,
+          'Database': middleWareDatabaseIcon,
+          'Cache': middleWareCacheIcon,
+          'MQBright': middleWareMQBrightIcon,
+          'DatabaseBright': middleWareDatabaseBrightIcon,
+          'CacheBright': middleWareCacheBrightIcon,
+          'Default': middleWareIcon,
+          'DefaultBright': middlewareBrightIcon
+        },
         tickTimer: null,
       }
     },
@@ -168,11 +184,11 @@
           top: 0 + 'px',
         };
       },
-      getNodeIcon(type, isBright) {
+      getNodeIcon(node, isBright) {
         let iconTmp = null;
-        switch (type) {
+        switch (node.type) {
           case 'Application': iconTmp = isBright ? applicationBrightIcon : applicationIcon; break;
-          case 'MiddleWare': iconTmp = isBright ? middlewareBrightIcon : middlewareIcon; break;
+          case 'MiddleWare': iconTmp = this.getMiddleWareIcon(node.middleWareType, isBright); break;
           case 'Process': iconTmp = isBright ? processBrightIcon : processIcon; break;
           case 'Workload': iconTmp = isBright ? workloadBrightIcon : workloadIcon; break;
           case 'Pod': iconTmp = isBright ? podBrightIcon : podIcon; break;
@@ -180,6 +196,11 @@
           default: break;
         }
         return iconTmp;
+      },
+      getMiddleWareIcon(middleWareType, isBright) {
+        let type = this.middleWareIcons[middleWareType] ? middleWareType : 'Default';
+        type = isBright ? type + 'Bright' : type;
+        return this.middleWareIcons[type];
       },
       setNodePositonNormalLayer(nNum, nObj, startX, factorY, nSize, deltaw, deltah) {
         nObj.x = startX + (nNum - 1) * deltaw;
@@ -204,8 +225,8 @@
           return;
         }
         const graph = this.topoDetailData;
-        const topoHeight = this.$jq("#tdtId").height();
-        const deltah = topoHeight / 6;
+        this.topoHeight = this.$jq("#tdtId").height();
+        const deltah = this.topoHeight / 6;
         const deltaw = 50;
 
         // 计算起点坐标
@@ -341,6 +362,7 @@
             responseTimePerMin: link.responseTimePerMin,
             isVertical: false,
             fixX: 0,
+            qpsLevel: link.qpsLevel,
           };
           switch (link.source.type) {
             case 'Application': itemTmp.isLine2Src = isAppLine2Src; break;
@@ -453,18 +475,18 @@
 
         // 计算拓扑宽度
         const tdwWidthMax = document.getElementById('tvccId').clientWidth * 0.6;
-        let topoWidth = startFixTopoWidthMax + 45 + maxNum * deltaw + 30 + endFixTopoWidthMax;
-        let tdwWidth = topoWidth > tdwWidthMax ? tdwWidthMax : topoWidth;
+        this.topoWidth = startFixTopoWidthMax + 45 + maxNum * deltaw + 30 + endFixTopoWidthMax;
+        let tdwWidth = this.topoWidth > tdwWidthMax ? tdwWidthMax : this.topoWidth;
         this.$jq('#tdwId').width(tdwWidth);
-        this.$jq('#tdId').width(topoWidth);
-        this.drawTopo(topoWidth, topoHeight, nodesOption, linksOption, arrowsOption, anchorsOption);
+        this.$jq('#tdId').width(this.topoWidth);
+        this.drawTopo(nodesOption, linksOption, arrowsOption, anchorsOption);
       },
-      drawTopo(topoWidth, topoHeight, nodesOption, linksOption, arrowsOption, anchorsOption) {
+      drawTopo(nodesOption, linksOption, arrowsOption, anchorsOption) {
         const svg = this.$d3
           .select('#tdt-view-cross-layer')
           .append('svg')
           .attr('class', 'topo-svg')
-          .attr('height', topoHeight);
+          .attr('height', this.topoHeight);
         this.tip = this.$d3tip()
           .attr('class', 'd3-tip')
           // .offset([-8, 0]);
@@ -508,7 +530,7 @@
           .attr('x', d => -d.symbolSize / 2)
           .attr('y', d => -d.symbolSize / 2)
           .attr('style', 'cursor: pointer;')
-          .attr('xlink:href', d => icons[d.type.toUpperCase()])
+          .attr('xlink:href', d => this.icon(d))
           .on('mouseenter', (data, index, element) => { this.handleNodeMouseenter(data, index, element); })
           .on('mouseleave', d => { this.handleNodeMouseleave(d); })
           .on('click', d => { this.handleNodeClicked(d); })
@@ -543,7 +565,8 @@
         return linkEles.data(linksOption)
           .enter().append("path")
           .attr("class", "topo-line")
-          .attr("stroke-dasharray", d => d.isTracingTo ? '13 7' : 'none')
+          .attr("stroke-width", d => d.qpsLevel * 1.3)
+          .attr("stroke-dasharray", d => d.isTracingTo ? '7 5' : 'none')
           // @todo: 加上箭头
           // .attr("marker-end", d => 'url(#arrow_detail' + d.id + ')')
           .on('mouseover', d => { this.handleLinkMouseover(d); })
@@ -567,10 +590,10 @@
             let tNode = this.$jq('.topo-node')[data.target.index];
             this.$jq(sNode)
               .children('image')
-              .attr('href', this.getNodeIcon(data.source.type, true));
+              .attr('href', this.getNodeIcon(data.source, true));
             this.$jq(tNode)
               .children('image')
-              .attr('href', this.getNodeIcon(data.target.type, true));
+              .attr('href', this.getNodeIcon(data.target, true));
 
             if (data.source.type === 'Application' || data.target.type === 'Application') {
               this.tip.direction('e');
@@ -595,10 +618,10 @@
             let tNode = this.$jq('.topo-node')[data.target.index];
             this.$jq(sNode)
               .children('image')
-              .attr('href', this.getNodeIcon(data.source.type, false));
+              .attr('href', this.getNodeIcon(data.source, false));
             this.$jq(tNode)
               .children('image')
-              .attr('href', this.getNodeIcon(data.target.type, false));
+              .attr('href', this.getNodeIcon(data.target, false));
 
             this.tip.direction('n');
             this.tip.hide(this);
@@ -629,6 +652,11 @@
           }
         });
       },
+      icon(d) {
+        let type =
+          d.type === 'MiddleWare' && this.middleWareIcons[d.middleWareType] ? `${d.type}_${d.middleWareType}` : d.type;
+        return icons[type.toUpperCase()];
+      },
       handleLinkMouseout(d) {
         this.$d3.event.stopPropagation();
         this.$d3.event.preventDefault();
@@ -645,10 +673,10 @@
           let tNode = this.$jq('.topo-node')[d.target.index];
           this.$jq(sNode)
             .children('image')
-            .attr('href', this.getNodeIcon(d.source.type, false));
+            .attr('href', this.getNodeIcon(d.source, false));
           this.$jq(tNode)
             .children('image')
-            .attr('href', this.getNodeIcon(d.target.type, false));
+            .attr('href', this.getNodeIcon(d.target, false));
         }
       },
       handleLinkMouseover(d) {
@@ -669,10 +697,10 @@
           let tNode = this.$jq('.topo-node')[d.target.index];
           this.$jq(sNode)
             .children('image')
-            .attr('href', this.getNodeIcon(d.source.type, true));
+            .attr('href', this.getNodeIcon(d.source, true));
           this.$jq(tNode)
             .children('image')
-            .attr('href', this.getNodeIcon(d.target.type, true));
+            .attr('href', this.getNodeIcon(d.target, true));
         }
       },
       handleNodeDblclicked(nodeTmp) {
@@ -801,14 +829,20 @@
           width: 100%;
 
           .topo-line {
-            stroke-linecap: round;
-            stroke-width: 1.3px !important;
-            // stroke-dasharray: 13 7;
+            // stroke-linecap: round;
             fill: none;
-            animation: topo-dash 1s linear infinite !important;
+            animation: topo-dash 0.8s linear infinite !important;
 
             &.topo-line-light {
               stroke: yellow !important;
+            }
+          }
+          @keyframes topo-dash {
+            from {
+              stroke-dashoffset: 12;
+            }
+            to {
+              stroke-dashoffset: 0;
             }
           }
 
@@ -843,15 +877,6 @@
           }
         }
       }
-    }
-  }
-
-  @keyframes topo-dash {
-    from {
-      stroke-dashoffset: 20;
-    }
-    to {
-      stroke-dashoffset: 0;
     }
   }
 </style>

@@ -2,6 +2,7 @@
   <div class="rk-topo">
     <TopoView :topoData="topoData" :topoViewData="topoViewData" :isMatch="isMatch" @restoreFilters="restoreFilters" />
     <TopoSideNavigation :topoViewData="topoViewData" />
+    <TopoSideInformation :topoViewData="topoViewData" />
     <TopoToolSet
       ref="topotoolset"
       :topoData="topoData"
@@ -22,6 +23,7 @@
 
   import TopoView from '../../components/topology/topo-view.vue';
   import TopoSideNavigation from '../../components/topology/topo-side-navigation.vue';
+  import TopoSideInformation from '../../components/topology/topo-side-information.vue';
   import TopoToolSet from '../../components/topology/topo-tool-set.vue';
 
   export default {
@@ -38,6 +40,7 @@
     components: {
       TopoView,
       TopoSideNavigation,
+      TopoSideInformation,
       TopoToolSet,
     },
 
@@ -98,7 +101,7 @@
   .rk-topo {
     position: absolute;
     top: 48px;
-    bottom: 30px;
+    bottom: 40px;
     left: 0;
     right: 0;
     min-height: 320px;

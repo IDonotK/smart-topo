@@ -127,6 +127,7 @@
           links: [],
         },
         tip: null,
+        middleWareTypes: ['MQ', 'Database', 'Cache'],
       };
     },
     render(createElement) {
@@ -386,8 +387,11 @@
           if (!node.name && node.name !== '0') vm.$set(node, 'name', 'node ' + node.id);
           // node icon
           if (node.type) {
-            node.svgIcon = node.type.toUpperCase();
-            node.svgIconBright = node.type.toUpperCase() + '-BRIGHT';
+            node.svgIcon =
+              node.type === 'MiddleWare' && this.middleWareTypes.includes(node.middleWareType)
+                ? `${node.type}_${node.middleWareType}`.toUpperCase()
+                : node.type.toUpperCase();
+            node.svgIconBright = node.svgIcon + '-BRIGHT';
           }
 
           if (this.isTopoNodesUpdated) {
@@ -1031,7 +1035,7 @@
           &.selected {
             stroke: rgba(202, 164, 85, 0.6);
           }
-          animation: topo-dash 0.5s linear infinite !important;
+          animation: topo-dash 0.8s linear infinite !important;
         }
         @keyframes topo-dash {
           from {

@@ -4,8 +4,6 @@ import axios, { AxiosPromise, AxiosResponse } from 'axios';
 import { cancelToken } from '@/utils/cancelToken';
 import { formatTopoData, utc2Peking } from '@/utils/topo';
 
-import { generateGesData } from './ges-data.js';
-
 export interface Duration {
   start: string;
   end: string;
@@ -221,8 +219,7 @@ const actions: ActionTree<State, any> = {
       })
       .then((res: any) => {
         context.state.isLoadingTopo = false;
-        // let topoData = formatTopoData(res, true);
-        let topoData = formatTopoData(generateGesData(), true);
+        let topoData = formatTopoData(res, true);
         context.commit(types.SET_TOPO_DATA, {
           nodes: topoData.nodes,
           links: topoData.links,

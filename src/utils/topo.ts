@@ -53,7 +53,7 @@ const getLinkQpsLevel = (link) => {
   let levelTmp = LINK_QPS_LEVELS.find((level) => {
     return link.callPerMinute >= level.min && link.callPerMinute < level.max;
   });
-  let qpsLevel = levelTmp === undefined ? 1 : Number(levelTmp.id) * 0.8;
+  let qpsLevel = levelTmp === undefined ? 1 : Number(levelTmp.weight);
   return qpsLevel;
 };
 

@@ -38,7 +38,10 @@
 
 <script lang="js">
   import appIcon from './assets/png/APPLICATION.png';
-  import middlewareIcon from './assets/png/MIDDLEWARE.png';
+  import middleWareIcon from './assets/png/MIDDLEWARE.png';
+  import middleWareCacheIcon from './assets/png/MIDDLEWARE_CACHE.png';
+  import middleWareDatabaseIcon from './assets/png/MIDDLEWARE_DATABASE.png';
+  import middleWareMQIcon from './assets/png/MIDDLEWARE_MQ.png';
   import processIcon from './assets/png/PROCESS.png';
   import workloadIcon from './assets/png/WORKLOAD.png';
   import podIcon from './assets/png/POD.png';
@@ -71,7 +74,7 @@
           'podIp',
           'nodeIp',
           'processNo',
-          'middlewareType',
+          'middleWareType',
           'kind',
         ],
         stateExLabels: [
@@ -91,6 +94,11 @@
           '#c4ebad',
           '#96dee8',
         ],
+        middleWareIcons: {
+          'Cache': middleWareCacheIcon,
+          'Database': middleWareDatabaseIcon,
+          'MQ': middleWareMQIcon
+        }
       }
     },
 
@@ -128,6 +136,7 @@
           name: this.curNodeCrossLayer.name,
           type: this.curNodeCrossLayer.type,
           state: this.curNodeCrossLayer.state,
+          middleWareType: this.curNodeCrossLayer.middleWareType,
           category: 0
         });
         this.topoViewData.links.forEach(link => {
@@ -144,6 +153,7 @@
               name: link.target.name,
               type: link.target.type,
               state: link.target.state,
+              middleWareType: link.target.middleWareType,
               category: 1
             });
           } else if (link.tid === this.curNodeCrossLayer.id) {
@@ -159,6 +169,7 @@
               name: link.source.name,
               type: link.source.type,
               state: link.source.state,
+              middleWareType: link.source.middleWareType,
               category: 1
             });
           }
@@ -192,7 +203,9 @@
               nodeColor = this.pallet[0];
               break;
             case 'MiddleWare':
-              nodeSymbol = 'image://' + middlewareIcon + '';
+              nodeSymbol = 'image://' + (this.middleWareIcons[node.middleWareType] ?
+                  this.middleWareIcons[node.middleWareType] :
+                  middleWareIcon) + '';
               nodeColor = this.pallet[1];
               break;
             case 'Process':

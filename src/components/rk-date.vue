@@ -25,20 +25,6 @@
         v-if="show || type === 'inline'"
       >
         <template v-if="range">
-          <div class="datepicker-popup__sidebar">
-            <button type="button" class="datepicker-popup__shortcut" @click="quickPick('oneMinute')">
-              {{ this.local.oneMinuteCutTip }}
-            </button>
-            <button type="button" class="datepicker-popup__shortcut" @click="quickPick('threeMinutes')">
-              {{ this.local.threeMinutesCutTip }}
-            </button>
-            <button type="button" class="datepicker-popup__shortcut" @click="quickPick('fiveMinutes')">
-              {{ this.local.fiveMinutesCutTip }}
-            </button>
-            <button type="button" class="datepicker-popup__shortcut" @click="quickPick('tenMinutes')">
-              {{ this.local.tenMinutesCutTip }}
-            </button>
-          </div>
           <div class="datepicker-popup__body">
             <rk-calendar v-model="dates[0]" :left="true"></rk-calendar>
             <rk-calendar v-model="dates[1]" :right="true"></rk-calendar>
@@ -390,7 +376,6 @@
       }
     }
     &__body {
-      margin-left: 100px;
       padding-left: 5px;
     }
   }
@@ -401,11 +386,11 @@
   }
 
   .datepicker-range {
-    min-width: 280px;
+    min-width: 240px;
   }
 
   .datepicker-range .datepicker-popup {
-    width: 520px;
+    width: 420px;
   }
 
   .datepicker-bottom {
