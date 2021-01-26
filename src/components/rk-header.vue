@@ -18,7 +18,7 @@
       </a>
       <div class="auto-time">
         <span class="rk-auto-select">
-          <input v-model="autoTime" type="number" @change="changeAutoTime" min="10" />
+          <input v-model="autoTime" type="number" @change="changeAutoTime" @focus="focusAutoTime" min="10" />
         </span>
         {{ this.$t('second') }}
       </div>
@@ -65,9 +65,7 @@
     }
     @Watch('durationRow')
     private onDurationRow() {
-      if (!this.isAutoReloadTopo) {
-        this.handleReload();
-      }
+      this.reLoadTopoData();
     }
 
     private mounted() {
@@ -75,24 +73,19 @@
     }
 
     private handleReload() {
+      const gap = this.duration.end.getTime() - this.duration.start.getTime();
+      const time: Date[] = [new Date(new Date().getTime() - gap), new Date()];
+      this.SET_DURATION(timeFormat(time));
+    }
+
+    private reLoadTopoData() {
       this.rocketTopo.toolSetInstance.refreshTopoView(false);
       const params = {
         start_time: '',
         end_time: '',
       };
-      if (this.isAutoReloadTopo) {
-        // 开启轮询，查的是最近的时间段
-        const gap = this.duration.end.getTime() - this.duration.start.getTime();
-        const time: Date[] = [new Date(new Date().getTime() - gap), new Date()];
-        this.SET_DURATION(timeFormat(time));
-
-        params.start_time = dateFormat('YYYY-mm-dd HH:MM:SS', time[0]);
-        params.end_time = dateFormat('YYYY-mm-dd HH:MM:SS', time[1]);
-      } else {
-        // 关闭轮询，可以查询任意时间段
-        params.start_time = dateFormat('YYYY-mm-dd HH:MM:SS', this.duration.start);
-        params.end_time = dateFormat('YYYY-mm-dd HH:MM:SS', this.duration.end);
-      }
+      params.start_time = dateFormat('YYYY-mm-dd HH:MM:SS', this.duration.start);
+      params.end_time = dateFormat('YYYY-mm-dd HH:MM:SS', this.duration.end);
       this.GET_TOPO_DATA(params);
     }
 
@@ -107,11 +100,18 @@
     }
 
     private changeAutoTime() {
-      clearInterval(this.timer);
-      if (this.isAutoReloadTopo) {
-        this.handleReload();
-        this.timer = setInterval(this.handleReload, this.autoTime * 1000);
+      this.SET_IS_AUTO_RELOAD_TOPO(false);
+      if (this.autoTime < 10) {
+        this.autoTime = 10;
       }
+    }
+
+    private focusAutoTime() {
+      this.SET_IS_AUTO_RELOAD_TOPO(false);
+    }
+
+    private beforeDestroy() {
+      clearInterval(this.timer);
     }
   }
 </script>

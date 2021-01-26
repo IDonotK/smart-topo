@@ -109,7 +109,21 @@ const formatTopoData = (originResponse: any, isNeedFixField: boolean) => {
         node.shortName = node.name;
       }
       node.type = node.label;
+
+      // 事件等级
+      node.eventCount = 0;
+      node.eventLevel = '';
+      if (originData.eventInfos) {
+        for (let key in originData.eventInfos) {
+          if (key === node.id) {
+            node.eventCount = originData.eventInfos[key].eventCount;
+            node.eventLevel = originData.eventInfos[key].eventLevel;
+            break;
+          }
+        }
+      }
       node.state = node.eventCount > 0 ? 'Abnormal' : 'Normal';
+
       // utc时间转北京时间
       node.createTime = utc2Peking(node.createTime);
       node.updateTime = utc2Peking(node.updateTime);
@@ -124,4 +138,25 @@ const formatTopoData = (originResponse: any, isNeedFixField: boolean) => {
   return topoData;
 };
 
-export { dateFormat, utc2Peking, formatTopoData };
+const setUniformLayout = (nodes, viewportSize) => {
+  let viewportW = viewportSize.w;
+  let viewportH = viewportSize.h;
+  let viewportR = Math.min(viewportW / 2, viewportH / 2);
+  let nodeNum = nodes.length;
+  let nodePositions = [];
+  for (let i = 0; i < nodeNum; i++) {
+    let k = Math.sqrt(Math.random()) * viewportR;
+    let theta = Math.random() * 2 * Math.PI;
+    let x = k * Math.cos(theta) + viewportW / 2;
+    let y = k * Math.sin(theta) + viewportH / 2;
+    nodePositions.push([x, y]);
+  }
+  for (let i = 0; i < nodeNum; i++) {
+    nodes[i].x = nodePositions[i][0];
+    nodes[i].y = nodePositions[i][1];
+    // @todo: 是否同类
+    // @todo: 是否连接
+  }
+};
+
+export { dateFormat, utc2Peking, formatTopoData, setUniformLayout };

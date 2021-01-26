@@ -1,9 +1,10 @@
 <template>
   <div class="topo-tool-set">
-    <!-- 拓扑探索 -->
+    <!-- 时间选择 -->
     <div class="time-pick-wrapper">
       <RkToolTime />
     </div>
+    <!-- 拓扑探索 -->
     <div class="explore-topo-wrapper">
       <svg class="icon topo-icon" @click="handleClickExploreBtn">
         <use xlink:href="#explore"></use>
@@ -101,7 +102,7 @@
     <!-- 工具集合 -->
     <!-- <div class="more-tool-wrapper" v-show="moreToolState"></div> -->
     <!-- 工具栏 -->
-    <div ref="toolBar" class="tool-bar">
+    <div ref="toolFilters" class="tool-filters">
       <div class="tb-item node-types-filter">
         <div
           class="ntf-item"
@@ -112,7 +113,9 @@
           <span class="item-wrapper item-checkbox">
             <input type="checkbox" v-model="item.checked" @change="toggleNodeTypeChecked" />
           </span>
-          <span class="item-wrapper item-icon" :title="item.label"><img :src="item.imgUrl" alt=""/></span>
+          <span class="item-wrapper item-icon" :title="item.label">
+            <svg><use :xlink:href="'#' + item.label.toUpperCase()"></use></svg>
+          </span>
         </div>
       </div>
       <div class="tb-item state-types-filter">
@@ -149,13 +152,6 @@
   import axios, { AxiosPromise, AxiosResponse } from 'axios';
   import { cancelToken } from '@/utils/cancelToken';
   import { dateFormat } from '@/utils/topo';
-
-  import applicationIcon from './assets/png/APPLICATION.png';
-  import middlewareIcon from './assets/png/MIDDLEWARE.png';
-  import processIcon from './assets/png/PROCESS.png';
-  import workloadIcon from './assets/png/WORKLOAD.png';
-  import podIcon from './assets/png/POD.png';
-  import nodeIcon from './assets/png/NODE.png';
 
   require('./assets/iconfont-toolset/iconfont.js');
 
@@ -210,12 +206,12 @@
         nodeTypesOption: {
           title: '显示节点类型',
           data: [
-            {key: 0, label: 'Application', checked: true, imgUrl: applicationIcon},
-            {key: 1, label: 'MiddleWare', checked: true, imgUrl: middlewareIcon},
-            {key: 2, label: 'Process', checked: true, imgUrl: processIcon},
-            {key: 3, label: 'Workload', checked: true, imgUrl: workloadIcon},
-            {key: 4, label: 'Pod', checked: true, imgUrl: podIcon},
-            {key: 5, label: 'Node', checked: true, imgUrl: nodeIcon},
+            {key: 0, label: 'Application', checked: true},
+            {key: 1, label: 'MiddleWare', checked: true},
+            {key: 2, label: 'Process', checked: true},
+            {key: 3, label: 'Workload', checked: true},
+            {key: 4, label: 'Pod', checked: true},
+            {key: 5, label: 'Node', checked: true},
           ],
         },
         stateTypesOption: {
@@ -1051,6 +1047,20 @@
                 .el-radio {
                   color: #ccc;
                   margin-right: 10px;
+
+                  .el-radio__inner {
+                    background-color: rgba(204, 204, 204, 1);
+
+                    &:after {
+                      background-color: rgba(204, 204, 204, 1);
+                    }
+                  }
+
+                  .el-radio__input.is-checked {
+                    .el-radio__inner {
+                      background-color: #409eff;
+                    }
+                  }
                 }
 
                 .el-form {
@@ -1065,6 +1075,7 @@
 
                 .el-input__inner {
                   background-color: #ddd;
+                  color: #606266;
 
                   &::-webkit-input-placeholder {
                     color: #252a2f;
@@ -1078,6 +1089,7 @@
           .el-dialog__footer .dialog-footer {
             .el-button {
               border: none;
+              color: #606266;
             }
 
             .el-button--default {
@@ -1164,7 +1176,7 @@
       }
     }
 
-    .tool-bar {
+    .tool-filters {
       position: fixed;
       bottom: 0px;
       left: 220px;
@@ -1208,7 +1220,7 @@
           .item-icon {
             pointer-events: auto;
             margin-left: 10px;
-            img {
+            svg {
               width: 20px;
               height: 20px;
             }
@@ -1242,7 +1254,7 @@
     &.el-popper[x-placement^='bottom'] {
       .popper__arrow,
       .popper__arrow::after {
-        border-bottom-color: #242424;
+        border-bottom-color: #252a2f;
       }
     }
   }
@@ -1260,7 +1272,7 @@
     &.el-popper[x-placement^='bottom'] {
       .popper__arrow,
       .popper__arrow::after {
-        border-bottom-color: #ddd;
+        border-bottom-color: #252a2f;
       }
     }
   }

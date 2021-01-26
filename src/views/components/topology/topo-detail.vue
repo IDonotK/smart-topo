@@ -20,28 +20,7 @@
 </template>
 
 <script lang="js">
-  import icons from './utils/icons';
   import tool from './utils/tool';
-  require('./assets/iconfont-topo/iconfont.js');
-
-  import applicationIcon from './assets/png/APPLICATION.png';
-  import middleWareIcon from './assets/png/MIDDLEWARE.png';
-  import middleWareCacheIcon from './assets/png/MIDDLEWARE_CACHE.png';
-  import middleWareDatabaseIcon from './assets/png/MIDDLEWARE_DATABASE.png';
-  import middleWareMQIcon from './assets/png/MIDDLEWARE_MQ.png';
-  import processIcon from './assets/png/PROCESS.png';
-  import workloadIcon from './assets/png/WORKLOAD.png';
-  import podIcon from './assets/png/POD.png';
-  import nodeIcon from './assets/png/NODE.png';
-  import applicationBrightIcon from './assets/png/APPLICATION-BRIGHT.png';
-  import middlewareBrightIcon from './assets/png/MIDDLEWARE-BRIGHT.png';
-  import middleWareCacheBrightIcon from './assets/png/MIDDLEWARE_CACHE-BRIGHT.png';
-  import middleWareDatabaseBrightIcon from './assets/png/MIDDLEWARE_DATABASE-BRIGHT.png';
-  import middleWareMQBrightIcon from './assets/png/MIDDLEWARE_MQ-BRIGHT.png';
-  import processBrightIcon from './assets/png/PROCESS-BRIGHT.png';
-  import workloadBrightIcon from './assets/png/WORKLOAD-BRIGHT.png';
-  import podBrightIcon from './assets/png/POD-BRIGHT.png';
-  import nodeBrightIcon from './assets/png/NODE-BRIGHT.png';
 
   export default {
     props: {
@@ -97,6 +76,7 @@
           'label',
           'state',
           'eventCount',
+          'eventLevel',
           'createTime',
           'updateTime',
           'podIp',
@@ -106,16 +86,6 @@
           'middleWareType',
           'kind',
         ],
-        middleWareIcons: {
-          'MQ': middleWareMQIcon,
-          'Database': middleWareDatabaseIcon,
-          'Cache': middleWareCacheIcon,
-          'MQBright': middleWareMQBrightIcon,
-          'DatabaseBright': middleWareDatabaseBrightIcon,
-          'CacheBright': middleWareCacheBrightIcon,
-          'Default': middleWareIcon,
-          'DefaultBright': middlewareBrightIcon
-        },
         tickTimer: null,
       }
     },
@@ -185,22 +155,27 @@
         };
       },
       getNodeIcon(node, isBright) {
-        let iconTmp = null;
+        let type = '';
         switch (node.type) {
-          case 'Application': iconTmp = isBright ? applicationBrightIcon : applicationIcon; break;
-          case 'MiddleWare': iconTmp = this.getMiddleWareIcon(node.middleWareType, isBright); break;
-          case 'Process': iconTmp = isBright ? processBrightIcon : processIcon; break;
-          case 'Workload': iconTmp = isBright ? workloadBrightIcon : workloadIcon; break;
-          case 'Pod': iconTmp = isBright ? podBrightIcon : podIcon; break;
-          case 'Node': iconTmp = isBright ? nodeBrightIcon : nodeIcon; break;
-          default: break;
+          case 'MiddleWare':
+            let middleWareTypes = ['MQ', 'Database', 'Cache'];
+            type = middleWareTypes.includes(node.middleWareType) ? '_' + node.middleWareType : '';
+            break;
+          default:
+            break;
         }
-        return iconTmp;
+        return `#${node.type}${type}${isBright ? '_bright' : ''}`.toUpperCase();
       },
-      getMiddleWareIcon(middleWareType, isBright) {
-        let type = this.middleWareIcons[middleWareType] ? middleWareType : 'Default';
-        type = isBright ? type + 'Bright' : type;
-        return this.middleWareIcons[type];
+      getEventIcon(node) {
+        let icon = '';
+        if (node && node.eventCount > 0) {
+           switch (node.eventLevel) {
+              case 'Critical': icon = '#EVENT_CRITICAL'; break;
+              case 'Warning': icon = '#EVENT_WARNING'; break;
+              default: break;
+            }
+        }
+        return icon;
       },
       setNodePositonNormalLayer(nNum, nObj, startX, factorY, nSize, deltaw, deltah) {
         nObj.x = startX + (nNum - 1) * deltaw;
@@ -524,25 +499,30 @@
         let nodeElesTmp = nodeEles.data(nodesOption)
           .enter().append("g")
           .attr("class", "topo-node");
-        nodeElesTmp.append('image')
+        nodeElesTmp.append('svg')
           .attr('width', d => d.symbolSize)
           .attr('height', d => d.symbolSize)
           .attr('x', d => -d.symbolSize / 2)
           .attr('y', d => -d.symbolSize / 2)
-          .attr('style', 'cursor: pointer;')
-          .attr('xlink:href', d => this.icon(d))
+          .append('use')
+          .attr('xlink:href', d => this.getNodeIcon(d, false));
+        nodeElesTmp.append('svg')
+          .attr("class", "event-node-cross-topo")
+          .attr('width', d => d.symbolSize === 28 ? 15 : 12)
+          .attr('height', d => d.symbolSize === 28 ? 15 : 12)
+          .attr('x', d => d.symbolSize === 28 ? 6 : 4)
+          .attr('y', d => d.symbolSize === 28 ? -25 : -18)
+          .append('use')
+          .attr('xlink:href', d => this.getEventIcon(d));
+        nodeElesTmp.append('circle')
+          .attr('r', d => d.symbolSize / 2)
+          .attr('x', d => d.x)
+          .attr('y', d => d.y)
+          .attr('style', 'cursor: pointer; opacity: 0;')
           .on('mouseenter', (data, index, element) => { this.handleNodeMouseenter(data, index, element); })
           .on('mouseleave', d => { this.handleNodeMouseleave(d); })
           .on('click', d => { this.handleNodeClicked(d); })
           .on('dblclick', d => { this.handleNodeDblclicked(d); });
-        nodeElesTmp.append('svg')
-          .attr("class", "event-node-cross-topo")
-          .attr('width', d => d.symbolSize === 28 ? 18 : 12)
-          .attr('height', d => d.symbolSize === 28 ? 18 : 12)
-          .attr('x', d => d.symbolSize === 28 ? 5 : 3)
-          .attr('y', d => d.symbolSize === 28 ? -25 : -18)
-          .append('use')
-          .attr('xlink:href', d => d.state === 'Abnormal' ? '#icon-tanhao' : '');
         return nodeElesTmp;
       },
       getArrowEles(arrowEles, arrowsOption) {
@@ -589,10 +569,12 @@
             let sNode = this.$jq('.topo-node')[data.source.index];
             let tNode = this.$jq('.topo-node')[data.target.index];
             this.$jq(sNode)
-              .children('image')
+              .children('svg:first')
+              .children('use')
               .attr('href', this.getNodeIcon(data.source, true));
             this.$jq(tNode)
-              .children('image')
+              .children('svg:first')
+              .children('use')
               .attr('href', this.getNodeIcon(data.target, true));
 
             if (data.source.type === 'Application' || data.target.type === 'Application') {
@@ -604,7 +586,7 @@
               `
                 <div class="mb-5"><span class="grey">链路类型: </span>${data.type}</div>
                 <div class="mb-5"><span class="grey">调用频率: </span>${data.callPerMinute === undefined ? ' ' : data.callPerMinute + ' 次/分钟'}</div>
-                <div><span class="grey">平均响应时间: </span>${data.responseTimePerMin  === undefined ? ' ' : data.responseTimePerMin + ' 毫秒/分钟'}</div>
+                <div><span class="grey">平均响应时间: </span>${data.responseTimePerMin  === undefined ? ' ' : data.responseTimePerMin + ' ms'}</div>
               `
             ).show(data, element[index]);
           })
@@ -617,10 +599,12 @@
             let sNode = this.$jq('.topo-node')[data.source.index];
             let tNode = this.$jq('.topo-node')[data.target.index];
             this.$jq(sNode)
-              .children('image')
+              .children('svg:first')
+              .children('use')
               .attr('href', this.getNodeIcon(data.source, false));
             this.$jq(tNode)
-              .children('image')
+              .children('svg:first')
+              .children('use')
               .attr('href', this.getNodeIcon(data.target, false));
 
             this.tip.direction('n');
@@ -652,11 +636,6 @@
           }
         });
       },
-      icon(d) {
-        let type =
-          d.type === 'MiddleWare' && this.middleWareIcons[d.middleWareType] ? `${d.type}_${d.middleWareType}` : d.type;
-        return icons[type.toUpperCase()];
-      },
       handleLinkMouseout(d) {
         this.$d3.event.stopPropagation();
         this.$d3.event.preventDefault();
@@ -672,10 +651,12 @@
           let sNode = this.$jq('.topo-node')[d.source.index];
           let tNode = this.$jq('.topo-node')[d.target.index];
           this.$jq(sNode)
-            .children('image')
+            .children('svg:first')
+            .children('use')
             .attr('href', this.getNodeIcon(d.source, false));
           this.$jq(tNode)
-            .children('image')
+            .children('svg:first')
+            .children('use')
             .attr('href', this.getNodeIcon(d.target, false));
         }
       },
@@ -696,10 +677,12 @@
           let sNode = this.$jq('.topo-node')[d.source.index];
           let tNode = this.$jq('.topo-node')[d.target.index];
           this.$jq(sNode)
-            .children('image')
+            .children('svg:first')
+            .children('use')
             .attr('href', this.getNodeIcon(d.source, true));
           this.$jq(tNode)
-            .children('image')
+            .children('svg:first')
+            .children('use')
             .attr('href', this.getNodeIcon(d.target, true));
         }
       },

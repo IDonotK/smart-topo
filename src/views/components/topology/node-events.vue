@@ -16,9 +16,7 @@
         <vxe-form-item span="6" title-align="right" title="等级" field="severity">
           <template v-slot>
             <vxe-select v-model="formData.severity" placeholder="请选择等级" clearable>
-              <vxe-option value="critical" label="critical"></vxe-option>
-              <vxe-option value="Major" label="Major"></vxe-option>
-              <vxe-option value="Minor" label="Minor"></vxe-option>
+              <vxe-option value="Critical" label="Critical"></vxe-option>
               <vxe-option value="Warning" label="Warning"></vxe-option>
             </vxe-select>
           </template>
@@ -323,8 +321,6 @@
         this.getViewNodeEvents();
       },
       queryNodeEvents() {
-        console.log(this.durationRow.start)
-        console.log(this.formData.createTimeRange[0])
         const params = {
           id: this.viewNodeId,
           offset: (this.tablePage.currentPage - 1) * this.tablePage.pageSize,

@@ -1,7 +1,5 @@
 <template>
   <div class="tool-time-wrapper">
-    <!-- <span class="rk-time-tips" v-show="timeRangeMax">{{ $t('timeMaxTips') }}</span>
-    <span class="rk-time-tips" v-show="timeRangeMin">{{ $t('timeMinTips') }}</span> -->
     <div class="quick-pick-wrapper">
       <a class="rk-btn mr-5 sm qpw-item" @click="quickPick('oneMinute')">
         <span class="vm">{{ this.oneMinuteCutTip }}</span>
@@ -13,7 +11,7 @@
         <span class="vm">{{ this.tenMinutesCutTip }}</span>
       </a>
     </div>
-    <RkDate v-model="time" position="top" format="YYYY-MM-DD HH:mm:ss" />
+    <RkDate ref="rkdate" v-model="time" position="bottom" format="YYYY-MM-DD HH:mm:ss" :showButtons="true" />
   </div>
 </template>
 
@@ -23,10 +21,7 @@
   export default {
     data() {
       return {
-        timeRangeMax: 0,
-        timeRangeMin: 0,
         oneMinuteCutTip: this.$t('oneMinuteCutTip'),
-        threeMinutesCutTip: this.$t('threeMinutesCutTip'),
         fiveMinutesCutTip: this.$t('fiveMinutesCutTip'),
         tenMinutesCutTip: this.$t('tenMinutesCutTip'),
       };
@@ -40,25 +35,19 @@
           ];
         },
         set(val: Date[]) {
-          (this as any).timeRangeMax = val[1].getTime() - val[0].getTime() > 10 * 60 * 1000 ? 1 : 0;
-          if ((this as any).timeRangeMax) {
-            return;
-          }
-          (this as any).timeRangeMin = val[1].getTime() - val[0].getTime() < 30 * 1000 ? 1 : 0;
-          if ((this as any).timeRangeMin) {
-            return;
-          }
           (this as any).$store.dispatch('SET_DURATION', timeFormat(val));
         },
+      },
+    },
+    methods: {
+      quickPick(type) {
+        this.$refs.rkdate.quickPick(type);
       },
     },
   };
 </script>
 
 <style lang="scss" scoped>
-  .rk-time-tips {
-    color: red;
-  }
   .tool-time-wrapper {
     display: flex;
     .rk-btn.qpw-item {

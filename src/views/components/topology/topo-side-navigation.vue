@@ -8,7 +8,9 @@
       @click="handleClickSideNav(item.id)"
     >
       <div class="tsni-h">
-        <img :src="item.imgUrl" alt="" width="20" height="20" />
+        <svg alt="" width="20" height="20">
+          <use :xlink:href="'#' + item.id.toUpperCase()"></use>
+        </svg>
         {{ item.name }}
       </div>
       <div class="tsni-count">
@@ -26,13 +28,6 @@
 </template>
 
 <script lang="js">
-  import appIcon from './assets/png/APPLICATION.png';
-  import middlewareIcon from './assets/png/MIDDLEWARE.png';
-  import processIcon from './assets/png/PROCESS.png';
-  import workloadIcon from './assets/png/WORKLOAD.png';
-  import podIcon from './assets/png/POD.png';
-  import nodeIcon from './assets/png/NODE.png';
-
   export default {
     props: {
       topoViewData: {
@@ -52,42 +47,36 @@
           {
             id: 'Application',
             name: 'Applications',
-            imgUrl: appIcon,
             abnormal: 0,
             total: 0
           },
           {
             id: 'MiddleWare',
             name: 'MiddleWares',
-            imgUrl: middlewareIcon,
             abnormal: 0,
             total: 0
           },
           {
             id: 'Process',
             name: 'Processes',
-            imgUrl: processIcon,
             abnormal: 0,
             total: 0
           },
           {
             id: 'Workload',
             name: 'Workloads',
-            imgUrl: workloadIcon,
             abnormal: 0,
             total: 0
           },
           {
             id: 'Pod',
             name: 'Pods',
-            imgUrl: podIcon,
             abnormal: 0,
             total: 0
           },
           {
             id: 'Node',
             name: 'Nodes',
-            imgUrl: nodeIcon,
             abnormal: 0,
             total: 0
           }
@@ -154,7 +143,7 @@
       display: flex;
       flex-direction: column;
       justify-content: center;
-      padding: 0 48px 0 0;
+      padding: 0 48px 0 30px;
       cursor: pointer;
 
       &:active {
@@ -188,7 +177,7 @@
         display: flex;
         align-items: center;
 
-        img {
+        svg {
           margin-right: 5px;
         }
       }

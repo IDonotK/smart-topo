@@ -28,16 +28,25 @@
           <div class="datepicker-popup__body">
             <rk-calendar v-model="dates[0]" :left="true"></rk-calendar>
             <rk-calendar v-model="dates[1]" :right="true"></rk-calendar>
+            <div class="clear"></div>
           </div>
         </template>
         <template v-else>
           <rk-calendar v-model="dates[0]"></rk-calendar>
         </template>
+        <div class="datepicker__tips">
+          <span class="rk-time-tips" v-show="timeRangeMax">{{ $t('timeMaxTips') }}</span>
+          <span class="rk-time-tips" v-show="timeRangeMin">{{ $t('timeMinTips') }}</span>
+        </div>
         <div v-if="showButtons" class="datepicker__buttons">
           <button @click.prevent.stop="cancel" class="datepicker__button-cancel">
             {{ this.local.cancelTip }}
           </button>
-          <button @click.prevent.stop="submit" class="datepicker__button-select">
+          <button
+            @click.prevent.stop="submit"
+            class="datepicker__button-select"
+            :disabled="timeRangeMax || timeRangeMin"
+          >
             {{ this.local.submitTip }}
           </button>
         </div>
@@ -49,8 +58,6 @@
 <script lang="js">
   import RkCalendar from './rk-date-calendar.vue';
   import getLocalTime from '@/utils/localtime';
-  /* eslint-disable */
-  /* tslint:disable */
   export default {
     name: 'VueDatepickerLocal',
     components: { RkCalendar },
@@ -92,27 +99,25 @@
       return {
         show: false,
         dates: [],
+        timeRangeMax: false,
+        timeRangeMin: false,
+        datesBackup: null,
       };
     },
     computed: {
       local() {
         return {
-          dow: 1, // Monday is the first day of the week
-          hourTip: this.$t('hourTip'), // tip of select hour
-          minuteTip: this.$t('minuteTip'), // tip of select minute
-          secondTip: this.$t('secondTip'), // tip of select second
-          yearSuffix: this.$t('yearSuffix'), // format of head
-          monthsHead: this.$t('monthsHead').split(
-            '_',
-          ), // months of head
-          months: this.$t('months').split(
-            '_',
-          ), // months of panel
-          weeks: this.$t('weeks').split('_'), // weeks
-          cancelTip: this.$t('cancel'), // default text for cancel button
-          submitTip: this.$t('confirm'), // default text for submit button
+          dow: 1,
+          hourTip: this.$t('hourTip'),
+          minuteTip: this.$t('minuteTip'),
+          secondTip: this.$t('secondTip'),
+          yearSuffix: this.$t('yearSuffix'),
+          monthsHead: this.$t('monthsHead').split('_'),
+          months: this.$t('months').split('_'),
+          weeks: this.$t('weeks').split('_'),
+          cancelTip: this.$t('cancel'),
+          submitTip: this.$t('confirm'),
           oneMinuteCutTip: this.$t('oneMinuteCutTip'),
-          threeMinutesCutTip: this.$t('threeMinutesCutTip'),
           fiveMinutesCutTip: this.$t('fiveMinutesCutTip'),
           tenMinutesCutTip: this.$t('tenMinutesCutTip'),
         };
@@ -137,13 +142,18 @@
       },
       show(newVal) {
         if (newVal) {
+          this.datesBackup = this.deepClone(this.dates);
           this.$store.commit('rocketTopo/SET_IS_AUTO_RELOAD_TOPO', false);
         }
+      },
+      dates(val) {
+        this.timeRangeMax = val[1].getTime() - val[0].getTime() > 10 * 60 * 1000 ? true : false;
+        this.timeRangeMin = val[1].getTime() - val[0].getTime() < 30 * 1000 ? true : false;
       }
     },
     methods: {
-      get() {
-        return Array.isArray(this.value) ? this.dates : this.dates[0];
+      get(dates) {
+        return Array.isArray(this.value) ? dates : dates[0];
       },
       cls() {
         this.$emit('clear');
@@ -158,7 +168,7 @@
         return val ? [new Date(val)] : [new Date()];
       },
       ok(leaveOpened) {
-        this.$emit('input', this.get());
+        this.$emit('input', this.get(this.dates));
         !leaveOpened &&
           !this.showButtons &&
           setTimeout(() => {
@@ -199,7 +209,13 @@
         );
       },
       dc(e) {
+        if (!this.$el.contains(e.target) && this.show && this.datesBackup) {
+          this.dates = this.deepClone(this.datesBackup);
+        }
         this.show = this.$el.contains(e.target) && !this.disabled;
+      },
+      validateTime() {
+        return this.timeRangeMax || this.timeRangeMin ? false : true;
       },
       quickPick(type){
         const end = new Date();
@@ -207,9 +223,6 @@
         switch (type) {
           case 'oneMinute':
             start.setTime(start.getTime() - 60 * 1000);
-            break;
-          case 'threeMinutes':
-            start.setTime(start.getTime() - 3 * 60 * 1000);
             break;
           case 'fiveMinutes':
             start.setTime(start.getTime() - 5 * 60 * 1000);
@@ -221,15 +234,32 @@
             break;
         }
         this.dates = [start, end];
-        this.$emit('input', this.get());
+        this.$emit('input', this.get(this.dates));
+        this.show = false;
       },
       submit() {
-        this.$emit('confirm', this.get());
+        this.$emit('input', this.get(this.dates));
         this.show = false;
       },
       cancel() {
-        this.$emit('cancel');
+        this.dates = this.deepClone(this.datesBackup);
         this.show = false;
+      },
+      deepClone (obj) {
+        let objClone = Array.isArray(obj) ? [] : {}
+        if (obj && typeof obj === 'object') {
+          for (let key in obj) {
+            if (obj.hasOwnProperty(key)) {
+              if (obj[key] && typeof obj[key] === 'object') {
+                if (obj[key] instanceof Date) {
+                  objClone[key] = new Date(obj[key].valueOf())
+                } else { objClone[key] = this.deepClone(obj[key]) }
+              } else {
+                objClone[key] = obj[key]
+              }
+            }
+          }
+        } return objClone
       },
     },
     mounted() {
@@ -313,11 +343,11 @@
     letter-spacing: -0.7px;
   }
 
-  // .datepicker > input.focus {
-  //   border-color: #3f97e3;
-  //   -webkit-box-shadow: 0 0 5px rgba(59, 180, 242, 0.3);
-  //   box-shadow: 0 0 5px rgba(59, 180, 242, 0.3);
-  // }
+  .datepicker > input.focus {
+    border-color: #3f97e3;
+    -webkit-box-shadow: 0 0 5px rgba(59, 180, 242, 0.3);
+    box-shadow: 0 0 5px rgba(59, 180, 242, 0.3);
+  }
 
   .datepicker > input:disabled {
     cursor: not-allowed;
@@ -377,6 +407,9 @@
     }
     &__body {
       padding-left: 5px;
+      .clear {
+        clear: both;
+      }
     }
   }
 
@@ -417,6 +450,13 @@
     animation: datepicker-anim-out 0.2s cubic-bezier(0.755, 0.05, 0.855, 0.06);
   }
 
+  .datepicker__tips {
+    margin: 8px 5px;
+    .rk-time-tips {
+      color: red;
+    }
+  }
+
   .datepicker__buttons {
     display: block;
     text-align: right;
@@ -427,9 +467,14 @@
     font-size: 13px;
     border: none;
     cursor: pointer;
-    margin: 10px 0 0 5px;
+    margin: 5px 0 0 5px;
     padding: 5px 15px;
     color: #ffffff;
+    border-radius: 3px;
+
+    // &[disabled]{
+    //   opacity: 0.5;
+    // }
   }
 
   .datepicker__buttons .datepicker__button-select {

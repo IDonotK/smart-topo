@@ -21,6 +21,7 @@
   import { cancelToken } from '@/utils/cancelToken';
   import { dateFormat } from '@/utils/topo';
 
+  import '../../components/topology/utils/icons'
   import TopoView from '../../components/topology/topo-view.vue';
   import TopoSideNavigation from '../../components/topology/topo-side-navigation.vue';
   import TopoSideInformation from '../../components/topology/topo-side-information.vue';
@@ -105,7 +106,7 @@
     left: 0;
     right: 0;
     min-height: 320px;
-    min-width: 500px;
+    min-width: 1305px;
     background: #333840;
     overflow: hidden;
   }

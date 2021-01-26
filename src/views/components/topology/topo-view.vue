@@ -24,6 +24,10 @@
       </div>
       <!-- 右侧主拓扑图 -->
       <div class="tvc-r" id="tvcrId" ref="tvcr">
+        <!-- 时间轴 -->
+        <div class="time-line-wrapper">
+          <TopoTimeLine :step="1" :labels="false" v-show="false" />
+        </div>
         <!-- 拓扑图 -->
         <d3-network
           v-show="topoViewData.nodes.length > 0 && isMatch && !isLoadingTopo"
@@ -73,11 +77,10 @@
   import TopoDetail from './topo-detail.vue';
   import NodeDetail from './node-detail.vue';
   import NodeEvents from './node-events.vue';
+  import TopoTimeLine from './topo-time-line.vue';
 
   import * as utils from './d3-network/utils.js';
   import D3Network from './d3-network/vue-d3-network.vue';
-
-  import './assets';
 
   export default {
     props: {
@@ -163,7 +166,8 @@
       TopoDetail,
       NodeDetail,
       NodeEvents,
-      D3Network
+      D3Network,
+      TopoTimeLine
     },
 
     computed: {
@@ -204,10 +208,10 @@
           this.$store.commit('rocketTopo/SET_NODE_CROSS_LAYER', {});
         }
       },
-      foldTopoDetail(newVal, oldVal) { // 控制 toolBar 左偏移距离
+      foldTopoDetail(newVal, oldVal) { // 控制 toolFilters 左偏移距离
         this.handleToolBarOffsetLeft(this.showNodeDetail);
       },
-      showNodeDetail(newVal, oldVal) { // 控制 toolBar 左偏移距离
+      showNodeDetail(newVal, oldVal) { // 控制 toolFilters 左偏移距离
         this.handleToolBarOffsetLeft(newVal);
       }
     },
@@ -311,7 +315,7 @@
           let topoDetailWidth = this.$jq('#tvclId').width();
           let width = Math.max(topoDetailWidth, nodeDetailWidth);
 
-          this.toolSetInstance.$refs.toolBar.style.left = 220 +  width + 'px';
+          this.toolSetInstance.$refs.toolFilters.style.left = 220 +  width + 'px';
         });
       }
     },
@@ -338,6 +342,7 @@
         transition: 0.1s width;
         height: 100%;
         position: relative;
+        z-index: 9999;
 
         .tvcl-close {
           position: absolute;
@@ -388,6 +393,12 @@
         height: 100%;
         position: relative;
 
+        .time-line-wrapper {
+          position: absolute;
+          top: 62px;
+          width: 100%;
+        }
+
         .explore-dialog {
           .el-dialog {
             background-color: #333840;
@@ -417,6 +428,7 @@
             .el-dialog__footer .dialog-footer {
               .el-button {
                 border: none;
+                color: #606266;
               }
 
               .el-button--default {

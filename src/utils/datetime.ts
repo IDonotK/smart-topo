@@ -32,7 +32,7 @@ const getDurationRow = (): Duration => {
     };
   } else {
     durationRow = {
-      start: new Date(new Date().getTime() - 900000),
+      start: new Date(new Date().getTime() - 5 * 60 * 1000),
       end: new Date(),
       step: 'MINUTE',
     };

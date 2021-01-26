@@ -35,34 +35,34 @@
           <div class="info-title">当前查看的节点信息:</div>
           <div
             class="info-item"
-            v-for="(value, key) in viewNode"
-            :key="key"
+            v-for="(item, index) in nodeDetailItems"
+            :key="'field' + index"
             v-show="
-              nodeDetailItems.includes(key) ||
-                (key === 'eventCount' && !stateExLabels.includes(viewNode['label'])) ||
-                (key === 'state' && !stateExLabels.includes(viewNode['label']))
+              viewNode.hasOwnProperty(item) &&
+                ((stateReLabels.includes(item) && !stateExLabels.includes(viewNode['label'])) ||
+                  !stateReLabels.includes(item))
             "
           >
-            <span class="item-title">{{ key }} :</span>
-            <span class="item-content" v-if="key === 'id'">
-              <span :title="value">{{ value }}</span>
+            <span class="item-title">{{ item }} :</span>
+            <span class="item-content" v-if="item === 'id'">
+              <span :title="viewNode[item]">{{ viewNode[item] }}</span>
               <!-- 复制按钮 -->
-              <span class="item-btn" @click.prevent.stop="copyNodeId(value)" title="复制">
+              <span class="item-btn" @click.prevent.stop="copyNodeId(viewNode[item])" title="复制">
                 <svg class="icon sm vm copy-btn-icon">
-                  <use xlink:href="#COPY-GRAY"></use>
+                  <use xlink:href="#COPY_GRAY"></use>
                 </svg>
               </span>
             </span>
-            <ul class="item-content" :title="value" v-else-if="key.indexOf('Time') !== -1">
-              <li>{{ value.slice(0, value.indexOf(' ')) }}</li>
-              <li>{{ value.slice(value.indexOf(' ')) }}</li>
+            <ul class="item-content" :title="viewNode[item]" v-else-if="item.indexOf('Time') !== -1">
+              <li>{{ viewNode[item] && viewNode[item].slice(0, viewNode[item].indexOf(' ')) }}</li>
+              <li>{{ viewNode[item] && viewNode[item].slice(viewNode[item].indexOf(' ')) }}</li>
             </ul>
             <span class="item-content item-content-ellipsis" v-else>
-              <span :title="value">{{ value }}</span>
+              <span :title="viewNode[item]">{{ viewNode[item] }}</span>
               <!-- 查看事件按钮 -->
-              <span v-if="key === 'eventCount'" class="item-btn" @click.prevent.stop="showEvents()" title="查看事件">
+              <span v-if="item === 'eventCount'" class="item-btn" @click.prevent.stop="showEvents()" title="查看事件">
                 <svg class="icon sm vm event-btn-icon">
-                  <use xlink:href="#DETAIL-PAGE-GRAY"></use>
+                  <use xlink:href="#DETAIL_PAGE_GRAY"></use>
                 </svg>
               </span>
             </span>
@@ -119,14 +119,22 @@
           'id',
           'name',
           'label',
-          'createTime',
-          'updateTime',
           'podIp',
           'nodeIp',
           'hostName',
           'processNo',
           'middleWareType',
           'kind',
+          'eventLevel',
+          'eventCount',
+          'state',
+          'createTime',
+          'updateTime',
+        ],
+        stateReLabels: [
+          'eventCount',
+          'eventLevel',
+          'state'
         ],
         stateExLabels: [
           'Application',

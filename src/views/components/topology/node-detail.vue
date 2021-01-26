@@ -24,9 +24,12 @@
         v-show="
           smallDetailItems.includes(key) ||
             (key === 'eventCount' && !stateExLabels.includes(curNodeCrossLayer['label'])) ||
+            (key === 'eventLevel' && !stateExLabels.includes(curNodeCrossLayer['label'])) ||
             (key === 'state' && !stateExLabels.includes(curNodeCrossLayer['label']))
         "
-        :class="{ small: smallDetailItems.includes(key) || key === 'eventCount' || key === 'state' }"
+        :class="{
+          small: smallDetailItems.includes(key) || key === 'eventCount' || key === 'eventLevel' || key === 'state',
+        }"
       >
         <span class="item-title" :title="key">{{ key }} :</span>
         <span class="item-content" :title="value">{{ value }}</span>
@@ -37,16 +40,7 @@
 </template>
 
 <script lang="js">
-  import appIcon from './assets/png/APPLICATION.png';
-  import middleWareIcon from './assets/png/MIDDLEWARE.png';
-  import middleWareCacheIcon from './assets/png/MIDDLEWARE_CACHE.png';
-  import middleWareDatabaseIcon from './assets/png/MIDDLEWARE_DATABASE.png';
-  import middleWareMQIcon from './assets/png/MIDDLEWARE_MQ.png';
-  import processIcon from './assets/png/PROCESS.png';
-  import workloadIcon from './assets/png/WORKLOAD.png';
-  import podIcon from './assets/png/POD.png';
-  import nodeIcon from './assets/png/NODE.png';
-  import eventIcon from './assets/png/EVENT_LIGHT.png';
+  import { getIconByName } from './utils/icons';
   export default {
     props: {
       topoViewData: {
@@ -94,11 +88,6 @@
           '#c4ebad',
           '#96dee8',
         ],
-        middleWareIcons: {
-          'Cache': middleWareCacheIcon,
-          'Database': middleWareDatabaseIcon,
-          'MQ': middleWareMQIcon
-        }
       }
     },
 
@@ -136,6 +125,8 @@
           name: this.curNodeCrossLayer.name,
           type: this.curNodeCrossLayer.type,
           state: this.curNodeCrossLayer.state,
+          eventCount: this.curNodeCrossLayer.eventCount,
+          eventLevel: this.curNodeCrossLayer.eventLevel,
           middleWareType: this.curNodeCrossLayer.middleWareType,
           category: 0
         });
@@ -153,6 +144,8 @@
               name: link.target.name,
               type: link.target.type,
               state: link.target.state,
+              eventCount: link.target.eventCount,
+              eventLevel: link.target.eventLevel,
               middleWareType: link.target.middleWareType,
               category: 1
             });
@@ -169,6 +162,8 @@
               name: link.source.name,
               type: link.source.type,
               state: link.source.state,
+              eventCount: link.source.eventCount,
+              eventLevel: link.source.eventLevel,
               middleWareType: link.source.middleWareType,
               category: 1
             });
@@ -195,33 +190,28 @@
           } else if (node.category === 1) {
             node.symbolSize = 20;
           }
-          let nodeSymbol = 'image://' + appIcon + '';
+          let nodeSymbol = 'image://' + getIconByName(node.type);
           let nodeColor = '#fff';
           switch (node.type) {
             case 'Application':
-              nodeSymbol = 'image://' + appIcon + '';
               nodeColor = this.pallet[0];
               break;
             case 'MiddleWare':
-              nodeSymbol = 'image://' + (this.middleWareIcons[node.middleWareType] ?
-                  this.middleWareIcons[node.middleWareType] :
-                  middleWareIcon) + '';
+              let middleWareTypes = ['Cache', 'Database', 'MQ'];
+              let name = middleWareTypes.includes(node.middleWareType) ? node.type + '_' + node.middleWareType : node.type;
+              nodeSymbol = 'image://' + getIconByName(name);
               nodeColor = this.pallet[1];
               break;
             case 'Process':
-              nodeSymbol = 'image://' + processIcon + '';
               nodeColor = this.pallet[2];
               break;
             case 'Workload':
-              nodeSymbol = 'image://' + workloadIcon + '';
               nodeColor = this.pallet[3];
               break;
             case 'Pod':
-              nodeSymbol = 'image://' + podIcon + '';
               nodeColor = this.pallet[4];
               break;
             case 'Node':
-              nodeSymbol = 'image://' + nodeIcon + '';
               nodeColor = this.pallet[5];
               break;
           }
@@ -262,18 +252,25 @@
         // 提取事件节点
         let eventNodes = [];
         nodes.forEach(node => {
-          if (node.state === 'Abnormal') {
+          if (node.eventCount > 0) {
             let nodeObj = JSON.parse(JSON.stringify(node));
-            nodeObj.symbol = 'image://' + eventIcon + '';
-            nodeObj.symbolOffset = ['75%', '-75%'];
+            let eventIcon = '';
+            switch (node.eventLevel) {
+              case 'Critical': eventIcon = getIconByName('EVENT_CRITICAL'); break;
+              case 'Warning': eventIcon = getIconByName('EVENT_WARNING'); break;
+              default: break;
+            }
+            nodeObj.symbol = 'image://' + eventIcon;
             nodeObj.name = '';
             if (nodeObj.id === this.curNodeCrossLayer.id) {
               nodeObj.label.show = false;
             }
             if (nodeObj.category === 0) {
-              nodeObj.symbolSize = 24;
+              nodeObj.symbolOffset = [16, -20];
+              nodeObj.symbolSize = 20;
             } else if (nodeObj.category === 1) {
-              nodeObj.symbolSize = 16;
+              nodeObj.symbolOffset = [12, -14];
+              nodeObj.symbolSize = 14;
             }
             eventNodes.push(nodeObj);
           }

@@ -104,18 +104,25 @@
               @mouseleave.stop.prevent="emit('mouseLeaveNode', [$event, node])"
             />
 
-            <!-- warn icon -->
+            <!-- event icon -->
             <svg
               v-if="node.state === 'Abnormal'"
-              :x="node.x + (0.8 * getNodeSize(node)) / 2"
-              :y="node.y - 0.8 * getNodeSize(node)"
-              :width="0.8 * getNodeSize(node)"
-              :height="0.8 * getNodeSize(node)"
+              :x="node.x + (0.75 * getNodeSize(node)) / 2"
+              :y="node.y - 0.75 * getNodeSize(node)"
+              :width="0.6 * getNodeSize(node)"
+              :height="0.6 * getNodeSize(node)"
               :class="warnClass(node, [node.isDark ? 'dark-warn-icon' : '', node.isBright ? 'bright-warn-icon' : ''])"
               :key="'event' + key"
               aria-hidden="true"
             >
-              <use xlink:href="#icon-tanhao"></use>
+              <use
+                v-show="node.eventCount > 0 && node.eventLevel === 'Critical'"
+                :xlink:href="'#' + node.criticalEventIcon"
+              ></use>
+              <use
+                v-show="node.eventCount > 0 && node.eventLevel === 'Warning'"
+                :xlink:href="'#' + node.warningEventIcon"
+              ></use>
             </svg>
           </template>
         </g>
@@ -186,7 +193,6 @@
   </div>
 </template>
 <script>
-  require('../../assets/iconfont-topo/iconfont.js');
   import svgExport from '../lib/js/svgExport.js';
 
   export default {

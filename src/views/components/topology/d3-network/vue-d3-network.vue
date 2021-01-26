@@ -3,8 +3,7 @@
   import saveImage from './lib/js/saveImage.js';
   import svgExport from './lib/js/svgExport.js';
   import { defaults } from 'lodash';
-
-  import '../assets';
+  import { setUniformLayout } from '@/utils/topo';
 
   export default {
     name: 'd3-network',
@@ -97,18 +96,6 @@
         nodeSingleClicked: true,
         clickNodeTimer: null,
         isMouseDwonNet: true,
-        pallet: [
-          '#3fb1e3',
-          '#a0a7e6',
-          '#96dee8',
-          '#3f96e3',
-          '#6be6c1',
-          '#6be6c1',
-          '#626c91',
-          '#a0a7e6',
-          '#c4ebad',
-          '#96dee8',
-        ],
         topoTickCount: 0,
         defaultNodeSize: 20,
         defaultLinkWidth: 1,
@@ -127,7 +114,6 @@
           links: [],
         },
         tip: null,
-        middleWareTypes: ['MQ', 'Database', 'Cache'],
       };
     },
     render(createElement) {
@@ -387,11 +373,7 @@
           if (!node.name && node.name !== '0') vm.$set(node, 'name', 'node ' + node.id);
           // node icon
           if (node.type) {
-            node.svgIcon =
-              node.type === 'MiddleWare' && this.middleWareTypes.includes(node.middleWareType)
-                ? `${node.type}_${node.middleWareType}`.toUpperCase()
-                : node.type.toUpperCase();
-            node.svgIconBright = node.svgIcon + '-BRIGHT';
+            this.setNodeIcon(node);
           }
 
           if (this.isTopoNodesUpdated) {
@@ -399,39 +381,17 @@
             vm.$set(node, 'isDark', false);
             vm.$set(node, 'isBright', false);
             vm.$set(node, 'isRelatedToCurNode', false);
-            let nodeColor = '';
-            switch (
-              node.type // 调色板如何解耦？
-            ) {
-              case 'Application':
-                nodeColor = this.pallet[0];
-                break;
-              case 'MiddleWare':
-                nodeColor = this.pallet[1];
-                break;
-              case 'Process':
-                nodeColor = this.pallet[2];
-                break;
-              case 'Workload':
-                nodeColor = this.pallet[3];
-                break;
-              case 'Pod':
-                nodeColor = this.pallet[4];
-                break;
-              case 'Node':
-                nodeColor = this.pallet[5];
-                break;
-              default:
-                nodeColor = '#dcfaf3';
-                break;
-            }
-            vm.$set(node, '_color', nodeColor);
+            vm.$set(node, '_color', 'rgba(33, 126, 242, 0.373)');
           }
           if (this.isTopoNodesUpdated && index === nodes.length - 1) {
             this.$store.commit('rocketTopo/SET_IS_TOPO_NODES_UPDATED', false);
           }
           return node;
         });
+        // @todo: 非物理布局算法优化
+        // if (this.nodes.length > this.nodeNumSmall) {
+        //   setUniformLayout(this.nodes, this.size);
+        // }
       },
       buildLinks(links) {
         let vm = this;
@@ -454,6 +414,21 @@
           }
           return link;
         });
+      },
+      setNodeIcon(node) {
+        let iconTemp = node.type;
+        switch (node.type) {
+          case 'MiddleWare':
+            let middleWareTypes = ['MQ', 'Database', 'Cache'];
+            iconTemp = middleWareTypes.includes(node.middleWareType) ? `${iconTemp}_${node.middleWareType}` : iconTemp;
+            break;
+          default:
+            break;
+        }
+        node.svgIcon = iconTemp.toUpperCase();
+        node.svgIconBright = node.svgIcon + '_BRIGHT';
+        node.criticalEventIcon = 'EVENT_CRITICAL';
+        node.warningEventIcon = 'EVENT_WARNING';
       },
       itemCb(cb, item) {
         if (cb && typeof cb === 'function') item = cb(item);
@@ -660,8 +635,8 @@
           return;
         }
         this.$refs.svg.$forceUpdate();
-        let offsetX = this.$jq('#netContent').offset().left;
-        let offsetY = this.$jq('#netContent').offset().top;
+        let offsetX = this.$jq('#netContent').offset().left - this.$jq(window).scrollLeft();
+        let offsetY = this.$jq('#netContent').offset().top - this.$jq(window).scrollTop();
         this.linkTextStyle = {
           height: 25 + 'px',
           left: event.clientX - offsetX + 8 + 'px',
@@ -694,15 +669,15 @@
       },
       mouseEnterLinkAnchor(event, hoveredLink) {
         this.$refs.svg.$forceUpdate();
-        let offsetX = this.$jq('#netContent').offset().left;
-        let offsetY = this.$jq('#netContent').offset().top;
+        let offsetX = this.$jq('#netContent').offset().left - this.$jq(window).scrollLeft();
+        let offsetY = this.$jq('#netContent').offset().top - this.$jq(window).scrollTop();
         this.linkTextContent = `
           <div class="mb-5"><span class="grey">链路类型: </span>${hoveredLink.type}</div>
           <div class="mb-5"><span class="grey">调用频率: </span>${
             hoveredLink.callPerMinute === undefined ? ' ' : hoveredLink.callPerMinute + ' 次/分钟'
           }</div>
           <div><span class="grey">平均响应时间: </span>${
-            hoveredLink.responseTimePerMin === undefined ? ' ' : hoveredLink.responseTimePerMin + ' 毫秒/分钟'
+            hoveredLink.responseTimePerMin === undefined ? ' ' : hoveredLink.responseTimePerMin + ' ms'
           }</div>
         `;
         this.linkTextVisible = true;
@@ -774,8 +749,8 @@
             let zoomK = this.$d3.zoomTransform(this.$d3.select('#zoomContainer').node()).k;
             let zoomX = this.$d3.zoomTransform(this.$d3.select('#zoomContainer').node()).x;
             let zoomY = this.$d3.zoomTransform(this.$d3.select('#zoomContainer').node()).y;
-            let offsetX = this.$jq('#netSvg').offset().left;
-            let offsetY = this.$jq('#netSvg').offset().top;
+            let offsetX = this.$jq('#netSvg').offset().left - this.$jq(window).scrollLeft();
+            let offsetY = this.$jq('#netSvg').offset().top - this.$jq(window).scrollTop();
             let centerX = this.$jq('#netSvg').width() / 2;
             let centerY = this.$jq('#netSvg').height() / 2;
             this.nodes[this.dragging].fx =
@@ -838,8 +813,8 @@
         this.$refs.svg.$forceUpdate();
         let centerX = this.$jq('#netSvg').width() / 2;
         let centerY = this.$jq('#netSvg').height() / 2;
-        let offsetX = this.$jq('#netSvg').offset().left;
-        let offsetY = this.$jq('#netSvg').offset().top;
+        let offsetX = this.$jq('#netSvg').offset().left - this.$jq(window).scrollLeft();
+        let offsetY = this.$jq('#netSvg').offset().top - this.$jq(window).scrollTop();
         let zoomK = this.$d3.zoomTransform(this.$d3.select('#zoomContainer').node()).k;
         let zoomX = this.$d3.zoomTransform(this.$d3.select('#zoomContainer').node()).x;
         let zoomY = this.$d3.zoomTransform(this.$d3.select('#zoomContainer').node()).y;

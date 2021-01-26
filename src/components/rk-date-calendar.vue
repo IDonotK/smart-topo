@@ -359,7 +359,7 @@ limitations under the License. -->
           this.$parent.dates[1] = _time;
         }
         $this.$emit('input', _time);
-        $this.$parent.ok(info === 'h');
+        // $this.$parent.ok(info === 'h');
       },
     },
     mounted() {

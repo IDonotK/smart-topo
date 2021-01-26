@@ -111,12 +111,14 @@ axios.interceptors.response.use(
     } else {
       err.message = '连接服务器失败!';
     }
-    Message.error({
-      showClose: true,
-      message: err.message,
-      type: 'error',
-      duration: 5000,
-    });
-    return Promise.resolve(err.response);
+    if (!axios.isCancel(err)) {
+      Message.error({
+        showClose: true,
+        message: err.message,
+        type: 'error',
+        duration: 5000,
+      });
+    }
+    return Promise.reject(err);
   },
 );

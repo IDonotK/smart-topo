@@ -4,6 +4,10 @@ import axios, { AxiosPromise, AxiosResponse } from 'axios';
 import { cancelToken } from '@/utils/cancelToken';
 import { formatTopoData, utc2Peking } from '@/utils/topo';
 
+import { getEvents } from './getEvents.js';
+import { generateGesData } from './ges-data';
+import { getA1Up, getA1Down, getA1Cl, PS2_UP, PS2_DOWN, PS2_CL } from './relative-data';
+
 export interface Duration {
   start: string;
   end: string;
@@ -181,6 +185,17 @@ const actions: ActionTree<State, any> = {
         return res.data;
       })
       .catch((err) => {});
+    // return Promise.resolve().then((res) => {
+    //     const eventsDataRes = getEvents();
+    //     if (eventsDataRes && eventsDataRes.data && eventsDataRes.data.events) {
+    //       eventsDataRes.data.events.forEach(item => {
+    //         item.expansion = false;
+    //         item.createTime = utc2Peking(item.createTime);
+    //         item.updateTime = utc2Peking(item.updateTime);
+    //       })
+    //     }
+    //     return eventsDataRes.data;
+    // });
   },
   GET_RELYON_DATA(context: { commit: Commit; state: State }, params: any) {
     return axios
@@ -189,7 +204,8 @@ const actions: ActionTree<State, any> = {
         cancelToken: cancelToken(),
       })
       .then((res: any) => {
-        let relyonData = formatTopoData(res, true);
+        // let relyonData = formatTopoData(res, true);
+        let relyonData = formatTopoData(getA1Cl(), true);
         return relyonData;
       })
       .catch((err) => {});
@@ -201,7 +217,16 @@ const actions: ActionTree<State, any> = {
         cancelToken: cancelToken(),
       })
       .then((res: any) => {
-        let relativeData = formatTopoData(res, false);
+        // let relativeData = formatTopoData(res, false);
+        let relativeData = {
+          nodes: [],
+          links: [],
+        };
+        if (params.direction == 'in') {
+          relativeData = formatTopoData(getA1Up(), true);
+        } else {
+          relativeData = formatTopoData(getA1Down(), true);
+        }
         return relativeData;
       })
       .catch((err) => {});
@@ -219,7 +244,8 @@ const actions: ActionTree<State, any> = {
       })
       .then((res: any) => {
         context.state.isLoadingTopo = false;
-        let topoData = formatTopoData(res, true);
+        // let topoData = formatTopoData(res, true);
+        let topoData = formatTopoData(generateGesData(), true);
         context.commit(types.SET_TOPO_DATA, {
           nodes: topoData.nodes,
           links: topoData.links,

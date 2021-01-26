@@ -8,17 +8,20 @@ import './svg/POD.svg';
 import './svg/PROCESS.svg';
 import './svg/WORKLOAD.svg';
 
-import './svg/APPLICATION-BRIGHT.svg';
-import './svg/MIDDLEWARE-BRIGHT.svg';
+import './svg/APPLICATION_BRIGHT.svg';
+import './svg/MIDDLEWARE_BRIGHT.svg';
 import './svg/MIDDLEWARE_MQ-BRIGHT.svg';
 import './svg/MIDDLEWARE_DATABASE-BRIGHT.svg';
 import './svg/MIDDLEWARE_CACHE-BRIGHT.svg';
-import './svg/NODE-BRIGHT.svg';
-import './svg/POD-BRIGHT.svg';
-import './svg/PROCESS-BRIGHT.svg';
-import './svg/WORKLOAD-BRIGHT.svg';
+import './svg/NODE_BRIGHT.svg';
+import './svg/POD_BRIGHT.svg';
+import './svg/PROCESS_BRIGHT.svg';
+import './svg/WORKLOAD_BRIGHT.svg';
 
 import './svg/COPY.svg';
-import './svg/COPY-GRAY.svg';
-import './svg/DETAIL-EYE-GRAY.svg';
-import './svg/DETAIL-PAGE-GRAY.svg';
+import './svg/COPY_GRAY.svg';
+import './svg/DETAIL_EYE_GRAY.svg';
+import './svg/DETAIL_PAGE_GRAY.svg';
+
+import './svg/PLAY_START.svg';
+import './svg/PLAY_STOP.svg';
