@@ -21,15 +21,8 @@
         class="info-item"
         v-for="(value, key) in curNodeCrossLayer"
         :key="'small' + key"
-        v-show="
-          smallDetailItems.includes(key) ||
-            (key === 'eventCount' && !stateExLabels.includes(curNodeCrossLayer['label'])) ||
-            (key === 'eventLevel' && !stateExLabels.includes(curNodeCrossLayer['label'])) ||
-            (key === 'state' && !stateExLabels.includes(curNodeCrossLayer['label']))
-        "
-        :class="{
-          small: smallDetailItems.includes(key) || key === 'eventCount' || key === 'eventLevel' || key === 'state',
-        }"
+        v-show="smallDetailItems.includes(key)"
+        :class="{ small: smallDetailItems.includes(key) }"
       >
         <span class="item-title" :title="key">{{ key }} :</span>
         <span class="item-content" :title="value">{{ value }}</span>
@@ -70,11 +63,9 @@
           'processNo',
           'middleWareType',
           'kind',
-        ],
-        stateExLabels: [
-          'Application',
-          'MiddleWare',
-          'Process',
+          'eventCount',
+          'eventLevel',
+          'state'
         ],
         pallet: [
           '#3fb1e3',

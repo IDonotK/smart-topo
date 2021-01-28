@@ -28,6 +28,7 @@ export interface State {
   exploreNode: any;
   topoData: any;
   toolSetInstance: any;
+  topoTimeInstance: any;
   networkInstance: any;
   elemIdsRTCAll: any;
   topoDetailData: any;
@@ -56,6 +57,7 @@ const initState: State = {
     links: [],
   },
   toolSetInstance: {},
+  topoTimeInstance: {},
   networkInstance: {},
   elemIdsRTCAll: {
     nodeIds: [],
@@ -123,6 +125,9 @@ const mutations = {
   },
   [types.SET_TOOL_SET_INSTANCE](state: State, data: any) {
     state.toolSetInstance = data;
+  },
+  [types.SET_TOPO_TIME_INSTANCE](state: State, data: any) {
+    state.topoTimeInstance = data;
   },
   [types.SET_NETWORK_INSTANCE](state: State, data: any) {
     state.networkInstance = data;
@@ -207,13 +212,17 @@ const actions: ActionTree<State, any> = {
       .catch((err) => {});
   },
   GET_TOPO_DATA(context: { commit: Commit; state: State }, params: any) {
-    context.state.isLoadingTopo = true;
-    context.commit(types.SET_TOPO_DATA, {
-      nodes: [],
-      links: [],
-    });
+    if (params.isClearTopoData) {
+      context.state.isLoadingTopo = true;
+      context.commit(types.SET_TOPO_DATA, {
+        nodes: [],
+        links: [],
+      });
+    } else {
+      context.state.isLoadingTopo = false;
+    }
     return axios
-      .get(window.location.origin + '/v2/endpoints', {
+      .get(window.location.origin + '/v1/endpoints', {
         params,
         cancelToken: cancelToken(),
       })

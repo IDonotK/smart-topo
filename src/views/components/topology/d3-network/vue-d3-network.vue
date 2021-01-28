@@ -2,7 +2,6 @@
   import svgRenderer from './components/svgRenderer.vue';
   import saveImage from './lib/js/saveImage.js';
   import svgExport from './lib/js/svgExport.js';
-  import { defaults } from 'lodash';
   import { setUniformLayout } from '@/utils/topo';
 
   export default {
@@ -46,6 +45,10 @@
       return {
         nodes: [],
         links: [],
+        preNetData: {
+          nodes: [],
+          links: [],
+        },
         size: {
           w: 500,
           h: 500,
@@ -100,6 +103,7 @@
         defaultNodeSize: 20,
         defaultLinkWidth: 1,
         nodeNumSmall: 20,
+        nodeNumDiff: 10,
         defaultFontSize: 16,
         elemsAroundPreHovNodeDeep: {
           nodes: [],
@@ -114,6 +118,8 @@
           links: [],
         },
         tip: null,
+        isNodesChanged: false,
+        deltaIterateNum: 50,
       };
     },
     render(createElement) {
@@ -177,10 +183,14 @@
       this.$nextTick(() => {
         this.animate();
       });
-      if (this.resizeListener) window.addEventListener('resize', this.onResize);
+      if (this.resizeListener) {
+        window.addEventListener('resize', this.onResize);
+      }
     },
     beforeDestroy() {
-      if (this.resizeListener) window.removeEventListener('resize', this.onResize);
+      if (this.resizeListener) {
+        window.removeEventListener('resize', this.onResize);
+      }
     },
     computed: {
       isAutoReloadTopo() {
@@ -230,12 +240,13 @@
       },
     },
     watch: {
-      netData(newVal) {
+      netData(newVal, oldVal) {
+        this.preNetData = oldVal;
         this.updateOptions(this.options);
-        // this.resetElemsSize();
         this.buildNodes(newVal.nodes);
         this.buildLinks(newVal.links);
-        this.reset();
+        // this.reset();
+        this.animate();
       },
       nodeSym() {
         this.updateNodeSvg();
@@ -251,11 +262,6 @@
       },
     },
     methods: {
-      resetElemsSize() {
-        this.nodeSize = 20;
-        this.linkWidth = 1;
-        this.fontSize = 16;
-      },
       getScaleFixForSim(nodes, fix) {
         if (nodes.length === 0) {
           return;
@@ -321,26 +327,14 @@
         return scaleFix;
       },
       fixTopoScaleOnBound() {},
-      fixTopoScaleOnCoord() {
+      fixTopoScaleOnCoord(nodes) {
         let scaleFix = 1;
-        if (this.nodes.length <= this.nodeNumSmall) {
-          scaleFix = this.getScaleFixForSim(this.nodes, 0.6);
+        if (nodes.length <= this.nodeNumSmall) {
+          scaleFix = this.getScaleFixForSim(nodes, 0.6);
         } else {
-          scaleFix = this.getScaleFixForSim(this.nodes, 0.8);
-        }
-        if (this.nodes.length > 2 && scaleFix > 1) {
-          this.nodeSize = this.defaultNodeSize / scaleFix;
-          this.linkWidth = this.defaultLinkWidth / scaleFix;
-          this.fontSize = this.defaultFontSize / scaleFix;
+          scaleFix = this.getScaleFixForSim(nodes, 0.8);
         }
         this.$store.commit('rocketTopo/SET_TOPO_SCALE_FIX', scaleFix);
-        this.zoomController.scaleTo(
-          this.$d3
-            .select('.net-svg')
-            .transition()
-            .duration(10),
-          scaleFix,
-        );
       },
       methodCall(action, args) {
         let method = this[action];
@@ -361,17 +355,28 @@
       },
       buildNodes(nodes) {
         let vm = this;
+        if (nodes.length === this.preNetData.nodes.length) {
+          this.isNodesChanged = false;
+        } else {
+          this.isNodesChanged = true;
+        }
         this.nodes = nodes.map((node, index) => {
-          // node formatter option
           node = this.itemCb(this.nodeCb, node);
-          // index as default node id
-          if (!node.id && node.id !== 0) vm.$set(node, 'id', index);
-          // initialize node coords
+          if (!node.id && node.id !== 0) vm.$set(node, 'id', '');
           if (!node.x) vm.$set(node, 'x', 0);
           if (!node.y) vm.$set(node, 'y', 0);
-          // node default name, allow string 0 as name
-          if (!node.name && node.name !== '0') vm.$set(node, 'name', 'node ' + node.id);
-          // node icon
+          if (nodes.length >= this.nodeNumDiff) {
+            for (let i = 0; i < this.preNetData.nodes.length; i++) {
+              if (node.id === this.preNetData.nodes[i].id) {
+                node.x = this.preNetData.nodes[i].x;
+                node.y = this.preNetData.nodes[i].y;
+                node.fx = this.preNetData.nodes[i].x;
+                node.fy = this.preNetData.nodes[i].y;
+                break;
+              }
+            }
+          }
+          if (!node.name && node.name !== '0') vm.$set(node, 'name', '');
           if (node.type) {
             this.setNodeIcon(node);
           }
@@ -396,9 +401,7 @@
       buildLinks(links) {
         let vm = this;
         this.links = links.map((link, index) => {
-          // link formatter option
           link = this.itemCb(this.linkCb, link);
-          // source and target for this.$d3
           link.source = link.sid;
           link.target = link.tid;
           if (!link.id) vm.$set(link, 'id', 'link-' + index);
@@ -448,8 +451,8 @@
           .forceSimulation()
           .stop()
           .alpha(0.5) // 0.5以0.01的速度衰减到0.01，控制它们，让布局更合理
-          .alphaMin(0.01)
-          .alphaDecay(0.01)
+          // .alphaMin(0.01)
+          // .alphaDecay(0.01)
           .velocityDecay(0.5) // 控制节点速度
           .nodes(nodes);
 
@@ -474,21 +477,6 @@
             }),
           );
         }
-        sim.on('tick', () => {
-          if (this.isFirstTick && this.nodes.length > 0) {
-            this.topoTickCount++;
-            if (this.topoTickCount % 2 === 0) {
-              this.fixTopoScaleOnCoord();
-            }
-          }
-        });
-        sim.on('end', () => {
-          if (this.isFirstTick && this.nodes.length > 0) {
-            this.$store.commit('rocketTopo/SET_IS_FIRST_TICK', false);
-            this.fixTopoScaleOnCoord();
-          }
-        });
-
         sim = this.setCustomForces(sim);
         sim = this.itemCb(this.simCb, sim);
         return sim;
@@ -511,16 +499,111 @@
         if (func && typeof func === 'function') return func;
         return null;
       },
-      animate() {
-        if (this.simulation) this.simulation.stop();
-        if (this.forces.Link !== false) this.simulation = this.simulate(this.nodes, this.links);
-        else this.simulation = this.simulate(this.nodes);
-        this.simulation.restart();
+      setTopoScaleFix(nodes, links) {
+        let vNodes = JSON.parse(JSON.stringify(nodes));
+        let vLinks = JSON.parse(JSON.stringify(links));
+        let vSimulation = this.simulate(vNodes, vLinks);
+        if (vSimulation) {
+          vSimulation.stop();
+        }
+        this.startSimulation(vSimulation, vNodes, true);
+      },
+      startVSimulation(simulation, nodes, isVsim) {
+        const n = Math.ceil(Math.log(simulation.alphaMin()) / Math.log(1 - simulation.alphaDecay()));
+        this.$d3.timeout(() => {
+          for (let i = 0; i < n; i++) {
+            simulation.tick();
+            if (isVsim) {
+              if (i === n - 1) {
+                this.simulationTicked(nodes);
+              } else {
+                this.simulationTicking(nodes);
+              }
+            } else {
+              if (i === n - 1) {
+                this.fixTopoViewOnScale(nodes);
+              }
+            }
+          }
+        });
+      },
+      async animate() {
+        if (this.isNodesChanged) {
+          await this.setTopoScaleFix(this.nodes, this.links);
+        }
+        if (this.simulation) {
+          this.simulation.stop();
+        }
+        if (this.forces.Link !== false) {
+          this.simulation = this.simulate(this.nodes, this.links);
+        } else {
+          this.simulation = this.simulate(this.nodes);
+        }
+        this.startSimulation(this.simulation, this.nodes, false);
+      },
+      startSimulation(simulation, nodes, isVsim) {
+        const n = Math.ceil(Math.log(simulation.alphaMin()) / Math.log(1 - simulation.alphaDecay()));
+        console.log(n);
+        this.startIteration(0, n, simulation, nodes, isVsim);
+      },
+      startIteration(start, n, simulation, nodes, isVsim) {
+        for (let i = start; i < start + this.deltaIterateNum; i++) {
+          if (i >= n) {
+            return;
+          }
+          simulation.tick();
+          if (isVsim) {
+            if (i === n - 1) {
+              this.simulationTicked(nodes);
+            } else {
+              this.simulationTicking(nodes);
+            }
+          } else {
+            if (i == start + this.deltaIterateNum - 1 || i == n - 1) {
+              this.fixTopoViewOnScale(nodes);
+            }
+          }
+        }
+        setTimeout(() => {
+          this.startIteration(start + this.deltaIterateNum, n, simulation, nodes, isVsim);
+        }, 0);
+      },
+      fixTopoViewOnScale(nodes) {
+        let scaleFix = this.topoScaleFix;
+        if (nodes.length > 2 && scaleFix > 1) {
+          this.nodeSize = this.defaultNodeSize / scaleFix;
+          this.linkWidth = this.defaultLinkWidth / scaleFix;
+          this.fontSize = this.defaultFontSize / scaleFix;
+        }
+        this.zoomController.scaleTo(
+          this.$d3
+            .select('.net-svg')
+            .transition()
+            .duration(2),
+          scaleFix,
+        );
+      },
+      simulationTicking(nodes) {
+        if (this.isFirstTick && nodes.length > 0) {
+          this.topoTickCount++;
+          if (this.topoTickCount % 2 === 0) {
+            this.fixTopoScaleOnCoord(nodes);
+          }
+        }
+      },
+      simulationTicked(nodes) {
+        if (this.isFirstTick && nodes.length > 0) {
+          this.$store.commit('rocketTopo/SET_IS_FIRST_TICK', false);
+          this.topoTickCount = 0;
+          this.fixTopoScaleOnCoord(nodes);
+        }
       },
       reset() {
         this.animate();
         this.nodes = this.simulation.nodes();
-        if (this.forces.links) this.links = this.simulation.force('link').links();
+        if (this.forces.links) {
+          this.links = this.simulation.force('link').links();
+        }
       },
       onResize() {
         let size = this.options.size;
@@ -742,8 +825,8 @@
             if (this.nodes[this.dragging].id === this.currentNode.id) {
               return;
             }
-            this.simulation.restart();
-            this.simulation.alpha(0.5);
+            // this.simulation.alpha(0.5);
+            // this.simulation.restart();
             let pos = this.clientPos(event);
             // 适配缩放后的拖拽
             let zoomK = this.$d3.zoomTransform(this.$d3.select('#zoomContainer').node()).k;
@@ -757,6 +840,8 @@
               centerX - (centerX + offsetX - pos.x) / zoomK - (zoomX + centerX * (zoomK - 1)) / zoomK;
             this.nodes[this.dragging].fy =
               centerY - (centerY + offsetY - pos.y) / zoomK - (zoomY + centerY * (zoomK - 1)) / zoomK;
+            this.nodes[this.dragging].x = this.nodes[this.dragging].fx;
+            this.nodes[this.dragging].y = this.nodes[this.dragging].fy;
           }
         }
       },
@@ -801,8 +886,8 @@
         this.nodes[this.dragging].fx = null;
         this.nodes[this.dragging].fy = null;
         this.dragging = false;
-        this.simulation.alpha(0.1);
-        this.simulation.restart();
+        // this.simulation.alpha(0.1);
+        // this.simulation.restart();
         this.setMouseOffset();
       },
       // -- Render helpers

@@ -49,18 +49,15 @@
       topoData() { // 全部拓扑数据
         return this.$store.state.rocketTopo.topoData;
       },
-      durationRow() {
-        return this.$store.state.rocketbot.durationRow;
-      },
     },
 
     watch: {
       topoViewData(newVal) {
-        if (newVal.nodes.length <= 2) {
-          this.$store.commit('rocketTopo/SET_TOPO_SCALE_FIX', 2);
-        } else {
-          this.$store.commit('rocketTopo/SET_TOPO_SCALE_FIX', 1);
-        }
+        // if (newVal.nodes.length <= 2) {
+        //   this.$store.commit('rocketTopo/SET_TOPO_SCALE_FIX', 2);
+        // } else {
+        //   this.$store.commit('rocketTopo/SET_TOPO_SCALE_FIX', 1);
+        // }
         this.$store.commit('rocketTopo/SET_IS_FIRST_TICK', true);
       },
       topoData(newVal) {
@@ -71,11 +68,11 @@
     },
 
     created() {
-      this.initTopoData();
+      this.initSceneConfig();
     },
 
     methods: {
-      querySceneConfig() {
+      initSceneConfig() {
         return this.$store.dispatch('rocketTopo/GET_SCENE_CONFIG', {});
       },
       restoreFilters() {
@@ -86,13 +83,6 @@
       },
       onSearchResult(isMatch) {
         this.isMatch = isMatch;
-      },
-      async initTopoData() {
-        let sceneConfig = await this.querySceneConfig();
-        this.$store.dispatch('rocketTopo/GET_TOPO_DATA', {
-          start_time: dateFormat("YYYY-mm-dd HH:MM:SS", this.durationRow.start),
-          end_time: dateFormat("YYYY-mm-dd HH:MM:SS", this.durationRow.end),
-        });
       },
     },
 
@@ -106,7 +96,7 @@
     left: 0;
     right: 0;
     min-height: 320px;
-    min-width: 1305px;
+    min-width: 1200px;
     background: #333840;
     overflow: hidden;
   }

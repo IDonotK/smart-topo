@@ -138,8 +138,8 @@
             v-show="link.type === 'TracingTo' || link.type === 'SubTracingTo'"
             :r="nodeSize / 6"
             fill="#217EF25f"
-            :cx="(link.source.x + link.target.x) / 2"
-            :cy="(link.source.y + link.target.y) / 2"
+            :cx="linkAnchorCoord(link).x"
+            :cy="linkAnchorCoord(link).y"
             @mouseenter.stop.prevent="emit('mouseEnterLinkAnchor', [$event, link])"
             @mouseleave.stop.prevent="emit('mouseLeaveLinkAnchor', [$event, link])"
           ></circle>
@@ -152,7 +152,7 @@
           <text
             v-for="(link, index) in links"
             v-show="link.label === 'TracingTo' || link.label === 'SubTracingTo'"
-            :x="Math.sqrt(Math.pow(link.target.y - link.source.y, 2) + Math.pow(link.target.x - link.source.x, 2)) / 2"
+            :x="linkIndicatorCoord(link)"
             text-anchor="middle"
             :dy="-nodeSize / 6"
             :key="index"
@@ -322,16 +322,40 @@
         return cssClass;
       },
       linkPath(link) {
+        let sx = link.source.x ? link.source.x : 0;
+        let sy = link.source.y ? link.source.y : 0;
+        let tx = link.target.x ? link.target.x : 0;
+        let ty = link.target.y ? link.target.y : 0;
         let d = {
-          M: [link.source.x, link.source.y],
-          X: [link.target.x, link.target.y],
+          M: [sx, sy],
+          X: [tx, ty],
         };
         if (this.strLinks) {
           return 'M ' + d.M.join(' ') + ' L' + d.X.join(' ');
         } else {
-          d.Q = [link.source.x, link.target.y];
+          d.Q = [sx, ty];
           return 'M ' + d.M + ' Q ' + d.Q.join(' ') + ' ' + d.X;
         }
+      },
+      linkAnchorCoord(link) {
+        let sx = link.source.x ? link.source.x : 0;
+        let sy = link.source.y ? link.source.y : 0;
+        let tx = link.target.x ? link.target.x : 0;
+        let ty = link.target.y ? link.target.y : 0;
+        let coord = {
+          x: (sx + tx) / 2,
+          y: (sy + ty) / 2,
+        };
+        return coord;
+      },
+      linkIndicatorCoord(link) {
+        let sx = link.source.x ? link.source.x : 0;
+        let sy = link.source.y ? link.source.y : 0;
+        let tx = link.target.x ? link.target.x : 0;
+        let ty = link.target.y ? link.target.y : 0;
+        let detalX = tx - sx;
+        let detalY = ty - sy;
+        return Math.sqrt(Math.pow(detalY, 2) + Math.pow(detalX, 2)) / 2;
       },
       nodeStyle(node) {
         return node._color ? 'fill: ' + node._color : '';

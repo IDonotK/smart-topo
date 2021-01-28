@@ -48,7 +48,7 @@ import {
   Autocomplete,
   DatePicker,
 } from 'element-ui';
-import './assets/styles/fix-element-ui.scss';
+// import './assets/styles/fix-element-ui.scss';
 Vue.prototype.$ELEMENT = { size: 'small', zIndex: 99999 };
 Vue.use(Button);
 Vue.use(Dialog);

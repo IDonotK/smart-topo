@@ -25,6 +25,20 @@
         v-if="show || type === 'inline'"
       >
         <template v-if="range">
+          <div class="datepicker-popup__sidebar">
+            <button type="button" class="datepicker-popup__shortcut" @click="quickPick('oneMinute')">
+              {{ this.local.oneMinuteCutTip }}
+            </button>
+            <button type="button" class="datepicker-popup__shortcut" @click="quickPick('tenMinutes')">
+              {{ this.local.tenMinutesCutTip }}
+            </button>
+            <button type="button" class="datepicker-popup__shortcut" @click="quickPick('thirtyMinutes')">
+              {{ this.local.thirtyMinutesCutTip }}
+            </button>
+            <button type="button" class="datepicker-popup__shortcut" @click="quickPick('oneHour')">
+              {{ this.local.oneHourCutTip }}
+            </button>
+          </div>
           <div class="datepicker-popup__body">
             <rk-calendar v-model="dates[0]" :left="true"></rk-calendar>
             <rk-calendar v-model="dates[1]" :right="true"></rk-calendar>
@@ -118,8 +132,9 @@
           cancelTip: this.$t('cancel'),
           submitTip: this.$t('confirm'),
           oneMinuteCutTip: this.$t('oneMinuteCutTip'),
-          fiveMinutesCutTip: this.$t('fiveMinutesCutTip'),
           tenMinutesCutTip: this.$t('tenMinutesCutTip'),
+          thirtyMinutesCutTip: this.$t('thirtyMinutesCutTip'),
+          oneHourCutTip: this.$t('oneHourCutTip'),
         };
       },
       range() {
@@ -147,7 +162,7 @@
         }
       },
       dates(val) {
-        this.timeRangeMax = val[1].getTime() - val[0].getTime() > 10 * 60 * 1000 ? true : false;
+        this.timeRangeMax = val[1].getTime() - val[0].getTime() > 24 * 60 * 60 * 1000 ? true : false;
         this.timeRangeMin = val[1].getTime() - val[0].getTime() < 30 * 1000 ? true : false;
       }
     },
@@ -224,11 +239,14 @@
           case 'oneMinute':
             start.setTime(start.getTime() - 60 * 1000);
             break;
-          case 'fiveMinutes':
-            start.setTime(start.getTime() - 5 * 60 * 1000);
-            break;
           case 'tenMinutes':
             start.setTime(start.getTime() - 10 * 60 * 1000);
+            break;
+          case 'thirtyMinutes':
+            start.setTime(start.getTime() - 30 * 60 * 1000);
+            break;
+          case 'oneHour':
+            start.setTime(start.getTime() - 60 * 60 * 1000);
             break;
           default:
             break;
@@ -358,7 +376,8 @@
   }
 
   .datepicker-popup {
-    right: 0px;
+    width: 500px;
+    left: 0px;
     border-radius: 4px;
     position: absolute;
     transition: all 200ms ease;
@@ -372,6 +391,7 @@
     padding: 5px;
     overflow: hidden;
     z-index: 999;
+
     &.top {
       bottom: 35px;
       transform-origin: center bottom;
@@ -384,7 +404,7 @@
       position: absolute;
       top: 0;
       bottom: 0;
-      width: 100px;
+      width: 80px;
       height: 100%;
       padding: 5px;
       border-right: solid 1px #eaeaea;
@@ -406,7 +426,7 @@
       }
     }
     &__body {
-      padding-left: 5px;
+      padding-left: 85px;
       .clear {
         clear: both;
       }
@@ -420,10 +440,6 @@
 
   .datepicker-range {
     min-width: 256px;
-  }
-
-  .datepicker-range .datepicker-popup {
-    width: 420px;
   }
 
   .datepicker-bottom {
@@ -452,6 +468,8 @@
 
   .datepicker__tips {
     margin: 8px 5px;
+    text-align: left;
+    padding-left: 80px;
     .rk-time-tips {
       color: red;
     }

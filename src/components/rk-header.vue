@@ -44,7 +44,6 @@
     @State('rocketTopo') private rocketTopo: any;
     @Getter('duration') private duration: any;
     @Action('SET_DURATION') private SET_DURATION: any;
-    @Action('rocketTopo/GET_TOPO_DATA') private GET_TOPO_DATA: any;
     @Mutation('rocketTopo/SET_IS_AUTO_RELOAD_TOPO') private SET_IS_AUTO_RELOAD_TOPO: any;
 
     private autoTime: number = 10;
@@ -63,30 +62,16 @@
     private get durationRow() {
       return this.rocketbot.durationRow;
     }
-    @Watch('durationRow')
-    private onDurationRow() {
-      this.reLoadTopoData();
-    }
 
     private mounted() {
       this.$router.push('/topology');
     }
 
     private handleReload() {
-      const gap = this.duration.end.getTime() - this.duration.start.getTime();
-      const time: Date[] = [new Date(new Date().getTime() - gap), new Date()];
-      this.SET_DURATION(timeFormat(time));
-    }
-
-    private reLoadTopoData() {
-      this.rocketTopo.toolSetInstance.refreshTopoView(false);
-      const params = {
-        start_time: '',
-        end_time: '',
-      };
-      params.start_time = dateFormat('YYYY-mm-dd HH:MM:SS', this.duration.start);
-      params.end_time = dateFormat('YYYY-mm-dd HH:MM:SS', this.duration.end);
-      this.GET_TOPO_DATA(params);
+      let gap = this.duration.end.getTime() - this.duration.start.getTime();
+      let endTime = new Date();
+      let startTime = new Date(endTime.getTime() - gap);
+      this.rocketTopo.topoTimeInstance.setDateTimes(startTime, endTime);
     }
 
     private handleAuto() {

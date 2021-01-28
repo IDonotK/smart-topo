@@ -1,9 +1,5 @@
 <template>
   <div class="topo-tool-set">
-    <!-- 时间选择 -->
-    <div class="time-pick-wrapper">
-      <RkToolTime />
-    </div>
     <!-- 拓扑探索 -->
     <div class="explore-topo-wrapper">
       <svg class="icon topo-icon" @click="handleClickExploreBtn">
@@ -987,7 +983,7 @@
   .topo-tool-set {
     position: absolute;
     right: 262px;
-    top: 2px;
+    top: 70px;
     height: 40px;
     padding-left: 10px;
     border-radius: 2px;
@@ -996,7 +992,6 @@
     justify-content: flex-end;
     align-items: center;
 
-    .time-pick-wrapper,
     .explore-topo-wrapper,
     .search-wrapper,
     .size-controller,
@@ -1272,7 +1267,7 @@
     &.el-popper[x-placement^='bottom'] {
       .popper__arrow,
       .popper__arrow::after {
-        border-bottom-color: #252a2f;
+        border-bottom-color: #ddd;
       }
     }
   }

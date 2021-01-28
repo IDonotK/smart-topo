@@ -37,11 +37,7 @@
             class="info-item"
             v-for="(item, index) in nodeDetailItems"
             :key="'field' + index"
-            v-show="
-              viewNode.hasOwnProperty(item) &&
-                ((stateReLabels.includes(item) && !stateExLabels.includes(viewNode['label'])) ||
-                  !stateReLabels.includes(item))
-            "
+            v-show="viewNode.hasOwnProperty(item)"
           >
             <span class="item-title">{{ item }} :</span>
             <span class="item-content" v-if="item === 'id'">
@@ -130,16 +126,6 @@
           'state',
           'createTime',
           'updateTime',
-        ],
-        stateReLabels: [
-          'eventCount',
-          'eventLevel',
-          'state'
-        ],
-        stateExLabels: [
-          'Application',
-          'MiddleWare',
-          'Process',
         ],
         isShowEvents: false,
       }

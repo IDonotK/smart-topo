@@ -18,7 +18,7 @@
           <span class="item-title" title="All">All : </span>
           <span class="item-content" :title="item.total">{{ item.total }}</span>
         </div>
-        <div class="tsnic-item" v-show="!['Application', 'MiddleWare', 'Process'].includes(item.id)">
+        <div class="tsnic-item">
           <span class="item-title" title="All">Abnormal : </span>
           <span class="item-content abnormal-number" :title="item.abnormal">{{ item.abnormal }}</span>
         </div>

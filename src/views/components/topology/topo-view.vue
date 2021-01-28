@@ -25,8 +25,8 @@
       <!-- 右侧主拓扑图 -->
       <div class="tvc-r" id="tvcrId" ref="tvcr">
         <!-- 时间轴 -->
-        <div class="time-line-wrapper">
-          <TopoTimeLine :step="1" :labels="false" v-show="false" />
+        <div class="topo-time-wrapper">
+          <TopoTime />
         </div>
         <!-- 拓扑图 -->
         <d3-network
@@ -77,7 +77,7 @@
   import TopoDetail from './topo-detail.vue';
   import NodeDetail from './node-detail.vue';
   import NodeEvents from './node-events.vue';
-  import TopoTimeLine from './topo-time-line.vue';
+  import TopoTime from './topo-time.vue';
 
   import * as utils from './d3-network/utils.js';
   import D3Network from './d3-network/vue-d3-network.vue';
@@ -167,7 +167,7 @@
       NodeDetail,
       NodeEvents,
       D3Network,
-      TopoTimeLine
+      TopoTime
     },
 
     computed: {
@@ -330,6 +330,7 @@
     bottom: 2px;
     background-color: #333840;
     text-align: center;
+    overflow: hidden;
 
     .tvc-c {
       width: 100%;
@@ -393,10 +394,11 @@
         height: 100%;
         position: relative;
 
-        .time-line-wrapper {
+        .topo-time-wrapper {
           position: absolute;
-          top: 62px;
+          top: 2px;
           width: 100%;
+          z-index: 1;
         }
 
         .explore-dialog {
