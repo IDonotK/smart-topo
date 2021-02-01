@@ -7,7 +7,7 @@ import { formatTopoData, utc2Peking } from '@/utils/topo';
 import { getEvents } from './getEvents.js';
 import { generateGesData } from './ges-data';
 import { generateGesDataOnTime } from './ges-data-times';
-import { getA1Up, getA1Down, getA1Cl, PS2_UP, PS2_DOWN, PS2_CL } from './relative-data';
+import { getA1Up, getA1Down, getA1Cl, getA2Up, getA2Down, getA2Cl } from './relative-data';
 let timeIndex = 0;
 
 export interface Duration {
@@ -206,7 +206,8 @@ const actions: ActionTree<State, any> = {
   },
   GET_RELYON_DATA(context: { commit: Commit; state: State }, params: any) {
     return Promise.resolve().then(() => {
-      let relyonData = formatTopoData(getA1Cl(), true);
+      // let relyonData = formatTopoData(getA1Cl(), true);
+      let relyonData = formatTopoData(getA2Cl(), true);
       return relyonData;
     });
     // return axios.get( window.location.origin + '/v1/underlying-resources', {
@@ -227,9 +228,11 @@ const actions: ActionTree<State, any> = {
         links: [],
       };
       if (params.direction == 'in') {
-        relativeData = formatTopoData(getA1Up(), true);
+        // relativeData = formatTopoData(getA1Up(), true);
+        relativeData = formatTopoData(getA2Up(), true);
       } else {
-        relativeData = formatTopoData(getA1Down(), true);
+        // relativeData = formatTopoData(getA1Down(), true);
+        relativeData = formatTopoData(getA2Down(), true);
       }
       return relativeData;
     });
@@ -262,42 +265,41 @@ const actions: ActionTree<State, any> = {
     } else {
       context.state.isLoadingTopo = false;
     }
-    // return new Promise((resolve, reject) => {
-    //   // setTimeout(() => {
-    //   //   resolve(1);
-    //   // }, 2000);
-    //   resolve(1);
-    // }).then(() => {
-    //   context.state.isLoadingTopo = false;
-    //   let topoData = formatTopoData(generateGesData(), true);
-    //   // timeIndex++;
-    //   // if (timeIndex > 8) {
-    //   //   timeIndex = 1;
-    //   // }
-    //   // let topoData = formatTopoData(generateGesDataOnTime(timeIndex), true);
-    //   context.commit(types.SET_TOPO_DATA, {
-    //     nodes: topoData.nodes,
-    //     links: topoData.links,
-    //   });
-    // });
-
-    return axios
-      .get(window.location.origin + '/v1/endpoints', {
-        params,
-        cancelToken: cancelToken(),
-      })
-      .then((res: any) => {
-        context.state.isLoadingTopo = false;
-        // let topoData = formatTopoData(res, true);
-        let topoData = formatTopoData(generateGesData(), true);
-        context.commit(types.SET_TOPO_DATA, {
-          nodes: topoData.nodes,
-          links: topoData.links,
-        });
-      })
-      .catch((err) => {
-        context.state.isLoadingTopo = false;
+    return new Promise((resolve, reject) => {
+      // setTimeout(() => {
+      //   resolve(1);
+      // }, 2000);
+      resolve(1);
+    }).then(() => {
+      context.state.isLoadingTopo = false;
+      let topoData = formatTopoData(generateGesData(), true);
+      // timeIndex++;
+      // if (timeIndex > 8) {
+      //   timeIndex = 1;
+      // }
+      // let topoData = formatTopoData(generateGesDataOnTime(timeIndex), true);
+      context.commit(types.SET_TOPO_DATA, {
+        nodes: topoData.nodes,
+        links: topoData.links,
       });
+    });
+    // return axios
+    //   .get(window.location.origin + '/v1/endpoints', {
+    //     params,
+    //     cancelToken: cancelToken(),
+    //   })
+    //   .then((res: any) => {
+    //     context.state.isLoadingTopo = false;
+    //     // let topoData = formatTopoData(res, true);
+    //     let topoData = formatTopoData(generateGesData(), true);
+    //     context.commit(types.SET_TOPO_DATA, {
+    //       nodes: topoData.nodes,
+    //       links: topoData.links,
+    //     });
+    //   })
+    //   .catch((err) => {
+    //     context.state.isLoadingTopo = false;
+    //   });
   },
 };
 

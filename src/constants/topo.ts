@@ -1,4 +1,4 @@
-export const SHORT_NAME_LENGTH = 5;
+export const SHORT_NAME_LENGTH = 10;
 const LINK_QPS_LEVEL_WEIGHT = 0.7;
 export const LINK_QPS_LEVELS = [
   { id: 1, min: 0, max: 50, weight: 1 * LINK_QPS_LEVEL_WEIGHT },

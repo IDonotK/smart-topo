@@ -543,7 +543,6 @@
       },
       startSimulation(simulation, nodes, isVsim) {
         const n = Math.ceil(Math.log(simulation.alphaMin()) / Math.log(1 - simulation.alphaDecay()));
-        console.log(n);
         this.startIteration(0, n, simulation, nodes, isVsim);
       },
       startIteration(start, n, simulation, nodes, isVsim) {
@@ -579,7 +578,7 @@
           this.$d3
             .select('.net-svg')
             .transition()
-            .duration(2),
+            .duration(5),
           scaleFix,
         );
       },
@@ -860,7 +859,7 @@
 
           this.dragging = nodeKey;
           this.setMouseOffset(event, this.nodes[nodeKey]);
-        }, 100);
+        }, 200);
 
         // 拖拽 双击被选中节点无效
         if (node && this.currentNode && node.id === this.currentNode.id) {

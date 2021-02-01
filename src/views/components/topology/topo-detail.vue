@@ -204,7 +204,7 @@
         const deltah = this.topoHeight / 6;
         const deltaw = 50;
 
-        // 计算起点坐标
+        // 计算各类型节点数量
         let appNum = 0;
         let middlewareNum = 0;
         let processNum = 0;
@@ -223,7 +223,7 @@
           }
         });
 
-        // 选中节点类型 偶补成奇
+        // 计算当前类型节点数量：偶补成奇
         let curTypeNum = 0;
         switch (this.currentNode.type) {
           case 'Application': appNum = (appNum % 2 === 0 ? appNum + 1 : appNum); curTypeNum = appNum; break;
@@ -235,6 +235,8 @@
           default: break;
         }
         let maxNum = Math.max(appNum, middlewareNum, processNum, workloadNum, podNum, nodeNum);
+
+        // 计算每层起点坐标
         let appStartX = 45 + (maxNum - appNum) / 2 * 50;
         let middlewareStartX = 45 + (maxNum - middlewareNum) / 2 * 50;
         let processStartX = 45 + (maxNum - processNum) / 2 * 50;
@@ -242,12 +244,7 @@
         let podStartX = 45 + (maxNum - podNum) / 2 * 50;
         let nodeStartX = 45 + (maxNum - nodeNum) / 2 * 50;
 
-        // 调整曲线1
-        let isAppLine2Src = appNum >= middlewareNum ? true : false;
-        let isMiddlewareLine2Src = middlewareNum >= processNum ? true : false;
-        let isProcessLine2Src = processNum >= workloadNum ? true : false;
-        let isWorkloadLine2Src = workloadNum >= podNum ? true : false;
-        let isPodLine2Src = podNum >= nodeNum ? true : false;
+        // 计算节点坐标
         appNum = 0;
         middlewareNum = 0;
         processNum = 0;
@@ -258,8 +255,6 @@
         const linksOption = [];
         const anchorsOption = [];
         const arrowsOption = [];
-
-        // 计算节点坐标
         let existingTypes = new Set();
         graph.nodes.forEach(node => {
           let itemTmp = {};
@@ -336,17 +331,10 @@
             callPerMinute: link.callPerMinute,
             responseTimePerMin: link.responseTimePerMin,
             isVertical: false,
+            isHorizontal: false,
             fixX: 0,
             qpsLevel: link.qpsLevel,
           };
-          switch (link.source.type) {
-            case 'Application': itemTmp.isLine2Src = isAppLine2Src; break;
-            case 'MiddleWare': itemTmp.isLine2Src = isMiddlewareLine2Src; break;
-            case 'Process': itemTmp.isLine2Src = isProcessLine2Src; break;
-            case 'Workload': itemTmp.isLine2Src = isWorkloadLine2Src; break;
-            case 'Pod': itemTmp.isLine2Src = isPodLine2Src; break;
-            default: break;
-          }
           linksOption.push(itemTmp);
         });
         linksOption.forEach(link => {
@@ -356,7 +344,7 @@
           arrowsOption.push(link);
         });
 
-        // 调整曲线2
+        // 调整曲线：竖直重合边分开
         // 1.标记垂直边
         let xSet = new Set();
         linksOption.forEach(link => {
@@ -367,6 +355,11 @@
             xSet.add(sNode.x);
           } else {
             link.isVertical = false;
+          }
+          if (sNode && tNode && sNode.y === tNode.y) {
+            link.isHorizontal = true;
+          } else {
+            link.isHorizontal = false;
           }
         });
         // 2.垂直边分组
@@ -616,23 +609,25 @@
         linkEles.attr('d', d => {
           if (d.isVertical) {
             return `M ${d.source.fx} ${d.source.fy} Q ${(d.source.fx + d.target.fx) / 2 + d.fixX} ${(d.source.fy + d.target.fy) / 2} ${d.target.fx} ${d.target.fy}`;
+          } else if (d.isHorizontal) {
+            return `M ${d.source.fx} ${d.source.fy}
+              Q ${(d.source.fx + d.target.fx) / 2} ${(d.source.fy + d.target.fy) / 2 - 45}
+              ${d.target.fx} ${d.target.fy}
+            `;
           } else {
-            if (d.isLine2Src) {
-              return `M ${d.source.fx} ${d.source.fy} Q ${(d.source.fx + d.target.fx) / 2} ${(d.source.fy + d.target.fy) / 2 - 45} ${d.target.fx} ${d.target.fy}`;
-            } else {
-              return `M ${d.source.fx} ${d.source.fy} Q ${(d.source.fx + d.target.fx) / 2} ${(d.source.fy + d.target.fy) / 2 + 45 } ${d.target.fx} ${d.target.fy}`;
-            }
+            return `
+              M ${ d.source.fx } ${ d.source.fy }
+              C ${ d.source.fx } ${ d.source.fy + (d.target.fy - d.source.fy) * 0.8 }
+              ${ d.target.fx } ${ d.target.fy - (d.target.fy - d.source.fy) * 0.8 }
+              ${ d.target.fx } ${ d.target.fy }
+            `;
           }
         });
         anchorEles.attr('transform', d => {
-          if (d.isVertical) {
-            return `translate(${(d.source.x + d.target.x) / 2}, ${(d.target.y + d.source.y) / 2})`;
+          if (d.isHorizontal) {
+            return `translate(${(d.source.x + d.target.x) / 2}, ${(d.target.y + d.source.y) / 2 - 22.5})`;
           } else {
-            if (d.isLine2Src) {
-              return `translate(${(d.source.x + d.target.x) / 2}, ${(d.target.y + d.source.y) / 2 - 22.5})`;
-            } else {
-              return `translate(${(d.source.x + d.target.x) / 2}, ${(d.target.y + d.source.y) / 2 + 22.5})`;
-            }
+            return `translate(${(d.source.x + d.target.x) / 2}, ${(d.target.y + d.source.y) / 2})`;
           }
         });
       },

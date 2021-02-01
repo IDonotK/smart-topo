@@ -22,7 +22,7 @@
                   ref="mwAutocomplete"
                   popper-class="mw-autocomplete"
                   v-model="specificForm.specificId"
-                  placeholder="请输入节点ID"
+                  placeholder="请输入应用节点ID"
                   value-key="id"
                   :select-when-unmatched="true"
                   :disabled="exploreMode === 'global'"
@@ -333,11 +333,11 @@
     methods: {
       validateId(rule, value, callback) {
         if (value === '') {
-          callback(new Error('节点ID不能为空'));
+          callback(new Error('应用节点ID不能为空'));
         } else {
           let result = this.topoData.nodes.find(node => String(node.id) === value);
           if (result === undefined) {
-            callback(new Error('节点ID不存在'));
+            callback(new Error('应用节点ID不存在'));
           } else {
             callback();
           }
@@ -620,7 +620,7 @@
         let MAX_SEARCH_COUNT = 5;
         let count = 0;
         let results = this.topoData.nodes.filter(node => {
-          if (queryString && node.id.indexOf(queryString) !== -1 && count < MAX_SEARCH_COUNT) {
+          if (queryString && node.id.indexOf(queryString) !== -1 && count < MAX_SEARCH_COUNT && node.type === 'Application') {
             count++;
             return true;
           }

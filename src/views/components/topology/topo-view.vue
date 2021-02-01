@@ -274,8 +274,10 @@
         this.netData = this.topoViewData;
       },
       nodeRightClick(event, node) {
-        this.isShowExplore = true;
-        this.nodeToExplore = node;
+        if (node.type === 'Application') {
+          this.isShowExplore = true;
+          this.nodeToExplore = node;
+        }
       },
       nodeDblClick(event, node) {
         if (node && this.currentNode && node.id === this.currentNode.id) {
