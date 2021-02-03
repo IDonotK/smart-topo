@@ -244,7 +244,7 @@ export const generateGesData = () => {
           updateTime: '2020-12-01T08:16:16.000+00:00',
           label: 'MiddleWare',
           eventCount: 0,
-          middleWareType: 'MQ',
+          middleWareType: 'Database',
         },
         {
           id: 'm3',
@@ -253,7 +253,7 @@ export const generateGesData = () => {
           updateTime: '2020-12-01T08:16:16.000+00:00',
           label: 'MiddleWare',
           eventCount: 0,
-          middleWareType: 'MQ',
+          middleWareType: 'Database',
         },
         {
           id: 'm4',
@@ -262,7 +262,7 @@ export const generateGesData = () => {
           updateTime: '2020-12-01T08:16:16.000+00:00',
           label: 'MiddleWare',
           eventCount: 0,
-          middleWareType: 'MQ',
+          middleWareType: 'Database',
         },
         {
           id: 'm5',
@@ -271,7 +271,7 @@ export const generateGesData = () => {
           updateTime: '2020-12-01T08:16:16.000+00:00',
           label: 'MiddleWare',
           eventCount: 0,
-          middleWareType: 'MQ',
+          middleWareType: 'Cache',
         },
         {
           id: 'm6',
@@ -280,7 +280,7 @@ export const generateGesData = () => {
           updateTime: '2020-12-01T08:16:16.000+00:00',
           label: 'MiddleWare',
           eventCount: 0,
-          middleWareType: 'MQ',
+          middleWareType: 'Cache',
         },
         {
           id: 'm7',
@@ -289,7 +289,7 @@ export const generateGesData = () => {
           updateTime: '2020-12-01T08:16:16.000+00:00',
           label: 'MiddleWare',
           eventCount: 0,
-          middleWareType: 'MQ',
+          middleWareType: 'Cache',
         },
         {
           id: 'm8',
@@ -298,7 +298,7 @@ export const generateGesData = () => {
           updateTime: '2020-12-01T08:16:16.000+00:00',
           label: 'MiddleWare',
           eventCount: 0,
-          middleWareType: 'MQ',
+          middleWareType: 'Cache',
         },
         {
           id: 'm9',
@@ -307,7 +307,7 @@ export const generateGesData = () => {
           updateTime: '2020-12-01T08:16:16.000+00:00',
           label: 'MiddleWare',
           eventCount: 0,
-          middleWareType: 'MQ',
+          middleWareType: 'Cache',
         },
         {
           id: 'm10',
@@ -316,7 +316,7 @@ export const generateGesData = () => {
           updateTime: '2020-12-01T08:16:16.000+00:00',
           label: 'MiddleWare',
           eventCount: 0,
-          middleWareType: 'MQ',
+          middleWareType: 'Cache',
         },
         {
           id: 'm11',
@@ -325,7 +325,7 @@ export const generateGesData = () => {
           updateTime: '2020-12-01T08:16:16.000+00:00',
           label: 'MiddleWare',
           eventCount: 0,
-          middleWareType: 'MQ',
+          middleWareType: 'Cache',
         },
         {
           id: 'm12',
@@ -343,7 +343,7 @@ export const generateGesData = () => {
           updateTime: '2020-12-01T08:16:16.000+00:00',
           label: 'MiddleWare',
           eventCount: 3,
-          middleWareType: 'MQ',
+          middleWareType: 'Database',
         },
         {
           id: 'm14',
@@ -361,7 +361,7 @@ export const generateGesData = () => {
           updateTime: '2020-12-01T08:16:16.000+00:00',
           label: 'MiddleWare',
           eventCount: 2,
-          middleWareType: 'MQ',
+          middleWareType: 'Database',
         },
         {
           id: 'm16',
@@ -370,7 +370,7 @@ export const generateGesData = () => {
           updateTime: '2020-12-01T08:16:16.000+00:00',
           label: 'MiddleWare',
           eventCount: 1,
-          middleWareType: 'MQ',
+          middleWareType: 'Database',
         },
         {
           id: 'm17',
@@ -379,7 +379,7 @@ export const generateGesData = () => {
           updateTime: '2020-12-01T08:16:16.000+00:00',
           label: 'MiddleWare',
           eventCount: 0,
-          middleWareType: 'MQ',
+          middleWareType: 'Database',
         },
         {
           id: 'm18',
@@ -406,7 +406,7 @@ export const generateGesData = () => {
           updateTime: '2020-12-01T08:16:16.000+00:00',
           label: 'MiddleWare',
           eventCount: 1,
-          middleWareType: 'MQ',
+          middleWareType: 'Database',
         },
       ],
       processes: [
@@ -1029,7 +1029,7 @@ export const generateGesData = () => {
           target: 'a13',
           label: 'TracingTo',
           responseTimePerMin: 7,
-          callPerMinute: 17,
+          callPerMinute: 75,
           type: 'kafka-producer',
         },
         {
@@ -1039,7 +1039,7 @@ export const generateGesData = () => {
           target: 'a14',
           label: 'TracingTo',
           responseTimePerMin: 7,
-          callPerMinute: 18,
+          callPerMinute: 150,
           type: 'kafka-producer',
         },
         {
@@ -1049,7 +1049,7 @@ export const generateGesData = () => {
           target: 'a15',
           label: 'TracingTo',
           responseTimePerMin: 7,
-          callPerMinute: 19,
+          callPerMinute: 300,
           type: 'kafka-producer',
         },
         {
@@ -1059,7 +1059,7 @@ export const generateGesData = () => {
           target: 'a16',
           label: 'TracingTo',
           responseTimePerMin: 7,
-          callPerMinute: 20,
+          callPerMinute: 750,
           type: 'kafka-producer',
         },
         {
@@ -1069,7 +1069,7 @@ export const generateGesData = () => {
           target: 'a17',
           label: 'TracingTo',
           responseTimePerMin: 7,
-          callPerMinute: 21,
+          callPerMinute: 2000,
           type: 'kafka-producer',
         },
       ],
@@ -1180,6 +1180,34 @@ export const generateGesData = () => {
           label: 'CreateOn',
           source: 'pd2',
           target: 'n2',
+        },
+        {
+          id: 'c1501',
+          name: 'c1501',
+          label: 'CreateOn',
+          source: 'pd2',
+          target: 'n3',
+        },
+        {
+          id: 'c1502',
+          name: 'c1502',
+          label: 'CreateOn',
+          source: 'pd2',
+          target: 'n4',
+        },
+        {
+          id: 'c1503',
+          name: 'c1503',
+          label: 'CreateOn',
+          source: 'pd2',
+          target: 'n5',
+        },
+        {
+          id: 'c1504',
+          name: 'c1504',
+          label: 'CreateOn',
+          source: 'pd2',
+          target: 'n6',
         },
         // 4
         {
@@ -1533,6 +1561,18 @@ export const generateGesData = () => {
         a2: {
           eventCount: 10,
           eventLevel: 'Critical',
+        },
+        m1: {
+          eventCount: 8,
+          eventLevel: 'Warning',
+        },
+        m8: {
+          eventCount: 8,
+          eventLevel: 'Critical',
+        },
+        ps1: {
+          eventCount: 8,
+          eventLevel: 'Warning',
         },
         w1: {
           eventCount: 8,

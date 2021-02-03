@@ -43,6 +43,7 @@ axios.interceptors.response.use(
     return res;
   },
   (err) => {
+    console.log(err);
     if (err && err.response) {
       switch (err.response.status) {
         case 400:
@@ -89,6 +90,7 @@ axios.interceptors.response.use(
       if (urlArr.length > 0) {
         targetUrl = urlArr[urlArr.length - 1];
       }
+      console.log(targetUrl);
       switch (targetUrl) {
         case 'scene-config':
           err.message = '获取场景配置数据错误：' + err.message;
