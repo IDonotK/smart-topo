@@ -1094,7 +1094,7 @@
           &.selected {
             stroke: rgba(202, 164, 85, 0.6);
           }
-          animation: topo-dash 0.8s linear infinite !important;
+          // animation: topo-dash 0.8s linear infinite !important;
         }
         @keyframes topo-dash {
           from {
