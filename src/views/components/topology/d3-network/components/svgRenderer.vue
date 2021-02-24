@@ -1,20 +1,19 @@
 <template>
-  <div class="net-content" id="netContent">
+  <div id="netContent" class="net-content">
     <!-- link text -->
     <div
       v-show="linkTextVisible"
       id="linkText"
-      class="linkText"
-      :class="{ 'dark-linkText': isLinkTextDark }"
+      :class="{ linkText: true, 'dark-linkText': isLinkTextDark }"
       :style="linkTextStyle"
       v-html="linkTextContent"
     ></div>
 
     <!-- topo svg -->
     <svg
-      class="net-svg"
       id="netSvg"
       ref="svg"
+      class="net-svg"
       xmlns="http://www.w3.org/2000/svg"
       xmlns:xlink="http://www.w3.org/1999/xlink"
       :width="size.w"
@@ -26,8 +25,8 @@
         <defs class="arrows">
           <marker
             v-for="(link, index) in links"
-            :key="index"
             :id="'arrow' + link.id"
+            :key="index"
             markerUnits="userSpaceOnUse"
             :markerWidth="(1.5 * nodeSize) / 2"
             :markerHeight="(1.5 * nodeSize) / 2"
@@ -45,12 +44,12 @@
         </defs>
 
         <!-- links -->
-        <g class="links" id="l-links">
+        <g id="l-links" class="links">
           <path
             v-for="(link, index) in links"
+            :id="link.id"
             :key="index"
             :d="linkPath(link)"
-            :id="link.id"
             v-bind="linkAttrs(link)"
             :class="linkClass(link.id, [link.isDark ? 'dark-link' : '', link.isBright ? 'bright-link' : ''])"
             :style="linkStyle(link)"
@@ -63,7 +62,7 @@
         </g>
 
         <!-- nodes -->
-        <g class="nodes" id="l-nodes" v-if="!noNodes">
+        <g v-if="!noNodes" id="l-nodes" class="nodes">
           <template v-for="(node, key) in nodes">
             <svg
               v-if="svgIcon(node)"
@@ -107,12 +106,12 @@
             <!-- event icon -->
             <svg
               v-if="node.state === 'Abnormal'"
+              :key="'event' + key"
               :x="node.x + (0.75 * getNodeSize(node)) / 2"
               :y="node.y - 0.75 * getNodeSize(node)"
               :width="0.6 * getNodeSize(node)"
               :height="0.6 * getNodeSize(node)"
               :class="warnClass(node, [node.isDark ? 'dark-warn-icon' : '', node.isBright ? 'bright-warn-icon' : ''])"
-              :key="'event' + key"
               aria-hidden="true"
             >
               <use
@@ -128,14 +127,14 @@
         </g>
 
         <!-- Link Anchors -->
-        <g class="anchors" id="link-anchors">
+        <g id="link-anchors" class="anchors">
           <circle
             v-for="(link, index) in links"
+            v-show="link.type === 'TracingTo' || link.type === 'SubTracingTo'"
             :key="index"
             :class="
               linkAnchorClass(link, [link.isDark ? 'dark-link-anchor' : '', link.isBright ? 'bright-link-anchor' : ''])
             "
-            v-show="link.type === 'TracingTo' || link.type === 'SubTracingTo'"
             :r="nodeSize / 6"
             fill="#217EF25f"
             :cx="linkAnchorCoord(link).x"
@@ -145,17 +144,17 @@
           ></circle>
         </g>
         <!-- Link Indicators -->
-        <g class="indicators" id="link-indicators">
+        <g id="link-indicators" class="indicators">
           <defs>
-            <path v-for="(link, index) in links" :key="index" :d="linkPath(link)" :id="'link' + link.id" />
+            <path v-for="(link, index) in links" :id="'link' + link.id" :key="index" :d="linkPath(link)" />
           </defs>
           <text
             v-for="(link, index) in links"
             v-show="link.label === 'TracingTo' || link.label === 'SubTracingTo'"
+            :key="index"
             :x="linkIndicatorCoord(link)"
             text-anchor="middle"
             :dy="-nodeSize / 6"
-            :key="index"
             :font-size="fontSize / 4"
             :class="
               linkIndicatorClass(link, [
@@ -172,7 +171,7 @@
         </g>
 
         <!-- Node Labels -->
-        <g class="labels" id="node-labels" v-if="nodeLabels">
+        <g v-if="nodeLabels" id="node-labels" class="labels">
           <text
             v-for="(node, index) in nodes"
             v-show="node.showLabel"
@@ -193,237 +192,263 @@
   </div>
 </template>
 <script>
-  import svgExport from '../lib/js/svgExport.js';
+import svgExport from '../lib/js/svgExport.js';
 
-  export default {
-    name: 'svg-renderer',
-    props: [
-      'size',
-      'nodes',
-      'noNodes',
-      'selected',
-      'linksSelected',
-      'links',
-      'nodeSize',
-      'padding',
-      'fontSize',
-      'strLinks',
-      'linkWidth',
-      'nodeLabels',
-      'linkLabels',
-      'labelOffset',
-      'nodeSym',
-      'linkTextStyle',
-      'isLinkTextDark',
-      'linkTextVisible',
-      'linkTextContent',
-      'defaultNodeSize',
-    ],
+export default {
+  name: 'SvgRenderer',
+  props: [
+    'size',
+    'nodes',
+    'noNodes',
+    'selected',
+    'linksSelected',
+    'links',
+    'nodeSize',
+    'padding',
+    'fontSize',
+    'strLinks',
+    'linkWidth',
+    'nodeLabels',
+    'linkLabels',
+    'labelOffset',
+    'nodeSym',
+    'linkTextStyle',
+    'isLinkTextDark',
+    'linkTextVisible',
+    'linkTextContent',
+    'defaultNodeSize',
+  ],
 
-    data() {
-      return {
-        zoom: this.$d3.zoom(),
-      };
+  data() {
+    return {
+      zoom: this.$d3.zoom(),
+    };
+  },
+
+  computed: {
+    topoScaleFix() {
+      return this.$store.state.rocketTopo.topoScaleFix;
     },
-
-    mounted() {
-      this.setZoom();
+    currentNode() {
+      return this.$store.state.rocketTopo.currentNode;
     },
-
-    computed: {
-      topoScaleFix() {
-        return this.$store.state.rocketTopo.topoScaleFix;
-      },
-      currentNode() {
-        return this.$store.state.rocketTopo.currentNode;
-      },
-      nodeSvg() {
-        if (this.nodeSym) {
-          return svgExport.toObject(this.nodeSym);
-        }
-        return null;
-      },
+    nodeSvg() {
+      if (this.nodeSym) {
+        return svgExport.toObject(this.nodeSym);
+      }
+      return null;
     },
+  },
 
-    methods: {
-      arrowClass(classes = []) {
-        let cssClass = [];
-        classes.forEach((c) => cssClass.push(c));
-        return cssClass;
-      },
-      getArrowStyle(link) {
-        let style = {};
-        if (link._color) style.fill = link._color;
-        return style;
-      },
-      getArrowRefX(link) {
-        let size = this.nodes.find((node) => node.id === link.tid)._size || this.nodeSize;
-        return size / 2 + size;
-      },
-      setZoom() {
-        const zoomed = () => {
-          this.$d3
-            .select('#zoomContainer')
-            .attr(
-              'transform',
-              'translate(' +
-                this.$d3.event.transform.x +
-                ',' +
-                this.$d3.event.transform.y +
-                ') scale(' +
-                this.$d3.event.transform.k +
-                ')',
-            );
-          // this.$d3.selectAll('.node-label').attr(
-          //   'transform',
-          //   'scale(' + 1 / this.$d3.event.transform.k + ')' + ' translate(' + -this.$d3.event.transform.x + ',' + -this.$d3.event.transform.y + ')',
-          // );
-        };
-        this.zoom.scaleExtent([0.1, 100]).on('zoom', zoomed);
+  mounted() {
+    this.setZoom();
+  },
+
+  methods: {
+    arrowClass(classes = []) {
+      let cssClass = [];
+      classes.forEach(c => cssClass.push(c));
+      return cssClass;
+    },
+    getArrowStyle(link) {
+      let style = {};
+      if (link._color) {
+        style.fill = link._color;
+      }
+      return style;
+    },
+    getArrowRefX(link) {
+      let size = this.nodes.find(node => node.id === link.tid)._size || this.nodeSize;
+      return size / 2 + size;
+    },
+    setZoom() {
+      const zoomed = () => {
         this.$d3
-          .select('.net-svg')
-          .call(this.zoom)
-          .on('dblclick.zoom', null);
-        this.$store.commit('rocketTopo/SET_ZOOM_CONTROLLER', this.zoom);
-      },
-      getNodeSize(node, side) {
-        let size = node._size || this.nodeSize;
-        if (side) size = node['_' + side] || size;
-        return size;
-      },
-      svgIcon(node) {
-        return node.svgIcon || this.nodeSvg;
-      },
-      emit(e, args) {
-        this.$emit('action', e, args);
-      },
-      svgScreenShot(cb, toSvg, background, allCss) {
-        let svg = svgExport.export(this.$refs.svg, allCss);
-        if (!toSvg) {
-          if (!background) background = this.searchBackground();
-          let canvas = svgExport.makeCanvas(this.size.w, this.size.h, background);
-          svgExport.svgToImg(svg, canvas, (err, img) => {
-            if (err) cb(err);
-            else cb(null, img);
-          });
-        } else {
-          cb(null, svgExport.save(svg));
+          .select('#zoomContainer')
+          .attr(
+            'transform',
+            `translate(${this.$d3.event.transform.x},${this.$d3.event.transform.y}) scale(${this.$d3.event.transform.k})`
+          );
+        // this.$d3.selectAll('.node-label').attr(
+        //   'transform',
+        //   'scale(' + 1 / this.$d3.event.transform.k + ')' + ' translate(' + -this.$d3.event.transform.x + ',' + -this.$d3.event.transform.y + ')',
+        // );
+      };
+      this.zoom.scaleExtent([0.1, 100]).on('zoom', zoomed);
+      this.$d3
+        .select('.net-svg')
+        .call(this.zoom)
+        .on('dblclick.zoom', null);
+      this.$store.commit('rocketTopo/SET_ZOOM_CONTROLLER', this.zoom);
+    },
+    getNodeSize(node, side) {
+      let size = node._size || this.nodeSize;
+      if (side) {
+        size = node[`_${side}`] || size;
+      }
+      return size;
+    },
+    svgIcon(node) {
+      return node.svgIcon || this.nodeSvg;
+    },
+    emit(e, args) {
+      this.$emit('action', e, args);
+    },
+    svgScreenShot(cb, toSvg, background, allCss) {
+      let svg = svgExport.export(this.$refs.svg, allCss);
+      let backgroundTmp = background;
+      if (toSvg) {
+        cb(null, svgExport.save(svg));
+      } else {
+        if (!backgroundTmp) {
+          backgroundTmp = this.searchBackground();
         }
-      },
-      linkClass(linkId, classes = []) {
-        let cssClass = ['link'];
-        classes.forEach((c) => cssClass.push(c));
-        if (this.linksSelected.hasOwnProperty(linkId)) {
-          cssClass.push('selected');
+        let canvas = svgExport.makeCanvas(this.size.w, this.size.h, backgroundTmp);
+        svgExport.svgToImg(svg, canvas, (err, img) => {
+          if (err) {
+            cb(err);
+          } else {
+            cb(null, img);
+          }
+        });
+      }
+    },
+    linkClass(linkId, classes = []) {
+      let cssClass = ['link'];
+      classes.forEach(c => cssClass.push(c));
+      if (Object.prototype.hasOwnProperty.call(this.linksSelected, linkId)) {
+        cssClass.push('selected');
+      }
+      if (!this.strLinks) {
+        cssClass.push('curve');
+      }
+      return cssClass;
+    },
+    linkPath(link) {
+      let sx = link.source.x ? link.source.x : 0;
+      let sy = link.source.y ? link.source.y : 0;
+      let tx = link.target.x ? link.target.x : 0;
+      let ty = link.target.y ? link.target.y : 0;
+      let d = {
+        M: [sx, sy],
+        X: [tx, ty],
+      };
+      if (this.strLinks) {
+        return `M ${d.M.join(' ')} L${d.X.join(' ')}`;
+      } else {
+        d.Q = [sx, ty];
+        return `M ${d.M} Q ${d.Q.join(' ')} ${d.X}`;
+      }
+    },
+    linkAnchorCoord(link) {
+      let sx = link.source.x ? link.source.x : 0;
+      let sy = link.source.y ? link.source.y : 0;
+      let tx = link.target.x ? link.target.x : 0;
+      let ty = link.target.y ? link.target.y : 0;
+      let coord = {
+        x: (sx + tx) / 2,
+        y: (sy + ty) / 2,
+      };
+      return coord;
+    },
+    linkIndicatorCoord(link) {
+      let sx = link.source.x ? link.source.x : 0;
+      let sy = link.source.y ? link.source.y : 0;
+      let tx = link.target.x ? link.target.x : 0;
+      let ty = link.target.y ? link.target.y : 0;
+      let detalX = tx - sx;
+      let detalY = ty - sy;
+      return Math.sqrt(Math.pow(detalY, 2) + Math.pow(detalX, 2)) / 2;
+    },
+    nodeStyle(node) {
+      return node._color ? `fill: ${node._color}` : '';
+    },
+    linkStyle(link) {
+      let style = {};
+      if (link._color) {
+        style.stroke = link._color;
+      }
+      return style;
+    },
+    warnClass(node, classes = []) {
+      let cssClass = ['warn-icon-in-main-topo'];
+      classes.forEach(c => cssClass.push(c));
+      return cssClass;
+    },
+    linkIndicatorClass(link, classes = []) {
+      let cssClass = link._labelClass ? link._labelClass : [];
+      if (!Array.isArray(cssClass)) {
+        cssClass = [cssClass];
+      }
+      cssClass.push('link-indicator');
+      classes.forEach(c => cssClass.push(c));
+      return cssClass;
+    },
+    linkAnchorClass(link, classes = []) {
+      let cssClass = link._labelClass ? link._labelClass : [];
+      if (!Array.isArray(cssClass)) {
+        cssClass = [cssClass];
+      }
+      cssClass.push('link-anchor');
+      classes.forEach(c => cssClass.push(c));
+      return cssClass;
+    },
+    nodeLabelClass(node, classes = []) {
+      let cssClass = node._labelClass ? node._labelClass : [];
+      if (!Array.isArray(cssClass)) {
+        cssClass = [cssClass];
+      }
+      cssClass.push('node-label');
+      classes.forEach(c => cssClass.push(c));
+      return cssClass;
+    },
+    nodeClass(node, classes = []) {
+      let cssClass = node._cssClass ? node._cssClass : [];
+      if (!Array.isArray(cssClass)) {
+        cssClass = [cssClass];
+      }
+      cssClass.push('node');
+      classes.forEach(c => cssClass.push(c));
+      // if (this.selected[node.id]) cssClass.push('selected');
+      // if (node.fx || node.fy) cssClass.push('pinned');
+      return cssClass;
+    },
+    searchBackground() {
+      if (this.$parent) {
+        let style = window.getComputedStyle(this.$el);
+        let background = style.getPropertyValue('background-color');
+        let rgb = background.replace(/[^\d,]/g, '').split(',');
+        let sum = rgb.reduce((a, b) => parseInt(a) + parseInt(b), 0);
+        if (sum > 0) {
+          return background;
         }
-        if (!this.strLinks) {
-          cssClass.push('curve');
-        }
-        return cssClass;
-      },
-      linkPath(link) {
-        let sx = link.source.x ? link.source.x : 0;
-        let sy = link.source.y ? link.source.y : 0;
-        let tx = link.target.x ? link.target.x : 0;
-        let ty = link.target.y ? link.target.y : 0;
-        let d = {
-          M: [sx, sy],
-          X: [tx, ty],
-        };
-        if (this.strLinks) {
-          return 'M ' + d.M.join(' ') + ' L' + d.X.join(' ');
-        } else {
-          d.Q = [sx, ty];
-          return 'M ' + d.M + ' Q ' + d.Q.join(' ') + ' ' + d.X;
-        }
-      },
-      linkAnchorCoord(link) {
-        let sx = link.source.x ? link.source.x : 0;
-        let sy = link.source.y ? link.source.y : 0;
-        let tx = link.target.x ? link.target.x : 0;
-        let ty = link.target.y ? link.target.y : 0;
-        let coord = {
-          x: (sx + tx) / 2,
-          y: (sy + ty) / 2,
-        };
-        return coord;
-      },
-      linkIndicatorCoord(link) {
-        let sx = link.source.x ? link.source.x : 0;
-        let sy = link.source.y ? link.source.y : 0;
-        let tx = link.target.x ? link.target.x : 0;
-        let ty = link.target.y ? link.target.y : 0;
-        let detalX = tx - sx;
-        let detalY = ty - sy;
-        return Math.sqrt(Math.pow(detalY, 2) + Math.pow(detalX, 2)) / 2;
-      },
-      nodeStyle(node) {
-        return node._color ? 'fill: ' + node._color : '';
-      },
-      linkStyle(link) {
-        let style = {};
-        if (link._color) style.stroke = link._color;
-        return style;
-      },
-      warnClass(node, classes = []) {
-        let cssClass = ['warn-icon-in-main-topo'];
-        classes.forEach((c) => cssClass.push(c));
-        return cssClass;
-      },
-      linkIndicatorClass(link, classes = []) {
-        let cssClass = link._labelClass ? link._labelClass : [];
-        if (!Array.isArray(cssClass)) cssClass = [cssClass];
-        cssClass.push('link-indicator');
-        classes.forEach((c) => cssClass.push(c));
-        return cssClass;
-      },
-      linkAnchorClass(link, classes = []) {
-        let cssClass = link._labelClass ? link._labelClass : [];
-        if (!Array.isArray(cssClass)) cssClass = [cssClass];
-        cssClass.push('link-anchor');
-        classes.forEach((c) => cssClass.push(c));
-        return cssClass;
-      },
-      nodeLabelClass(node, classes = []) {
-        let cssClass = node._labelClass ? node._labelClass : [];
-        if (!Array.isArray(cssClass)) cssClass = [cssClass];
-        cssClass.push('node-label');
-        classes.forEach((c) => cssClass.push(c));
-        return cssClass;
-      },
-      nodeClass(node, classes = []) {
-        let cssClass = node._cssClass ? node._cssClass : [];
-        if (!Array.isArray(cssClass)) cssClass = [cssClass];
-        cssClass.push('node');
-        classes.forEach((c) => cssClass.push(c));
-        // if (this.selected[node.id]) cssClass.push('selected');
-        // if (node.fx || node.fy) cssClass.push('pinned');
-        return cssClass;
-      },
-      searchBackground() {
-        let vm = this;
+        let vm = this.$parent;
         while (vm.$parent) {
-          let style = window.getComputedStyle(vm.$el);
-          let background = style.getPropertyValue('background-color');
-          let rgb = background.replace(/[^\d,]/g, '').split(',');
-          let sum = rgb.reduce((a, b) => parseInt(a) + parseInt(b), 0);
-          if (sum > 0) return background;
+          style = window.getComputedStyle(vm.$el);
+          background = style.getPropertyValue('background-color');
+          rgb = background.replace(/[^\d,]/g, '').split(',');
+          sum = rgb.reduce((a, b) => parseInt(a) + parseInt(b), 0);
+          if (sum > 0) {
+            return background;
+          }
           vm = vm.$parent;
         }
-        return 'white';
-      },
-      spriteSymbol() {
-        let svg = this.nodeSym;
-        if (svg) {
-          return svgExport.toSymbol(svg);
-        }
-      },
-      linkAttrs(link) {
-        let attrs = link._svgAttrs || {};
-        let linkWidthOnQps = Number(link.qpsLevel) * this.linkWidth;
-        attrs['stroke-width'] = attrs['stroke-width'] || linkWidthOnQps;
-        return attrs;
-      },
+      }
+      return 'white';
     },
-  };
+    spriteSymbol() {
+      let svg = this.nodeSym;
+      if (svg) {
+        return svgExport.toSymbol(svg);
+      }
+      return null;
+    },
+    linkAttrs(link) {
+      let attrs = link._svgAttrs || {};
+      let linkWidthOnQps = Number(link.qpsLevel) * this.linkWidth;
+      attrs['stroke-width'] = attrs['stroke-width'] || linkWidthOnQps;
+      return attrs;
+    },
+  },
+};
 </script>

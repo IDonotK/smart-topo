@@ -158,9 +158,8 @@ const actions: ActionTree<State, any> = {
   GET_SCENE_CONFIG(context: { commit: Commit; state: State }, params: any) {
     context.commit(types.SET_SCENE_CONFIG, {});
     return axios
-      .get(window.location.origin + '/v1/scene-config', {
+      .get(`${window.location.origin}/v1/scene-config`, {
         params,
-        cancelToken: cancelToken(),
       })
       .then((res: any) => {
         if (res && res.data && res.data.sceneConfig) {
@@ -168,16 +167,16 @@ const actions: ActionTree<State, any> = {
         }
         return res.data.sceneConfig;
       })
-      .catch((err) => {});
+      .catch(err => {});
   },
   GET_EVENTS_DATA(context: { commit: Commit; state: State }, params: any) {
     return axios
-      .post(window.location.origin + '/v1/events', params, {
+      .post(`${window.location.origin}/v1/events`, params, {
         cancelToken: cancelToken(),
       })
       .then((res: any) => {
         if (res && res.data && res.data.events) {
-          res.data.events.forEach((item) => {
+          res.data.events.forEach(item => {
             item.expansion = false;
             item.createTime = utc2Peking(item.createTime);
             item.updateTime = utc2Peking(item.updateTime);
@@ -185,11 +184,11 @@ const actions: ActionTree<State, any> = {
         }
         return res.data;
       })
-      .catch((err) => {});
+      .catch(err => {});
   },
   GET_RELYON_DATA(context: { commit: Commit; state: State }, params: any) {
     return axios
-      .get(window.location.origin + '/v1/underlying-resources', {
+      .get(`${window.location.origin}/v1/underlying-resources`, {
         params,
         cancelToken: cancelToken(),
       })
@@ -197,11 +196,11 @@ const actions: ActionTree<State, any> = {
         let relyonData = formatTopoData(res, true);
         return relyonData;
       })
-      .catch((err) => {});
+      .catch(err => {});
   },
   GET_RELATIVE_DATA(context: { commit: Commit; state: State }, params: any) {
     return axios
-      .get(window.location.origin + '/v1/applications', {
+      .get(`${window.location.origin}/v1/applications`, {
         params,
         cancelToken: cancelToken(),
       })
@@ -209,7 +208,7 @@ const actions: ActionTree<State, any> = {
         let relativeData = formatTopoData(res, false);
         return relativeData;
       })
-      .catch((err) => {});
+      .catch(err => {});
   },
   GET_TOPO_DATA(context: { commit: Commit; state: State }, params: any) {
     if (params.isClearTopoData) {
@@ -222,7 +221,7 @@ const actions: ActionTree<State, any> = {
       context.state.isLoadingTopo = false;
     }
     return axios
-      .get(window.location.origin + '/v1/endpoints', {
+      .get(`${window.location.origin}/v1/endpoints`, {
         params,
         cancelToken: cancelToken(),
       })
@@ -234,7 +233,7 @@ const actions: ActionTree<State, any> = {
           links: topoData.links,
         });
       })
-      .catch((err) => {
+      .catch(err => {
         if (!axios.isCancel(err)) {
           context.state.isLoadingTopo = false;
         }

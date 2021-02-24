@@ -26,7 +26,7 @@ let timer: any = null;
 const dateFormat = (date: Date, step: string): string => {
   const year = date.getFullYear();
   const monthTemp = date.getMonth() + 1;
-  let month: string = `${monthTemp}`;
+  let month = `${monthTemp}`;
   if (monthTemp < 10) {
     month = `0${monthTemp}`;
   }
@@ -34,7 +34,7 @@ const dateFormat = (date: Date, step: string): string => {
     return `${year}-${month}`;
   }
   const dayTemp = date.getDate();
-  let day: string = `${dayTemp}`;
+  let day = `${dayTemp}`;
   if (dayTemp < 10) {
     day = `0${dayTemp}`;
   }
@@ -42,7 +42,7 @@ const dateFormat = (date: Date, step: string): string => {
     return `${year}-${month}-${day}`;
   }
   const hourTemp = date.getHours();
-  let hour: string = `${hourTemp}`;
+  let hour = `${hourTemp}`;
   if (hourTemp < 10) {
     hour = `0${hourTemp}`;
   }
@@ -50,7 +50,7 @@ const dateFormat = (date: Date, step: string): string => {
     return `${year}-${month}-${day} ${hour}`;
   }
   const minuteTemp = date.getMinutes();
-  let minute: string = `${minuteTemp}`;
+  let minute = `${minuteTemp}`;
   if (minuteTemp < 10) {
     minute = `0${minuteTemp}`;
   }
@@ -62,7 +62,7 @@ const dateFormat = (date: Date, step: string): string => {
 const dateFormatTime = (date: Date, step: string): string => {
   const year = date.getFullYear();
   const monthTemp = date.getMonth() + 1;
-  let month: string = `${monthTemp}`;
+  let month = `${monthTemp}`;
   if (monthTemp < 10) {
     month = `0${monthTemp}`;
   }
@@ -70,7 +70,7 @@ const dateFormatTime = (date: Date, step: string): string => {
     return `${year}-${month}`;
   }
   const dayTemp = date.getDate();
-  let day: string = `${dayTemp}`;
+  let day = `${dayTemp}`;
   if (dayTemp < 10) {
     day = `0${dayTemp}`;
   }
@@ -78,7 +78,7 @@ const dateFormatTime = (date: Date, step: string): string => {
     return `${month}-${day}`;
   }
   const hourTemp = date.getHours();
-  let hour: string = `${hourTemp}`;
+  let hour = `${hourTemp}`;
   if (hourTemp < 10) {
     hour = `0${hourTemp}`;
   }
@@ -86,7 +86,7 @@ const dateFormatTime = (date: Date, step: string): string => {
     return `${month}-${day} ${hour}`;
   }
   const minuteTemp = date.getMinutes();
-  let minute: string = `${minuteTemp}`;
+  let minute = `${minuteTemp}`;
   if (minuteTemp < 10) {
     minute = `0${minuteTemp}`;
   }
@@ -126,7 +126,7 @@ const getters = {
     };
   },
   intervalTime(state: State, getter: any): string[] {
-    let interval: number = 946080000000;
+    let interval = 946080000000;
     switch (getter.duration.step) {
       case 'MINUTE':
         interval = 60000;
@@ -145,8 +145,10 @@ const getters = {
             getter.duration.start.getFullYear() * 12 -
             getter.duration.start.getMonth());
         break;
+      default:
+        break;
     }
-    const utcSpace = (parseInt(state.utc + '', 10) + new Date().getTimezoneOffset() / 60) * 3600000;
+    const utcSpace = (parseInt(`${state.utc}`, 10) + new Date().getTimezoneOffset() / 60) * 3600000;
     const startUnix: number = getter.duration.start.getTime();
     const endUnix: number = getter.duration.end.getTime();
     const timeIntervals: string[] = [];
@@ -191,7 +193,7 @@ const mutations: MutationTree<State> = {
         state.eventStack.forEach((event: any) => {
           setTimeout(event(), 0);
         }),
-      500,
+      500
     );
   },
   [types.SET_EDIT](state: State, status: boolean): void {

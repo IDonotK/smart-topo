@@ -5,6 +5,6 @@ export default (d3, graph) =>
     .on('zoom', () => {
       graph.attr(
         'transform',
-        `translate(${d3.event.transform.x},${d3.event.transform.y})scale(${d3.event.transform.k})`,
+        `translate(${d3.event.transform.x},${d3.event.transform.y})scale(${d3.event.transform.k})`
       );
     });

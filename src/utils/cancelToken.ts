@@ -16,11 +16,10 @@
  */
 
 import axios from 'axios';
-/* eslint-disable */
 const CancelToken = axios.CancelToken;
 
 export const cancelToken = () =>
-  new CancelToken(function executor(c) {
+  new CancelToken(c => {
     const w = window as any;
     w.axiosCancel.push(c);
   });

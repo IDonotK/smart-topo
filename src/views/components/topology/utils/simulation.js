@@ -3,14 +3,14 @@ export const simulationInit = (d3, data_nodes, data_links, ticked, topo_size) =>
     .forceSimulation(data_nodes)
     .force(
       'collide',
-      d3.forceCollide().radius(() => 60),
+      d3.forceCollide().radius(() => 60)
     )
     .force('yPos', d3.forceY().strength(1))
     .force('xPos', d3.forceX().strength(1))
     .force('charge', d3.forceManyBody().strength(-520))
     .force(
       'link',
-      d3.forceLink(data_links).id((d) => d.id),
+      d3.forceLink(data_links).id(d => d.id)
     )
     .force('center', d3.forceCenter(topo_size.width / 2, topo_size.height / 2 - 20))
     .on('tick', ticked)

@@ -22,6 +22,7 @@ const m = {
   alarm: 'Alarm',
   auto: 'Auto',
   reload: 'Reload',
+  helpCenter: 'Help Center',
   usermode: 'User Mode',
   editmode: 'Edit Mode',
   currentService: 'Current Service',

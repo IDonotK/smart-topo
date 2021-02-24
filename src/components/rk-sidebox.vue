@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License. -->
 <template>
   <div>
-    <div class="rk-sidebox-backdrop" v-show="show" @click="handleHide"></div>
+    <div v-show="show" class="rk-sidebox-backdrop" @click="handleHide"></div>
     <aside
       class="rk-sidebox"
       :style="
@@ -22,49 +22,48 @@ limitations under the License. -->
       "
     >
       <div class="rk-sidebox-title">
-        <span class="title">{{ this.title }}</span>
+        <span class="title">{{ title }}</span>
         <div class="r rk-sidebox-close" @click="handleHide">
           <svg class="icon">
             <use xlink:href="#close"></use>
           </svg>
         </div>
       </div>
-      <div class="rk-sidebox-inner" :class="{ 'rk-sidebox-inner-fixed': fixed }">
+      <div :class="{ 'rk-sidebox-inner': true, 'rk-sidebox-inner-fixed': fixed }">
         <slot />
       </div>
     </aside>
   </div>
 </template>
 <script lang="js">
-        // tslint:disable
-  export default {
-    name: 'RkSidebox',
-    props: {
-      show: {},
-      title: {
-        default: '',
-      },
-      right: {
-        default: false,
-      },
-      fixed: {
-        default: false,
-      },
-      width: {
-        default: '550px',
-      },
+export default {
+  name: 'RkSidebox',
+  props: {
+    show: {},
+    title: {
+      default: '',
     },
-    methods: {
-      handleHide() {
-        this.$emit('update:show', false);
-        this.$emit('closeSideboxCallback');
-      },
+    right: {
+      default: false,
     },
-  };
+    fixed: {
+      default: false,
+    },
+    width: {
+      default: '550px',
+    },
+  },
+  methods: {
+    handleHide() {
+      this.$emit('update:show', false);
+      this.$emit('closeSideboxCallback');
+    },
+  },
+};
 </script>
 
 <style lang="scss">
-  .rk-sidebox-backdrop {
+.rk-sidebox-backdrop {
     position: fixed;
     top: 50px;
     left: 0;
@@ -72,8 +71,9 @@ limitations under the License. -->
     right: 0;
     background-color: rgba(31, 33, 38, 0.2);
     z-index: 199;
-  }
-  .rk-sidebox {
+}
+
+.rk-sidebox {
     overflow-y: auto;
     transition: all 0.3s;
     position: fixed;
@@ -82,47 +82,56 @@ limitations under the License. -->
     bottom: 30px;
     z-index: 200;
     background-color: #fff;
-  }
-  .rk-sidebox-inner {
+}
+
+.rk-sidebox-inner {
     padding: 35px 20px 20px;
-  }
-  .rk-sidebox-inner-fixed {
+}
+
+.rk-sidebox-inner-fixed {
     height: 100%;
     padding: 0;
     overflow: auto;
-  }
-  .rk-sidebox-title {
+}
+
+.rk-sidebox-title {
     font-size: 16px;
     position: absolute;
     width: 100%;
     padding-left: 20px;
     line-height: 35px;
-  }
-  .rk-sidebox-close {
+}
+
+.rk-sidebox-close {
     position: absolute;
     right: 10px;
     top: 0;
     cursor: pointer;
     color: #d8d8d8;
     transition: color 0.3s;
+
     .icon {
-      width: 18px;
-      height: 20px;
+        width: 18px;
+        height: 20px;
     }
+
     &:hover {
-      color: #3d92ff;
+        color: #3d92ff;
     }
-  }
-  .rk-sidebox-magnify {
+}
+
+.rk-sidebox-magnify {
     cursor: pointer;
     color: #d8d8d8;
     transition: color 0.3s;
+
     .icon {
-      width: 18px;
-      height: 20px;
+        width: 18px;
+        height: 20px;
     }
+
     &:hover {
-      color: #3d92ff;
+        color: #3d92ff;
     }
-  }
+}
 </style>

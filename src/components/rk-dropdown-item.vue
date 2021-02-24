@@ -13,8 +13,8 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License. -->
 <template>
-  <div class="rk-dropdown-item" :class="{ active: value === active && active }">
-    <div class="ell" v-if="!show">
+  <div :class="{ 'rk-dropdown-item': true, active: value === active && active }">
+    <div v-if="!show" class="ell">
       <svg v-if="detail" class="icon sm r" @click.stop="show = !show">
         <use xlink:href="#code"></use>
       </svg>
@@ -30,29 +30,31 @@ limitations under the License. -->
 </template>
 
 <script lang="ts">
-  import Vue from 'vue';
-  import { Component, Prop } from 'vue-property-decorator';
+import Vue from 'vue';
+import { Component, Prop } from 'vue-property-decorator';
 
-  @Component({})
-  export default class RkDropdownItem extends Vue {
-    @Prop({ default: false }) private detail!: boolean;
-    @Prop() private active!: string | number;
-    @Prop() private value!: string | number;
-    private show: boolean = false;
-  }
+@Component({})
+export default class RkDropdownItem extends Vue {
+  @Prop({ default: false }) private detail!: boolean;
+  @Prop() private active!: string | number;
+  @Prop() private value!: string | number;
+  private show = false;
+}
 </script>
 
 <style lang="scss">
-  .rk-dropdown-item {
+.rk-dropdown-item {
     padding: 7px 15px;
     cursor: pointer;
     user-select: none;
+
     .icon {
-      margin-top: 3px;
+        margin-top: 3px;
     }
+
     &:hover,
     &.active {
-      background-color: #40454e;
+        background-color: #40454e;
     }
-  }
+}
 </style>

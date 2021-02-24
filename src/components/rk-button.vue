@@ -13,24 +13,24 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License. -->
 <template>
-  <a class="rk-btn" :class="{ size, ghost: ghost }" @click.stop="$emit('click')">
+  <a :class="{ 'rk-btn': true, size, ghost: ghost }" @click.stop="$emit('click')">
     <svg v-if="icon" class="icon"><use :xlink:href="`#${icon}`"></use></svg>
     <slot />
   </a>
 </template>
 <script lang="ts">
-  import Vue from 'vue';
-  import { Component, Prop } from 'vue-property-decorator';
+import Vue from 'vue';
+import { Component, Prop } from 'vue-property-decorator';
 
-  @Component
-  export default class RkBtn extends Vue {
-    @Prop({ default: '' }) private size!: string;
-    @Prop({ default: '' }) private icon!: string;
-    @Prop({ default: false }) private ghost!: boolean;
-  }
+@Component
+export default class RkBtn extends Vue {
+  @Prop({ default: '' }) private size!: string;
+  @Prop({ default: '' }) private icon!: string;
+  @Prop({ default: false }) private ghost!: boolean;
+}
 </script>
 <style lang="scss">
-  .rk-btn {
+.rk-btn {
     display: inline-block;
     line-height: 26px;
     padding: 0 7px;
@@ -38,20 +38,25 @@ limitations under the License. -->
     border-radius: 4px;
     color: #fff;
     transition: background-color 0.3s;
+
     .icon {
-      margin-top: -2px;
+        margin-top: -2px;
     }
+
     &.sm {
-      line-height: 24px;
+        line-height: 24px;
     }
+
     &.lg {
-      line-height: 30px;
+        line-height: 30px;
     }
+
     &.ghost {
-      background-color: transparent;
+        background-color: transparent;
     }
+
     &:hover {
-      background-color: #357de9;
+        background-color: #357de9;
     }
-  }
+}
 </style>

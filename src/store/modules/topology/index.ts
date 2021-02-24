@@ -1,3 +1,4 @@
+/* eslint-disable no-param-reassign */
 import { Commit, ActionTree, Dispatch } from 'vuex';
 import * as types from '../../mutation-types';
 import axios, { AxiosPromise, AxiosResponse } from 'axios';
@@ -6,7 +7,6 @@ import { formatTopoData, utc2Peking } from '@/utils/topo';
 
 import { getEvents } from './get-events.js';
 import { generateGesData } from './ges-data';
-import { generateGesDataOnTime } from './ges-data-times';
 import { getA1Up, getA1Down, getA1Cl, getA2Up, getA2Down, getA2Cl } from './relative-data';
 let timeIndex = 0;
 
@@ -163,56 +163,37 @@ const mutations = {
 const actions: ActionTree<State, any> = {
   GET_SCENE_CONFIG(context: { commit: Commit; state: State }, params: any) {
     context.commit(types.SET_SCENE_CONFIG, {});
-    return axios
-      .get(window.location.origin + '/v1/scene-config', {
-        params,
-      })
-      .then((res: any) => {
-        res = {
-          data: {
-            sceneConfig: {
-              agentMode: 'customised',
-              eventSource: 'k8s,aom',
-            },
+    return Promise.resolve().then((res) => {
+      // @ts-ignore
+      res = {
+        data: {
+          sceneConfig: {
+            agentMode: 'customised',
+            eventSource: 'k8s,aom',
           },
-        };
-        if (res && res.data && res.data.sceneConfig) {
-          context.commit(types.SET_SCENE_CONFIG, res.data.sceneConfig);
-        }
-        return res.data.sceneConfig;
-      })
-      .catch((err) => {
-        console.log('scene-err', err);
-      });
+        },
+      };
+      // @ts-ignore
+      if (res && res.data && res.data.sceneConfig) {
+        // @ts-ignore
+        context.commit(types.SET_SCENE_CONFIG, res.data.sceneConfig);
+      }
+      // @ts-ignore
+      return res.data.sceneConfig;
+    });
   },
   GET_EVENTS_DATA(context: { commit: Commit; state: State }, params: any) {
-    return axios
-      .post(window.location.origin + '/v1/events', params, {
-        cancelToken: cancelToken(),
-      })
-      .then((res: any) => {
-        res = getEvents();
-        if (res && res.data && res.data.events) {
-          res.data.events.forEach((item) => {
+    return Promise.resolve().then((res) => {
+        const eventsDataRes = getEvents();
+        if (eventsDataRes && eventsDataRes.data && eventsDataRes.data.events) {
+          eventsDataRes.data.events.forEach(item => {
             item.expansion = false;
             item.createTime = utc2Peking(item.createTime);
             item.updateTime = utc2Peking(item.updateTime);
-          });
+          })
         }
-        return res.data;
-      })
-      .catch((err) => {});
-    // return Promise.resolve().then((res) => {
-    //     const eventsDataRes = getEvents();
-    //     if (eventsDataRes && eventsDataRes.data && eventsDataRes.data.events) {
-    //       eventsDataRes.data.events.forEach(item => {
-    //         item.expansion = false;
-    //         item.createTime = utc2Peking(item.createTime);
-    //         item.updateTime = utc2Peking(item.updateTime);
-    //       })
-    //     }
-    //     return eventsDataRes.data;
-    // });
+        return eventsDataRes.data;
+    });
   },
   GET_RELYON_DATA(context: { commit: Commit; state: State }, params: any) {
     return Promise.resolve().then(() => {
@@ -220,16 +201,6 @@ const actions: ActionTree<State, any> = {
       // let relyonData = formatTopoData(getA2Cl(), true);
       return relyonData;
     });
-    // return axios.get( window.location.origin + '/v1/underlying-resources', {
-    //     params,
-    //     cancelToken: cancelToken()
-    //   })
-    //   .then((res: any) => {
-    //     // let relyonData = formatTopoData(res, true);
-    //     let relyonData = formatTopoData(getA1Cl(), true);
-    //     return relyonData;
-    //   })
-    //   .catch((err) => {});
   },
   GET_RELATIVE_DATA(context: { commit: Commit; state: State }, params: any) {
     return Promise.resolve().then(() => {
@@ -246,24 +217,6 @@ const actions: ActionTree<State, any> = {
       }
       return relativeData;
     });
-    // return axios.get( window.location.origin + '/v1/applications', {
-    //     params,
-    //     cancelToken: cancelToken()
-    //   })
-    //   .then((res: any) => {
-    //     // let relativeData = formatTopoData(res, false);
-    //     let relativeData = {
-    //       nodes: [],
-    //       links: [],
-    //     };
-    //     if (params.direction == 'in') {
-    //       relativeData = formatTopoData(getA1Up(), true);
-    //     } else {
-    //       relativeData = formatTopoData(getA1Down(), true);
-    //     }
-    //     return relativeData;
-    //   })
-    //   .catch((err) => {});
   },
   GET_TOPO_DATA(context: { commit: Commit; state: State }, params: any) {
     if (params.isClearTopoData) {
@@ -275,41 +228,14 @@ const actions: ActionTree<State, any> = {
     } else {
       context.state.isLoadingTopo = false;
     }
-    // return new Promise((resolve, reject) => {
-    //   // setTimeout(() => {
-    //   //   resolve(1);
-    //   // }, 2000);
-    //   resolve(1);
-    // }).then(() => {
-    //   context.state.isLoadingTopo = false;
-    //   let topoData = formatTopoData(generateGesData(), true);
-    //   // timeIndex++;
-    //   // if (timeIndex > 8) {
-    //   //   timeIndex = 1;
-    //   // }
-    //   // let topoData = formatTopoData(generateGesDataOnTime(timeIndex), true);
-    //   context.commit(types.SET_TOPO_DATA, {
-    //     nodes: topoData.nodes,
-    //     links: topoData.links,
-    //   });
-    // });
-    return axios
-      .get(window.location.origin + '/v1/endpoints', {
-        params,
-        cancelToken: cancelToken(),
-      })
-      .then((res: any) => {
-        context.state.isLoadingTopo = false;
-        // let topoData = formatTopoData(res, true);
-        let topoData = formatTopoData(generateGesData(), true);
-        context.commit(types.SET_TOPO_DATA, {
-          nodes: topoData.nodes,
-          links: topoData.links,
-        });
-      })
-      .catch((err) => {
-        context.state.isLoadingTopo = false;
+    return Promise.resolve().then(() => {
+      context.state.isLoadingTopo = false;
+      let topoData = formatTopoData(generateGesData(), true);
+      context.commit(types.SET_TOPO_DATA, {
+        nodes: topoData.nodes,
+        links: topoData.links,
       });
+    });
   },
 };
 

@@ -12,68 +12,68 @@
 </template>
 
 <script lang="js">
-  import { dateFormat } from '@/utils/topo';
-  import TopoTimeLine from './topo-time-line.vue';
+import { dateFormat } from '@/utils/topo';
+import TopoTimeLine from './topo-time-line.vue';
 
-  export default {
-    data() {
-      return {
-        dateTimes: [],
-        isClearTopoData: true,
+export default {
+
+  components: {
+    TopoTimeLine,
+  },
+  data() {
+    return {
+      dateTimes: [],
+      isClearTopoData: true,
+    }
+  },
+
+  computed: {
+    durationRow() {
+      return this.$store.state.rocketbot.durationRow;
+    },
+    toolSetInstance() {
+      return this.$store.state.rocketTopo.toolSetInstance;
+    },
+    topoScaleFix() {
+      return this.$store.state.rocketTopo.topoScaleFix;
+    },
+  },
+
+  watch: {
+    durationRow(newVal) {
+      this.loadTopoData();
+    }
+  },
+
+  mounted() {
+    this.$store.commit('rocketTopo/SET_TOPO_TIME_INSTANCE', this);
+    let endTime = new Date();
+    let startTime = new Date(endTime.getTime() -  10 * 60 * 1000);
+    this.setDateTimes(startTime, endTime);
+  },
+
+  methods: {
+    setDateTimes(startTime, endTime) {
+      this.dateTimes = [startTime, endTime];
+    },
+    loadTopoData() {
+      if (this.topoScaleFix > -1) {
+        this.toolSetInstance.refreshTopoView(false);
       }
-    },
-
-    components: {
-      TopoTimeLine,
-    },
-
-    computed: {
-      durationRow() {
-        return this.$store.state.rocketbot.durationRow;
-      },
-      toolSetInstance() {
-        return this.$store.state.rocketTopo.toolSetInstance;
-      },
-      topoScaleFix() {
-        return this.$store.state.rocketTopo.topoScaleFix;
-      },
-    },
-
-    watch: {
-      durationRow(newVal) {
-        this.loadTopoData();
-      }
-    },
-
-    mounted() {
-      this.$store.commit('rocketTopo/SET_TOPO_TIME_INSTANCE', this);
-      let endTime = new Date();
-      let startTime = new Date(endTime.getTime() -  10 * 60 * 1000);
-      this.setDateTimes(startTime, endTime);
-    },
-
-    methods: {
-      setDateTimes(startTime, endTime) {
-        this.dateTimes = [startTime, endTime];
-      },
-      loadTopoData() {
-        if (this.topoScaleFix > -1) {
-          this.toolSetInstance.refreshTopoView(false);
-        }
-        let isClearTopoData = this.isClearTopoData;
-        this.isClearTopoData = false;
-        this.$store.dispatch('rocketTopo/GET_TOPO_DATA', {
-          start_time: dateFormat("YYYY-mm-dd HH:MM:SS", this.durationRow.start),
-          end_time: dateFormat("YYYY-mm-dd HH:MM:SS", this.durationRow.end),
-          isClearTopoData
-        });
-      }
+      let isClearTopoData = this.isClearTopoData;
+      this.isClearTopoData = false;
+      this.$store.dispatch('rocketTopo/GET_TOPO_DATA', {
+        start_time: dateFormat('YYYY-mm-dd HH:MM:SS', this.durationRow.start),
+        end_time: dateFormat('YYYY-mm-dd HH:MM:SS', this.durationRow.end),
+        isClearTopoData
+      });
     }
   }
+}
 </script>
 
 <style lang="scss">
-  .topo-time {
+.topo-time {
     width: 100%;
     padding: 5px 10px;
     display: flex;
@@ -82,27 +82,30 @@
     position: relative;
 
     .time-picker {
-      width: auto;
-      background: #242424;
-      border-radius: 3px;
+        width: auto;
+        background: #242424;
+        border-radius: 3px;
 
-      .el-input__inner {
-        width: 320px !important;
-        padding: 3px !important;
-        & > input {
-          background: #252a2f;
+        .el-input__inner {
+            width: 320px !important;
+            padding: 3px !important;
+
+            & > input {
+                background: #252a2f;
+            }
+
+            &:hover {
+                border-color: rgba(204, 204, 204, 0.2) !important;
+            }
         }
-        &:hover {
-          border-color: rgba(204, 204, 204, 0.2) !important;
+
+        .el-range-editor.is-active {
+            border-color: rgba(204, 204, 204, 0.2) !important;
         }
-      }
-      .el-range-editor.is-active {
-        border-color: rgba(204, 204, 204, 0.2) !important;
-      }
     }
 
     .time-line-wrapper {
-      flex-grow: 1;
+        flex-grow: 1;
     }
-  }
+}
 </style>

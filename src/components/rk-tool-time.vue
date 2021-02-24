@@ -2,13 +2,13 @@
   <div class="tool-time-wrapper">
     <div class="quick-pick-wrapper">
       <a class="rk-btn mr-5 sm qpw-item" @click="quickPick('oneMinute')">
-        <span class="vm">{{ this.oneMinuteCutTip }}</span>
+        <span class="vm">{{ oneMinuteCutTip }}</span>
       </a>
       <a class="rk-btn mr-5 sm qpw-item" @click="quickPick('fiveMinutes')">
-        <span class="vm">{{ this.fiveMinutesCutTip }}</span>
+        <span class="vm">{{ fiveMinutesCutTip }}</span>
       </a>
       <a class="rk-btn mr-5 sm qpw-item" @click="quickPick('tenMinutes')">
-        <span class="vm">{{ this.tenMinutesCutTip }}</span>
+        <span class="vm">{{ tenMinutesCutTip }}</span>
       </a>
     </div>
     <RkDate ref="rkdate" v-model="time" position="bottom" format="YYYY-MM-DD HH:mm:ss" :showButtons="true" />
@@ -16,42 +16,43 @@
 </template>
 
 <script lang="ts">
-  import timeFormat from '@/utils/timeFormat';
+import timeFormat from '@/utils/timeFormat';
 
-  export default {
-    data() {
-      return {
-        oneMinuteCutTip: this.$t('oneMinuteCutTip'),
-        fiveMinutesCutTip: this.$t('fiveMinutesCutTip'),
-        tenMinutesCutTip: this.$t('tenMinutesCutTip'),
-      };
-    },
-    computed: {
-      time: {
-        get() {
-          return [
-            (this as any).$store.state.rocketbot.durationRow.start, // 利用Vuex特性，双向绑定，相应变化
-            (this as any).$store.state.rocketbot.durationRow.end,
-          ];
-        },
-        set(val: Date[]) {
-          (this as any).$store.dispatch('SET_DURATION', timeFormat(val));
-        },
+export default {
+  data() {
+    return {
+      oneMinuteCutTip: this.$t('oneMinuteCutTip'),
+      fiveMinutesCutTip: this.$t('fiveMinutesCutTip'),
+      tenMinutesCutTip: this.$t('tenMinutesCutTip'),
+    };
+  },
+  computed: {
+    time: {
+      get() {
+        return [
+          (this as any).$store.state.rocketbot.durationRow.start, // 利用Vuex特性，双向绑定，相应变化
+          (this as any).$store.state.rocketbot.durationRow.end,
+        ];
+      },
+      set(val: Date[]) {
+        (this as any).$store.dispatch('SET_DURATION', timeFormat(val));
       },
     },
-    methods: {
-      quickPick(type) {
-        this.$refs.rkdate.quickPick(type);
-      },
+  },
+  methods: {
+    quickPick(type) {
+      this.$refs.rkdate.quickPick(type);
     },
-  };
+  },
+};
 </script>
 
 <style lang="scss" scoped>
-  .tool-time-wrapper {
+.tool-time-wrapper {
     display: flex;
+
     .rk-btn.qpw-item {
-      background-color: darkslategrey;
+        background-color: darkslategrey;
     }
-  }
+}
 </style>

@@ -15,8 +15,8 @@
  * limitations under the License.
  */
 
-export const readFile = (event: any) => {
-  return new Promise((resolve) => {
+export const readFile = (event: any) =>
+  new Promise(resolve => {
     const { files } = event.target;
     if (files.length < 1) {
       return;
@@ -30,4 +30,3 @@ export const readFile = (event: any) => {
       }
     };
   });
-};

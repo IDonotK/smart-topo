@@ -57,7 +57,7 @@ const components: any = {
 const componentsName: string[] = Object.keys(components);
 export default {
   install: (vue: any) => {
-    componentsName.forEach((i) => {
+    componentsName.forEach(i => {
       vue.component(i, components[i]);
     });
     vue.use(noty);

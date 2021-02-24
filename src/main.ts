@@ -48,7 +48,6 @@ import {
   Autocomplete,
   DatePicker,
 } from 'element-ui';
-// import './assets/styles/fix-element-ui.scss';
 Vue.prototype.$ELEMENT = { size: 'small', zIndex: 99999 };
 Vue.use(Button);
 Vue.use(Dialog);
@@ -75,7 +74,6 @@ Vue.use(OverlayScrollbars);
 
 import 'xe-utils';
 import VXETable from 'vxe-table';
-// import 'vxe-table/lib/style.css';
 import './assets/styles/fix-vxe-table.scss';
 VXETable.setup({
   zIndex: 99999,
@@ -88,7 +86,7 @@ Vue.use(components);
 Vue.use(VModal, { dialog: true });
 Vue.directive('clickout', clickout);
 Vue.directive('tooltip', tooltip);
-Vue.filter('dateformat', (dataStr: any, pattern: string = 'YYYY-MM-DD HH:mm:ss') => moment(dataStr).format(pattern));
+Vue.filter('dateformat', (dataStr: any, pattern = 'YYYY-MM-DD HH:mm:ss') => moment(dataStr).format(pattern));
 
 const savedLanguage = window.localStorage.getItem('lang');
 let language = navigator.language.split('-')[0];
@@ -115,5 +113,5 @@ new Vue({
   i18n,
   router,
   store,
-  render: (h) => h(App),
+  render: h => h(App),
 }).$mount('#app');

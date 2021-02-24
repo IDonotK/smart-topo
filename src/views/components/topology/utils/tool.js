@@ -7,7 +7,7 @@ function capitalizeFirstLetter(str) {
 function validateFileName(str) {
   return /^\S+\.png$/.test(str) && str.replace(/^\S+\/(\w+)\.png$/, (rs, $1) => capitalizeFirstLetter($1));
 }
-requireComponent.keys().forEach((filePath) => {
+requireComponent.keys().forEach(filePath => {
   const componentConfig = requireComponent(filePath);
   const fileName = validateFileName(filePath);
   icons[fileName] = componentConfig;
@@ -18,8 +18,10 @@ const Hexagon = (side, r, cx, cy) => {
   for (let i = 0; i < side; i += 1) {
     let x = Math.cos(((2 / side) * i + 1 / side) * Math.PI) * r + cx;
     let y = -Math.sin(((2 / side) * i + 1 / side) * Math.PI) * r + cy;
-    path += !i ? `M${x},${y} ` : `L${x},${y} `;
-    if (i == side - 1) path += 'Z';
+    path += i ? `L${x},${y} ` : `M${x},${y} `;
+    if (i === side - 1) {
+      path += 'Z';
+    }
   }
   return path;
 };

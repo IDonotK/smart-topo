@@ -2,7 +2,9 @@
 export const findLinks = (nodeId, links) => {
   let nodeLinks = [];
   for (let link of links) {
-    if (link.sid === nodeId || link.tid === nodeId) nodeLinks.push(link);
+    if (link.sid === nodeId || link.tid === nodeId) {
+      nodeLinks.push(link);
+    }
   }
   return nodeLinks.length ? nodeLinks : null;
 };
@@ -15,9 +17,7 @@ export const findNode = (nodes, nodeId) => {
 };
 // removes node by id => () => ( [newNodes] )
 export const removeNode = (nodeId, nodes, cb) => {
-  let index = nodes.findIndex((node) => {
-    return node.id === nodeId;
-  });
+  let index = nodes.findIndex(node => node.id === nodeId);
   if (index > -1) {
     nodes.splice(index, 1);
     cb(nodes);
@@ -53,24 +53,18 @@ export const rebuildNodes = (links, nodes) => {
 
 // finds node by id => boolean
 export const nodeExists = (nodeId, nodes) => {
-  let index = nodes.findIndex((node) => {
-    return node.id === nodeId;
-  });
+  let index = nodes.findIndex(node => node.id === nodeId);
   return index > -1;
 };
 
 // Checks if node is linked => boolean
 const isLinked = (nodeId, links) => {
-  let index = links.findIndex((link) => {
-    return link.tid === nodeId || link.sid === nodeId;
-  });
+  let index = links.findIndex(link => link.tid === nodeId || link.sid === nodeId);
   return index > -1;
 };
 
 // link formatter
-export const newLink = (id, sid, tid) => {
-  return { id, sid, tid };
-};
+export const newLink = (id, sid, tid) => ({ id, sid, tid });
 
 // generates random links => [ links ]
 export const makeRandomLinks = (nodes, maxLinks) => {
@@ -89,22 +83,17 @@ export const makeRandomLinks = (nodes, maxLinks) => {
 };
 
 // random node name
-const newNodeName = () => {
-  return Math.random()
+const newNodeName = () =>
+  Math.random()
     .toString(36)
     .substring(7);
-};
 
 // node formatter
-export const newNode = (nodeId) => {
-  return { id: nodeId, name: newNodeName() };
-};
+export const newNode = nodeId => ({ id: nodeId, name: newNodeName() });
 
 // generates random nodes => [ nodes ]
-export const makeRandomNodes = (maxNodes) => {
-  let nodes = Array.apply(null, { length: maxNodes }).map((value, index) => {
-    return newNode(index);
-  });
+export const makeRandomNodes = maxNodes => {
+  let nodes = Array.apply(null, { length: maxNodes }).map((value, index) => newNode(index));
   return nodes;
 };
 
@@ -112,8 +101,11 @@ export const makeRandomNodes = (maxNodes) => {
 export const methodCall = (vm, action, args) => {
   let method = vm[action];
   if (typeof method === 'function') {
-    if (args) method(...args);
-    else method();
+    if (args) {
+      method(...args);
+    } else {
+      method();
+    }
   } else {
     console.error('Call to undefined method:', action);
   }

@@ -25,3 +25,9 @@ import './svg/DETAIL_PAGE_GRAY.svg';
 
 import './svg/PLAY_START.svg';
 import './svg/PLAY_STOP.svg';
+
+import './svg/ENLARGE.svg';
+import './svg/NARROW.svg';
+import './svg/EXPLORE.svg';
+import './svg/SEARCH.svg';
+import './svg/RESTORE.svg';

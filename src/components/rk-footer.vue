@@ -1,5 +1,5 @@
 <template>
-  <footer class="rk-footer trans" :class="{ 'rk-footer-dark': $route.path === '/topology' }">
+  <footer :class="{ 'rk-footer': true, trans: true, 'rk-footer-dark': $route.path === '/topology' }">
     <div class="rk-footer-inner">
       <div class="flex-h"></div>
       <div class="sm flex-h">
@@ -13,50 +13,50 @@
 </template>
 
 <script lang="ts">
-  import { Duration } from '@/types/global';
-  import { Vue, Component, Watch } from 'vue-property-decorator';
-  import { State, Action, Mutation } from 'vuex-class';
+import { Duration } from '@/types/global';
+import { Vue, Component, Watch } from 'vue-property-decorator';
+import { State, Action, Mutation } from 'vuex-class';
 
-  @Component
-  export default class Footerssd extends Vue {
-    @State('rocketbot') private rocketbotGlobal: any;
-    @Action('SET_DURATION') private SET_DURATION: any;
-    @Action('SET_UTC') private SET_UTC: any;
-    private lang: any = '';
-    private utc: any = window.localStorage.getItem('utc') || -(new Date().getTimezoneOffset() / 60);
-    @Watch('utc')
-    private onUtcUpdate() {
-      if (this.utc < -12) {
-        this.utc = -12;
-      }
-      if (this.utc > 14) {
-        this.utc = 14;
-      }
-      if (this.utc === '') {
-        this.utc = 0;
-      }
-      this.SET_UTC(this.utc);
-      window.localStorage.setItem('utc', this.utc.toString());
+@Component
+export default class Footerssd extends Vue {
+  @State('rocketbot') private rocketbotGlobal: any;
+  @Action('SET_DURATION') private SET_DURATION: any;
+  @Action('SET_UTC') private SET_UTC: any;
+  private lang: any = '';
+  private utc: any = window.localStorage.getItem('utc') || -(new Date().getTimezoneOffset() / 60);
+  @Watch('utc')
+  private onUtcUpdate() {
+    if (this.utc < -12) {
+      this.utc = -12;
     }
-    private setLang() {
-      if (this.lang === 'zh') {
-        this.$i18n.locale = 'en';
-        window.localStorage.setItem('lang', 'en');
-        this.lang = 'en';
-      } else {
-        this.$i18n.locale = 'zh';
-        window.localStorage.setItem('lang', 'zh');
-        this.lang = 'zh';
-      }
+    if (this.utc > 14) {
+      this.utc = 14;
     }
-    private beforeMount() {
-      this.lang = window.localStorage.getItem('lang');
+    if (this.utc === '') {
+      this.utc = 0;
+    }
+    this.SET_UTC(this.utc);
+    window.localStorage.setItem('utc', this.utc.toString());
+  }
+  private setLang() {
+    if (this.lang === 'zh') {
+      this.$i18n.locale = 'en';
+      window.localStorage.setItem('lang', 'en');
+      this.lang = 'en';
+    } else {
+      this.$i18n.locale = 'zh';
+      window.localStorage.setItem('lang', 'zh');
+      this.lang = 'zh';
     }
   }
+  private beforeMount() {
+    this.lang = window.localStorage.getItem('lang');
+  }
+}
 </script>
 
 <style scoped>
-  .rk-footer {
+.rk-footer {
     position: fixed;
     height: 40px;
     bottom: 0;
@@ -68,29 +68,33 @@
     z-index: 9999;
     color: #515a6e;
     flex-shrink: 0;
-    box-shadow: 0 -1px 0px rgba(0, 0, 0, 0.08);
-  }
-  .rk-footer-dark {
+    box-shadow: 0 -1px 0 rgba(0, 0, 0, 0.08);
+}
+
+.rk-footer-dark {
     color: #ddd;
     background: #252a2f;
     border-top: 1px solid #252a2f;
-  }
-  .rk-footer-edit {
+}
+
+.rk-footer-edit {
     color: #eee;
     background: #448dfe;
     border-top: 1px solid #448dfe;
-  }
-  .rk-footer-utc {
+}
+
+.rk-footer-utc {
     color: inherit;
     background: 0;
     border: 0;
     outline: none;
     width: 40px;
     padding-bottom: 0;
-  }
-  .rk-footer-inner {
+}
+
+.rk-footer-inner {
     justify-content: space-between;
     display: flex;
     height: 100%;
-  }
+}
 </style>

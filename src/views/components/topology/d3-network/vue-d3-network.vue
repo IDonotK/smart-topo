@@ -1,555 +1,438 @@
 <script>
-  import svgRenderer from './components/svgRenderer.vue';
-  import saveImage from './lib/js/saveImage.js';
-  import svgExport from './lib/js/svgExport.js';
-  import { setUniformLayout } from '@/utils/topo';
+import svgRenderer from './components/svgRenderer.vue';
+import saveImage from './lib/js/saveImage.js';
+import svgExport from './lib/js/svgExport.js';
+// import { setUniformLayout } from '@/utils/topo';
 
-  export default {
-    name: 'd3-network',
-    components: {
-      svgRenderer,
+export default {
+  name: 'D3Network',
+  components: {
+    svgRenderer,
+  },
+  props: {
+    netData: {
+      type: Object,
     },
-    props: {
-      netData: {
-        type: Object,
-      },
-      options: {
-        type: Object,
-      },
-      nodeSym: {
-        type: String,
-      },
-      nodeCb: {
-        type: Function,
-      },
-      linkCb: {
-        type: Function,
-      },
-      simCb: {
-        type: Function,
-      },
-      customForces: {
-        type: Object,
-      },
-      selection: {
-        type: Object,
-        default: () => {
-          return {
-            nodes: {},
-            links: {},
-          };
-        },
-      },
+    options: {
+      type: Object,
     },
-    data() {
+    nodeSym: {
+      type: String,
+    },
+    nodeCb: {
+      type: Function,
+    },
+    linkCb: {
+      type: Function,
+    },
+    simCb: {
+      type: Function,
+    },
+    customForces: {
+      type: Object,
+    },
+    selection: {
+      type: Object,
+      default: () => ({
+        nodes: {},
+        links: {},
+      }),
+    },
+  },
+  data() {
+    return {
+      nodes: [],
+      links: [],
+      preNetData: { nodes: [], links: [] },
+      size: { w: 500, h: 500 },
+      offset: { x: 0, y: 0 },
+      clientOffset: { x: 0, y: 0 },
+      force: 500,
+      forces: { Center: false, X: 0.5, Y: 0.5, ManyBody: true, Link: true },
+      noNodes: false,
+      strLinks: true,
+      fontSize: 16,
+      dragging: false,
+      linkWidth: 1,
+      nodeLabels: false,
+      linkLabels: false,
+      nodeSize: 20,
+      mouseOfst: { x: 0, y: 0 },
+      padding: { x: 0, y: 0 },
+      simulation: null,
+      nodeSvg: null,
+      resizeListener: true,
+      linkTextStyle: { height: 0, left: 0, top: 0 },
+      isLinkTextDark: false,
+      linkTextVisible: false,
+      linkTextContent: '',
+      nodeSingleClicked: true,
+      clickNodeTimer: null,
+      isMouseDwonNet: true,
+      topoTickCount: 0,
+      defaultNodeSize: 20,
+      defaultLinkWidth: 1,
+      nodeNumSmall: 20,
+      nodeNumDiff: 10,
+      defaultFontSize: 16,
+      elemsAroundPreHovNodeDeep: { nodes: [], links: [] },
+      elemsAroundPreHovNodeShallow: { nodes: [], links: [] },
+      elemsAroundPreHovLinkShallow: { nodes: [], links: [] },
+      tip: null,
+      isNodesChanged: false,
+      deltaIterateNum: 50,
+    };
+  },
+  computed: {
+    isAutoReloadTopo() {
+      return this.$store.state.rocketTopo.isAutoReloadTopo;
+    },
+    isTopoNodesUpdated() {
+      return this.$store.state.rocketTopo.isTopoNodesUpdated;
+    },
+    isTopoLinksUpdated() {
+      return this.$store.state.rocketTopo.isTopoLinksUpdated;
+    },
+    isFirstTick() {
+      return this.$store.state.rocketTopo.isFirstTick;
+    },
+    topoScaleFix() {
+      return this.$store.state.rocketTopo.topoScaleFix;
+    },
+    showNodeTypes() {
+      return this.$store.state.rocketTopo.showNodeTypes;
+    },
+    elemIdsRTCAll() {
+      return this.$store.state.rocketTopo.elemIdsRTCAll;
+    },
+    currentNode() {
+      return this.$store.state.rocketTopo.currentNode;
+    },
+    zoomController() {
+      return this.$store.state.rocketTopo.zoomController;
+    },
+    selected() {
+      return this.selection.nodes;
+    },
+    linksSelected() {
+      return this.selection.links;
+    },
+    center() {
       return {
-        nodes: [],
-        links: [],
-        preNetData: {
-          nodes: [],
-          links: [],
-        },
-        size: {
-          w: 500,
-          h: 500,
-        },
-        offset: {
-          x: 0,
-          y: 0,
-        },
-        clientOffset: {
-          x: 0,
-          y: 0,
-        },
-        force: 500,
-        forces: {
-          Center: false,
-          X: 0.5,
-          Y: 0.5,
-          ManyBody: true,
-          Link: true,
-        },
-        noNodes: false,
-        strLinks: true,
-        fontSize: 16,
-        dragging: false,
-        linkWidth: 1,
-        nodeLabels: false,
-        linkLabels: false,
-        nodeSize: 20,
-        mouseOfst: {
-          x: 0,
-          y: 0,
-        },
-        padding: {
-          x: 0,
-          y: 0,
-        },
-        simulation: null,
-        nodeSvg: null,
-        resizeListener: true,
-        linkTextStyle: {
-          height: 0,
-          left: 0,
-          top: 0,
-        },
-        isLinkTextDark: false,
-        linkTextVisible: false,
-        linkTextContent: '',
-        nodeSingleClicked: true,
-        clickNodeTimer: null,
-        isMouseDwonNet: true,
-        topoTickCount: 0,
-        defaultNodeSize: 20,
-        defaultLinkWidth: 1,
-        nodeNumSmall: 20,
-        nodeNumDiff: 10,
-        defaultFontSize: 16,
-        elemsAroundPreHovNodeDeep: {
-          nodes: [],
-          links: [],
-        },
-        elemsAroundPreHovNodeShallow: {
-          nodes: [],
-          links: [],
-        },
-        elemsAroundPreHovLinkShallow: {
-          nodes: [],
-          links: [],
-        },
-        tip: null,
-        isNodesChanged: false,
-        deltaIterateNum: 50,
+        x: this.size.w / 2 + this.size.w / 200 + this.offset.x,
+        y: this.size.h / 2 + this.size.h / 200 + this.offset.y,
       };
     },
-    render(createElement) {
-      let ref = 'svg';
-      let props = {};
-      let renderer = 'svg-renderer';
-      let bindProps = [
-        'size',
-        'nodes',
-        'links',
-        'selected',
-        'linksSelected',
-        'strLinks',
-        'linkWidth',
-        'nodeLabels',
-        'linkLabels',
-        'fontSize',
-        'labelOffset',
-        'offset',
-        'padding',
-        'nodeSize',
-        'noNodes',
-        'linkTextStyle',
-        'isLinkTextDark',
-        'linkTextVisible',
-        'linkTextContent',
-      ];
-
-      for (let prop of bindProps) {
-        props[prop] = this[prop];
-      }
-      props.nodeSym = this.nodeSvg;
-
-      return createElement(
-        'div',
-        {
-          attrs: { class: 'net' },
-          on: {
-            mousemove: this.mouseMoveNet,
-            click: this.handleClickNet,
-          },
-        },
-        [
-          createElement(renderer, {
-            props,
-            ref,
-            on: { action: this.methodCall },
-          }),
-        ],
-      );
+    labelOffset() {
+      return {
+        x: this.nodeSize / 2 + this.fontSize / 2,
+        y: this.fontSize / 2,
+      };
     },
-    created() {
+  },
+  watch: {
+    netData(newVal, oldVal) {
+      this.preNetData = oldVal;
       this.updateOptions(this.options);
-      this.buildNodes(this.netData.nodes);
-      this.buildLinks(this.netData.links);
+      this.buildNodes(newVal.nodes);
+      this.buildLinks(newVal.links);
+      // this.reset();
+      this.animate();
+    },
+    nodeSym() {
       this.updateNodeSvg();
     },
-    mounted() {
-      this.$store.commit('rocketTopo/SET_NETWORK_INSTANCE', this);
-      this.onResize();
-      this.$nextTick(() => {
-        this.animate();
-      });
-      if (this.resizeListener) {
-        window.addEventListener('resize', this.onResize);
+    options(newValue, oldValue) {
+      this.updateOptions(newValue);
+      if (oldValue.size && newValue.size) {
+        if (oldValue.size.w !== newValue.size.w || oldValue.size.h !== newValue.size.h) {
+          this.onResize();
+        }
       }
+      this.animate();
     },
-    beforeDestroy() {
-      if (this.resizeListener) {
-        window.removeEventListener('resize', this.onResize);
+  },
+  created() {
+    this.updateOptions(this.options);
+    this.buildNodes(this.netData.nodes);
+    this.buildLinks(this.netData.links);
+    this.updateNodeSvg();
+  },
+  mounted() {
+    this.$store.commit('rocketTopo/SET_NETWORK_INSTANCE', this);
+    this.onResize();
+    this.$nextTick(() => {
+      this.animate();
+    });
+    if (this.resizeListener) {
+      window.addEventListener('resize', this.onResize);
+    }
+  },
+  beforeDestroy() {
+    if (this.resizeListener) {
+      window.removeEventListener('resize', this.onResize);
+    }
+  },
+  methods: {
+    getScaleFixForSim(nodes, fix) {
+      if (nodes.length === 0) {
+        return 1;
       }
+      if (nodes.length <= 2) {
+        return 2;
+      }
+      let centerX = this.$jq('#netSvg').width() / 2;
+      let centerY = this.$jq('#netSvg').height() / 2;
+      let xMin = nodes[0].x;
+      let xMax = nodes[0].x;
+      let yMin = nodes[0].y;
+      let yMax = nodes[0].y;
+      for (let i = 0; i < nodes.length; i++) {
+        xMin = xMin > nodes[i].x ? nodes[i].x : xMin;
+        xMax = xMax < nodes[i].x ? nodes[i].x : xMax;
+        yMin = yMin > nodes[i].y ? nodes[i].y : yMin;
+        yMax = yMax < nodes[i].y ? nodes[i].y : yMax;
+      }
+      let scaleFixX = 1;
+      let scaleFixY = 1;
+      let scaleFix = 1;
+      scaleFixX = (fix * 2 * centerX) / (xMax - xMin);
+      scaleFixY = (fix * 2 * centerY) / (yMax - yMin);
+      scaleFix = Math.min(scaleFixX, scaleFixY);
+      scaleFix = scaleFix <= 0 ? 1 : scaleFix;
+      return scaleFix;
     },
-    computed: {
-      isAutoReloadTopo() {
-        return this.$store.state.rocketTopo.isAutoReloadTopo;
-      },
-      isTopoNodesUpdated() {
-        return this.$store.state.rocketTopo.isTopoNodesUpdated;
-      },
-      isTopoLinksUpdated() {
-        return this.$store.state.rocketTopo.isTopoLinksUpdated;
-      },
-      isFirstTick() {
-        return this.$store.state.rocketTopo.isFirstTick;
-      },
-      topoScaleFix() {
-        return this.$store.state.rocketTopo.topoScaleFix;
-      },
-      showNodeTypes() {
-        return this.$store.state.rocketTopo.showNodeTypes;
-      },
-      elemIdsRTCAll() {
-        return this.$store.state.rocketTopo.elemIdsRTCAll;
-      },
-      currentNode() {
-        return this.$store.state.rocketTopo.currentNode;
-      },
-      zoomController() {
-        return this.$store.state.rocketTopo.zoomController;
-      },
-      selected() {
-        return this.selection.nodes;
-      },
-      linksSelected() {
-        return this.selection.links;
-      },
-      center() {
-        return {
-          x: this.size.w / 2 + this.size.w / 200 + this.offset.x,
-          y: this.size.h / 2 + this.size.h / 200 + this.offset.y,
-        };
-      },
-      labelOffset() {
-        return {
-          x: this.nodeSize / 2 + this.fontSize / 2,
-          y: this.fontSize / 2,
-        };
-      },
-    },
-    watch: {
-      netData(newVal, oldVal) {
-        this.preNetData = oldVal;
-        this.updateOptions(this.options);
-        this.buildNodes(newVal.nodes);
-        this.buildLinks(newVal.links);
-        // this.reset();
-        this.animate();
-      },
-      nodeSym() {
-        this.updateNodeSvg();
-      },
-      options(newValue, oldValue) {
-        this.updateOptions(newValue);
-        if (oldValue.size && newValue.size) {
-          if (oldValue.size.w !== newValue.size.w || oldValue.size.h !== newValue.size.h) {
-            this.onResize();
-          }
-        }
-        this.animate();
-      },
-    },
-    methods: {
-      getScaleFixForSim(nodes, fix) {
-        if (nodes.length === 0) {
-          return;
-        }
-        if (nodes.length <= 2) {
-          return 2;
-        }
-        let centerX = this.$jq('#netSvg').width() / 2;
-        let centerY = this.$jq('#netSvg').height() / 2;
-        let xMin = nodes[0].x;
-        let xMax = nodes[0].x;
-        let yMin = nodes[0].y;
-        let yMax = nodes[0].y;
-        for (let i = 0; i < nodes.length; i++) {
-          xMin = xMin > nodes[i].x ? nodes[i].x : xMin;
-          xMax = xMax < nodes[i].x ? nodes[i].x : xMax;
-          yMin = yMin > nodes[i].y ? nodes[i].y : yMin;
-          yMax = yMax < nodes[i].y ? nodes[i].y : yMax;
-        }
-        let scaleFixX = 1;
-        let scaleFixY = 1;
-        let scaleFix = 1;
-        scaleFixX = (fix * 2 * centerX) / (xMax - xMin);
-        scaleFixY = (fix * 2 * centerY) / (yMax - yMin);
-        scaleFix = Math.min(scaleFixX, scaleFixY);
-        scaleFix = scaleFix <= 0 ? 1 : scaleFix;
-        return scaleFix;
-      },
-      getScaleFixOnCurNode(nodes, fix, isOnNodeSize) {
-        if (nodes.length === 0) {
-          return;
-        }
-        if (nodes.length <= 1) {
-          return 3 * this.topoScaleFix;
-        }
-        let centerX = this.$jq('#netSvg').width() / 2;
-        let centerY = this.$jq('#netSvg').height() / 2;
-        let curNodeX = this.currentNode.x;
-        let curNodeY = this.currentNode.y;
+    getScaleFixOnCurNode(nodes, fix, isOnNodeSize) {
+      if (nodes.length === 0) {
+        return 1;
+      }
+      if (nodes.length <= 1) {
+        return 3 * this.topoScaleFix;
+      }
+      let centerX = this.$jq('#netSvg').width() / 2;
+      let centerY = this.$jq('#netSvg').height() / 2;
+      let curNodeX = this.currentNode.x;
+      let curNodeY = this.currentNode.y;
 
-        let toCnxMax = Math.abs(nodes[0].x - curNodeX);
-        let toCnyMax = Math.abs(nodes[0].y - curNodeY);
-        let toCnx = 0;
-        let toCny = 0;
-        for (let i = 0; i < nodes.length; i++) {
-          toCnx = Math.abs(nodes[i].x - curNodeX);
-          toCny = Math.abs(nodes[i].y - curNodeY);
-          toCnxMax = toCnxMax < toCnx ? toCnx : toCnxMax;
-          toCnyMax = toCnyMax < toCny ? toCny : toCnyMax;
-        }
-        let scaleFixX = 1;
-        let scaleFixY = 1;
-        let scaleFix = 1;
-        if (isOnNodeSize) {
-          scaleFixX = (fix * centerX) / (toCnxMax + this.nodeSize);
-          scaleFixY = (fix * centerY) / (toCnyMax + this.nodeSize);
+      let toCnxMax = Math.abs(nodes[0].x - curNodeX);
+      let toCnyMax = Math.abs(nodes[0].y - curNodeY);
+      let toCnx = 0;
+      let toCny = 0;
+      for (let i = 0; i < nodes.length; i++) {
+        toCnx = Math.abs(nodes[i].x - curNodeX);
+        toCny = Math.abs(nodes[i].y - curNodeY);
+        toCnxMax = toCnxMax < toCnx ? toCnx : toCnxMax;
+        toCnyMax = toCnyMax < toCny ? toCny : toCnyMax;
+      }
+      let scaleFixX = 1;
+      let scaleFixY = 1;
+      let scaleFix = 1;
+      if (isOnNodeSize) {
+        scaleFixX = (fix * centerX) / (toCnxMax + this.nodeSize);
+        scaleFixY = (fix * centerY) / (toCnyMax + this.nodeSize);
+      } else {
+        scaleFixX = (fix * centerX) / toCnxMax;
+        scaleFixY = (fix * centerY) / toCnyMax;
+      }
+      scaleFix = Math.min(scaleFixX, scaleFixY);
+      scaleFix = scaleFix <= 0 ? 1 : scaleFix;
+      return scaleFix;
+    },
+    fixTopoScaleOnBound() {},
+    fixTopoScaleOnCoord(nodes) {
+      let scaleFix = 1;
+      if (nodes.length <= this.nodeNumSmall) {
+        scaleFix = this.getScaleFixForSim(nodes, 0.6);
+      } else {
+        scaleFix = this.getScaleFixForSim(nodes, 0.8);
+      }
+      this.$store.commit('rocketTopo/SET_TOPO_SCALE_FIX', scaleFix);
+    },
+    methodCall(action, args) {
+      let method = this[action];
+      if (method && typeof method === 'function') {
+        if (args) {
+          method(...args);
         } else {
-          scaleFixX = (fix * centerX) / toCnxMax;
-          scaleFixY = (fix * centerY) / toCnyMax;
+          method();
         }
-        scaleFix = Math.min(scaleFixX, scaleFixY);
-        scaleFix = scaleFix <= 0 ? 1 : scaleFix;
-        return scaleFix;
-      },
-      fixTopoScaleOnBound() {},
-      fixTopoScaleOnCoord(nodes) {
-        let scaleFix = 1;
-        if (nodes.length <= this.nodeNumSmall) {
-          scaleFix = this.getScaleFixForSim(nodes, 0.6);
-        } else {
-          scaleFix = this.getScaleFixForSim(nodes, 0.8);
+      }
+    },
+    // -- Data
+    updateOptions(options) {
+      for (let op in options) {
+        if (Object.prototype.hasOwnProperty.call(this, op)) {
+          this[op] = options[op];
         }
-        this.$store.commit('rocketTopo/SET_TOPO_SCALE_FIX', scaleFix);
-      },
-      methodCall(action, args) {
-        let method = this[action];
-        if (method && typeof method === 'function') {
-          if (args) method(...args);
-          else method();
+      }
+      this.defaultNodeSize = this.nodeSize;
+      this.defaultFontSize = this.fontSize;
+    },
+    buildNodes(nodes) {
+      this.isNodesChanged = nodes.length !== this.preNetData.nodes.length;
+      this.nodes = nodes.map((item, index) => {
+        let node = this.itemCb(this.nodeCb, item);
+        if (!node.id && node.id !== 0) {
+          this.$set(node, 'id', '');
         }
-      },
-      // -- Data
-      updateOptions(options) {
-        for (let op in options) {
-          if (this.hasOwnProperty(op)) {
-            this[op] = options[op];
-          }
+        if (!node.x) {
+          this.$set(node, 'x', 0);
         }
-        this.defaultNodeSize = this.nodeSize;
-        this.defaultFontSize = this.fontSize;
-      },
-      buildNodes(nodes) {
-        let vm = this;
-        if (nodes.length === this.preNetData.nodes.length) {
-          this.isNodesChanged = false;
-        } else {
-          this.isNodesChanged = true;
+        if (!node.y) {
+          this.$set(node, 'y', 0);
         }
-        this.nodes = nodes.map((node, index) => {
-          node = this.itemCb(this.nodeCb, node);
-          if (!node.id && node.id !== 0) vm.$set(node, 'id', '');
-          if (!node.x) vm.$set(node, 'x', 0);
-          if (!node.y) vm.$set(node, 'y', 0);
-          if (nodes.length >= this.nodeNumDiff) {
-            for (let i = 0; i < this.preNetData.nodes.length; i++) {
-              if (node.id === this.preNetData.nodes[i].id) {
-                node.x = this.preNetData.nodes[i].x;
-                node.y = this.preNetData.nodes[i].y;
-                node.fx = this.preNetData.nodes[i].x;
-                node.fy = this.preNetData.nodes[i].y;
-                break;
-              }
+        if (nodes.length >= this.nodeNumDiff) {
+          for (let i = 0; i < this.preNetData.nodes.length; i++) {
+            if (node.id === this.preNetData.nodes[i].id) {
+              node.x = this.preNetData.nodes[i].x;
+              node.y = this.preNetData.nodes[i].y;
+              node.fx = this.preNetData.nodes[i].x;
+              node.fy = this.preNetData.nodes[i].y;
+              break;
             }
           }
-          if (!node.name && node.name !== '0') vm.$set(node, 'name', '');
-          if (node.type) {
-            this.setNodeIcon(node);
-          }
-
-          if (this.isTopoNodesUpdated) {
-            vm.$set(node, 'showLabel', false);
-            vm.$set(node, 'isDark', false);
-            vm.$set(node, 'isBright', false);
-            vm.$set(node, 'isRelatedToCurNode', false);
-            vm.$set(node, '_color', 'rgba(33, 126, 242, 0.373)');
-          }
-          if (this.isTopoNodesUpdated && index === nodes.length - 1) {
-            this.$store.commit('rocketTopo/SET_IS_TOPO_NODES_UPDATED', false);
-          }
-          return node;
-        });
-        // @todo: 非物理布局算法优化
-        // if (this.nodes.length > this.nodeNumSmall) {
-        //   setUniformLayout(this.nodes, this.size);
-        // }
-      },
-      buildLinks(links) {
-        let vm = this;
-        this.links = links.map((link, index) => {
-          link = this.itemCb(this.linkCb, link);
-          link.source = link.sid;
-          link.target = link.tid;
-          if (!link.id) vm.$set(link, 'id', 'link-' + index);
-          if (this.isTopoLinksUpdated) {
-            vm.$set(link, 'showLabel', false);
-            vm.$set(link, 'isDark', false);
-            vm.$set(link, 'isBright', false);
-            vm.$set(link, 'isRelatedToCurNode', false);
-            vm.$set(link, '_color', 'rgba(33, 126, 242, 0.373)');
-          }
-          if (this.isTopoLinksUpdated && index === links.length - 1) {
-            this.$store.commit('rocketTopo/SET_IS_TOPO_LINKS_UPDATED', false);
-          }
-          return link;
-        });
-      },
-      setNodeIcon(node) {
-        let iconTemp = node.type;
-        switch (node.type) {
-          case 'MiddleWare':
+        }
+        if (!node.name && node.name !== '0') {
+          this.$set(node, 'name', '');
+        }
+        if (node.type) {
+          this.setNodeIcon(node);
+        }
+        if (this.isTopoNodesUpdated) {
+          this.$set(node, 'showLabel', false);
+          this.$set(node, 'isDark', false);
+          this.$set(node, 'isBright', false);
+          this.$set(node, 'isRelatedToCurNode', false);
+          this.$set(node, '_color', 'rgba(33, 126, 242, 0.373)');
+        }
+        if (this.isTopoNodesUpdated && index === nodes.length - 1) {
+          this.$store.commit('rocketTopo/SET_IS_TOPO_NODES_UPDATED', false);
+        }
+        return node;
+      });
+    },
+    buildLinks(links) {
+      this.links = links.map((item, index) => {
+        let link = this.itemCb(this.linkCb, item);
+        link.source = link.sid;
+        link.target = link.tid;
+        if (!link.id) {
+          this.$set(link, 'id', `link-${index}`);
+        }
+        if (this.isTopoLinksUpdated) {
+          this.$set(link, 'showLabel', false);
+          this.$set(link, 'isDark', false);
+          this.$set(link, 'isBright', false);
+          this.$set(link, 'isRelatedToCurNode', false);
+          this.$set(link, '_color', 'rgba(33, 126, 242, 0.373)');
+        }
+        if (this.isTopoLinksUpdated && index === links.length - 1) {
+          this.$store.commit('rocketTopo/SET_IS_TOPO_LINKS_UPDATED', false);
+        }
+        return link;
+      });
+    },
+    setNodeIcon(node) {
+      let iconTemp = node.type;
+      switch (node.type) {
+        case 'MiddleWare':
+          {
             let middleWareTypes = ['MQ', 'Database', 'Cache'];
             iconTemp = middleWareTypes.includes(node.middleWareType) ? `${iconTemp}_${node.middleWareType}` : iconTemp;
-            break;
-          default:
-            break;
-        }
-        node.svgIcon = iconTemp.toUpperCase();
-        node.svgIconBright = node.svgIcon + '_BRIGHT';
-        node.criticalEventIcon = 'EVENT_CRITICAL';
-        node.warningEventIcon = 'EVENT_WARNING';
-      },
-      itemCb(cb, item) {
-        if (cb && typeof cb === 'function') item = cb(item);
-        return item;
-      },
-      updateNodeSvg() {
-        let svg = null;
-        if (this.nodeSym) {
-          svg = svgExport.svgElFromString(this.nodeSym);
-        }
-        this.nodeSvg = svg;
-      },
-      // -- Animation
-      simulate(nodes, links) {
-        let forces = this.forces;
-        let sim = this.$d3
-          .forceSimulation()
-          .stop()
-          .alpha(0.5) // 0.5以0.01的速度衰减到0.01，控制它们，让布局更合理
-          // .alphaMin(0.01)
-          // .alphaDecay(0.01)
-          .velocityDecay(0.5) // 控制节点速度
-          .nodes(nodes);
+          }
+          break;
+        default:
+          break;
+      }
+      node.svgIcon = iconTemp.toUpperCase();
+      node.svgIconBright = `${node.svgIcon}_BRIGHT`;
+      node.criticalEventIcon = 'EVENT_CRITICAL';
+      node.warningEventIcon = 'EVENT_WARNING';
+    },
+    itemCb(cb, item) {
+      let itemTmp = item;
+      if (cb && typeof cb === 'function') {
+        itemTmp = cb(itemTmp);
+      }
+      return itemTmp;
+    },
+    updateNodeSvg() {
+      let svg = null;
+      if (this.nodeSym) {
+        svg = svgExport.svgElFromString(this.nodeSym);
+      }
+      this.nodeSvg = svg;
+    },
+    // -- Animation
+    simulate(nodes, links) {
+      let forces = this.forces;
+      let sim = this.$d3
+        .forceSimulation()
+        .stop()
+        .alpha(0.5) // 0.5以0.01的速度衰减到0.01，控制它们，让布局更合理
+        // .alphaMin(0.01)
+        // .alphaDecay(0.01)
+        .velocityDecay(0.5) // 控制节点速度
+        .nodes(nodes);
 
-        if (forces.Center !== false) {
-          sim.force('center', this.$d3.forceCenter(this.center.x, this.center.y));
-        }
-        if (forces.X !== false) {
-          sim.force('X', this.$d3.forceX(this.center.x).strength(forces.X));
-        }
-        if (forces.Y !== false) {
-          sim.force('Y', this.$d3.forceY(this.center.y).strength(forces.Y));
-        }
-        if (forces.ManyBody !== false) {
-          sim.force('charge', this.$d3.forceManyBody().strength(-this.force));
-        }
+      if (forces.Center !== false) {
+        sim.force('center', this.$d3.forceCenter(this.center.x, this.center.y));
+      }
+      if (forces.X !== false) {
+        sim.force('X', this.$d3.forceX(this.center.x).strength(forces.X));
+      }
+      if (forces.Y !== false) {
+        sim.force('Y', this.$d3.forceY(this.center.y).strength(forces.Y));
+      }
+      if (forces.ManyBody !== false) {
+        sim.force('charge', this.$d3.forceManyBody().strength(-this.force));
+      }
 
-        if (forces.Link !== false) {
-          sim.force(
-            'link',
-            this.$d3.forceLink(links).id(function(d) {
-              return d.id;
-            }),
-          );
-        }
-        sim = this.setCustomForces(sim);
-        sim = this.itemCb(this.simCb, sim);
-        return sim;
-      },
-      setCustomForces(sim) {
-        let forces = this.customForces;
-        if (forces) {
-          for (let f in forces) {
-            let d3Func = this.getD3Func('force' + f);
+      if (forces.Link !== false) {
+        sim.force(
+          'link',
+          this.$d3.forceLink(links).id(d => d.id)
+        );
+      }
+      sim = this.setCustomForces(sim);
+      sim = this.itemCb(this.simCb, sim);
+      return sim;
+    },
+    setCustomForces(sim) {
+      let forces = this.customForces;
+      if (forces) {
+        for (let f in forces) {
+          if (Object.prototype.hasOwnProperty.call(forces, f)) {
+            let d3Func = this.getD3Func(`force${f}`);
             if (d3Func) {
               let args = forces[f];
-              sim.force('custom' + f, d3Func(...args));
+              sim.force(`custom${f}`, d3Func(...args));
             }
           }
         }
-        return sim;
-      },
-      getD3Func(name) {
-        let func = this.$d3[name];
-        if (func && typeof func === 'function') return func;
-        return null;
-      },
-      setTopoScaleFix(nodes, links) {
-        let vNodes = JSON.parse(JSON.stringify(nodes));
-        let vLinks = JSON.parse(JSON.stringify(links));
-        let vSimulation = this.simulate(vNodes, vLinks);
-        if (vSimulation) {
-          vSimulation.stop();
-        }
-        this.startSimulation(vSimulation, vNodes, true);
-      },
-      startVSimulation(simulation, nodes, isVsim) {
-        const n = Math.ceil(Math.log(simulation.alphaMin()) / Math.log(1 - simulation.alphaDecay()));
-        this.$d3.timeout(() => {
-          for (let i = 0; i < n; i++) {
-            simulation.tick();
-            if (isVsim) {
-              if (i === n - 1) {
-                this.simulationTicked(nodes);
-              } else {
-                this.simulationTicking(nodes);
-              }
-            } else {
-              if (i === n - 1) {
-                this.fixTopoViewOnScale(nodes);
-              }
-            }
-          }
-        });
-      },
-      async animate() {
-        if (this.isNodesChanged) {
-          await this.setTopoScaleFix(this.nodes, this.links);
-        }
-        if (this.simulation) {
-          this.simulation.stop();
-        }
-        if (this.forces.Link !== false) {
-          this.simulation = this.simulate(this.nodes, this.links);
-        } else {
-          this.simulation = this.simulate(this.nodes);
-        }
-        this.startSimulation(this.simulation, this.nodes, false);
-      },
-      startSimulation(simulation, nodes, isVsim) {
-        const n = Math.ceil(Math.log(simulation.alphaMin()) / Math.log(1 - simulation.alphaDecay()));
-        this.startIteration(0, n, simulation, nodes, isVsim);
-      },
-      startIteration(start, n, simulation, nodes, isVsim) {
-        for (let i = start; i < start + this.deltaIterateNum; i++) {
-          if (i >= n) {
-            return;
-          }
+      }
+      return sim;
+    },
+    getD3Func(name) {
+      let func = this.$d3[name];
+      if (func && typeof func === 'function') {
+        return func;
+      }
+      return null;
+    },
+    setTopoScaleFix(nodes, links) {
+      let vNodes = JSON.parse(JSON.stringify(nodes));
+      let vLinks = JSON.parse(JSON.stringify(links));
+      let vSimulation = this.simulate(vNodes, vLinks);
+      if (vSimulation) {
+        vSimulation.stop();
+      }
+      this.startSimulation(vSimulation, vNodes, true);
+    },
+    startVSimulation(simulation, nodes, isVsim) {
+      const n = Math.ceil(Math.log(simulation.alphaMin()) / Math.log(1 - simulation.alphaDecay()));
+      this.$d3.timeout(() => {
+        for (let i = 0; i < n; i++) {
           simulation.tick();
           if (isVsim) {
             if (i === n - 1) {
@@ -558,609 +441,699 @@
               this.simulationTicking(nodes);
             }
           } else {
-            if (i == start + this.deltaIterateNum - 1 || i == n - 1) {
+            if (i === n - 1) {
               this.fixTopoViewOnScale(nodes);
             }
           }
         }
-        setTimeout(() => {
-          this.startIteration(start + this.deltaIterateNum, n, simulation, nodes, isVsim);
-        }, 0);
-      },
-      fixTopoViewOnScale(nodes) {
-        let scaleFix = this.topoScaleFix;
-        if (nodes.length > 2 && scaleFix > 1) {
-          this.nodeSize = this.defaultNodeSize / scaleFix;
-          this.linkWidth = this.defaultLinkWidth / scaleFix;
-          this.fontSize = this.defaultFontSize / scaleFix;
+      });
+    },
+    async animate() {
+      if (this.isNodesChanged) {
+        await this.setTopoScaleFix(this.nodes, this.links);
+      }
+      if (this.simulation) {
+        this.simulation.stop();
+      }
+      if (this.forces.Link) {
+        this.simulation = this.simulate(this.nodes, this.links);
+      } else {
+        this.simulation = this.simulate(this.nodes);
+      }
+      this.startSimulation(this.simulation, this.nodes, false);
+    },
+    startSimulation(simulation, nodes, isVsim) {
+      const n = Math.ceil(Math.log(simulation.alphaMin()) / Math.log(1 - simulation.alphaDecay()));
+      this.startIteration(0, n, simulation, nodes, isVsim);
+    },
+    startIteration(start, n, simulation, nodes, isVsim) {
+      for (let i = start; i < start + this.deltaIterateNum; i++) {
+        if (i >= n) {
+          return;
         }
-        this.zoomController.scaleTo(
-          this.$d3
-            .select('.net-svg')
-            .transition()
-            .duration(5),
-          scaleFix,
-        );
-      },
-      simulationTicking(nodes) {
-        if (this.isFirstTick && nodes.length > 0) {
-          this.topoTickCount++;
-          if (this.topoTickCount % 2 === 0) {
-            this.fixTopoScaleOnCoord(nodes);
+        simulation.tick();
+        if (isVsim) {
+          if (i === n - 1) {
+            this.simulationTicked(nodes);
+          } else {
+            this.simulationTicking(nodes);
+          }
+        } else {
+          if (i === start + this.deltaIterateNum - 1 || i === n - 1) {
+            this.fixTopoViewOnScale(nodes);
           }
         }
-      },
-      simulationTicked(nodes) {
-        if (this.isFirstTick && nodes.length > 0) {
-          this.$store.commit('rocketTopo/SET_IS_FIRST_TICK', false);
-          this.topoTickCount = 0;
+      }
+      setTimeout(() => {
+        this.startIteration(start + this.deltaIterateNum, n, simulation, nodes, isVsim);
+      }, 0);
+    },
+    fixTopoViewOnScale(nodes) {
+      let scaleFix = this.topoScaleFix;
+      if (nodes.length > 2 && scaleFix > 1) {
+        this.nodeSize = this.defaultNodeSize / scaleFix;
+        this.linkWidth = this.defaultLinkWidth / scaleFix;
+        this.fontSize = this.defaultFontSize / scaleFix;
+      }
+      this.zoomController.scaleTo(
+        this.$d3
+          .select('.net-svg')
+          .transition()
+          .duration(5),
+        scaleFix
+      );
+    },
+    simulationTicking(nodes) {
+      if (this.isFirstTick && nodes.length > 0) {
+        this.topoTickCount++;
+        if (this.topoTickCount % 2 === 0) {
           this.fixTopoScaleOnCoord(nodes);
         }
-      },
-      reset() {
-        this.animate();
-        this.nodes = this.simulation.nodes();
-        if (this.forces.links) {
-          this.links = this.simulation.force('link').links();
-        }
-      },
-      onResize() {
-        let size = this.options.size;
-        if (!size || !size.w) this.size.w = this.$el.clientWidth;
-        if (!size || !size.h) this.size.h = this.$el.clientHeight;
-        this.padding.x = 0;
-        this.padding.y = 0;
-        // serach offsets of parents
-        let vm = this;
+      }
+    },
+    simulationTicked(nodes) {
+      if (this.isFirstTick && nodes.length > 0) {
+        this.$store.commit('rocketTopo/SET_IS_FIRST_TICK', false);
+        this.topoTickCount = 0;
+        this.fixTopoScaleOnCoord(nodes);
+      }
+    },
+    reset() {
+      this.animate();
+      this.nodes = this.simulation.nodes();
+      if (this.forces.links) {
+        this.links = this.simulation.force('link').links();
+      }
+    },
+    onResize() {
+      let size = this.options.size;
+      if (!size || !size.w) {
+        this.size.w = this.$el.clientWidth;
+      }
+      if (!size || !size.h) {
+        this.size.h = this.$el.clientHeight;
+      }
+      this.padding.x = 0;
+      this.padding.y = 0;
+      // serach offsets of parents
+      if (this.$parent) {
+        this.padding.x += this.$el.offsetLeft || 0;
+        this.padding.y += this.$el.offsetTop || 0;
+        let vm = this.$parent;
         while (vm.$parent) {
           this.padding.x += vm.$el.offsetLeft || 0;
           this.padding.y += vm.$el.offsetTop || 0;
           vm = vm.$parent;
         }
-        // this.animate();
-      },
-      // -- Mouse Interaction
-      normalAroundHoveredNode() {
-        this.elemsAroundPreHovNodeShallow.nodes.forEach((node) => {
-          node.isBright = false;
-          if (!node.isRelatedToCurNode) {
-            node.showLabel = false;
-          }
-        });
-        this.elemsAroundPreHovNodeShallow.links.forEach((link) => {
-          link.isBright = false;
-        });
-      },
-      lightAroundHoveredNode(hoveredNode) {
-        this.normalAroundHoveredNode();
-        let elemsAround = {
-          nodes: [],
-          links: [],
-        };
-        elemsAround.nodes.push(hoveredNode);
-        this.links.forEach((link) => {
-          if (link.sid === hoveredNode.id) {
-            elemsAround.nodes.push(link.target);
-            elemsAround.links.push(link);
-          } else if (link.tid === hoveredNode.id) {
-            elemsAround.nodes.push(link.source);
-            elemsAround.links.push(link);
-          }
-        });
-        // 注意，这里记录的上一个hover节点被light前的周边元素集合，深拷贝
-        this.elemsAroundPreHovNodeDeep = JSON.parse(JSON.stringify(elemsAround));
-        elemsAround.nodes.forEach((node) => {
-          node.isBright = true;
-          node.showLabel = true;
-        });
-        elemsAround.links.forEach((link) => {
-          link.isBright = true;
-        });
-        // 注意，这里记录的上一个hover节点被light后的周边元素集合，浅拷贝
-        this.elemsAroundPreHovNodeShallow = elemsAround;
-      },
-      mouseEnterNode(event, hoveredNode) {
-        // 强制更新svgRenderer组件，防止mouseEnterNode后视图样式无法更新
-        this.$refs.svg.$forceUpdate();
-        this.$jq('.link-anchor').addClass('link-anchor-static');
-        this.lightAroundHoveredNode(hoveredNode);
-      },
-      mouseLeaveNode(event, elem) {
-        this.$refs.svg.$forceUpdate();
-        this.$jq('.link-anchor').removeClass('link-anchor-static');
-        this.normalAroundHoveredNode();
-        this.elemsAroundPreHovNodeShallow = null;
-        this.elemsAroundPreHovNodeShallow = {
-          nodes: [],
-          links: [],
-        };
-        this.elemsAroundPreHovNodeDeep = null;
-        this.elemsAroundPreHovNodeDeep = {
-          nodes: [],
-          links: [],
-        };
-      },
-      normalAroundHoveredLink() {
-        this.elemsAroundPreHovLinkShallow.nodes.forEach((node) => {
-          node.isBright = false;
-          if (!node.isRelatedToCurNode) {
-            node.showLabel = false;
-          }
-        });
-        this.elemsAroundPreHovLinkShallow.links.forEach((link) => {
-          link.isBright = false;
-          link.showLabel = false;
-        });
-      },
-      lightAroundHoveredLink(event, hoveredLink) {
-        this.normalAroundHoveredLink();
-        let elemsAround = {
-          nodes: [],
-          links: [],
-        };
-        elemsAround.links.push(hoveredLink);
-        elemsAround.nodes.push(hoveredLink.source);
-        elemsAround.nodes.push(hoveredLink.target);
+      }
+      // this.animate();
+    },
+    // -- Mouse Interaction
+    normalAroundHoveredNode() {
+      this.elemsAroundPreHovNodeShallow.nodes.forEach(node => {
+        node.isBright = false;
+        if (!node.isRelatedToCurNode) {
+          node.showLabel = false;
+        }
+      });
+      this.elemsAroundPreHovNodeShallow.links.forEach(link => {
+        link.isBright = false;
+      });
+    },
+    lightAroundHoveredNode(hoveredNode) {
+      this.normalAroundHoveredNode();
+      let elemsAround = {
+        nodes: [],
+        links: [],
+      };
+      elemsAround.nodes.push(hoveredNode);
+      this.links.forEach(link => {
+        if (link.sid === hoveredNode.id) {
+          elemsAround.nodes.push(link.target);
+          elemsAround.links.push(link);
+        } else if (link.tid === hoveredNode.id) {
+          elemsAround.nodes.push(link.source);
+          elemsAround.links.push(link);
+        }
+      });
+      // 注意，这里记录的上一个hover节点被light前的周边元素集合，深拷贝
+      this.elemsAroundPreHovNodeDeep = JSON.parse(JSON.stringify(elemsAround));
+      elemsAround.nodes.forEach(node => {
+        node.isBright = true;
+        node.showLabel = true;
+      });
+      elemsAround.links.forEach(link => {
+        link.isBright = true;
+      });
+      // 注意，这里记录的上一个hover节点被light后的周边元素集合，浅拷贝
+      this.elemsAroundPreHovNodeShallow = elemsAround;
+    },
+    mouseEnterNode(event, hoveredNode) {
+      // 强制更新svgRenderer组件，防止mouseEnterNode后视图样式无法更新
+      this.$refs.svg.$forceUpdate();
+      this.$jq('.link-anchor').addClass('link-anchor-static');
+      this.lightAroundHoveredNode(hoveredNode);
+    },
+    mouseLeaveNode(event, elem) {
+      this.$refs.svg.$forceUpdate();
+      this.$jq('.link-anchor').removeClass('link-anchor-static');
+      this.normalAroundHoveredNode();
+      this.elemsAroundPreHovNodeShallow = null;
+      this.elemsAroundPreHovNodeShallow = {
+        nodes: [],
+        links: [],
+      };
+      this.elemsAroundPreHovNodeDeep = null;
+      this.elemsAroundPreHovNodeDeep = {
+        nodes: [],
+        links: [],
+      };
+    },
+    normalAroundHoveredLink() {
+      this.elemsAroundPreHovLinkShallow.nodes.forEach(node => {
+        node.isBright = false;
+        if (!node.isRelatedToCurNode) {
+          node.showLabel = false;
+        }
+      });
+      this.elemsAroundPreHovLinkShallow.links.forEach(link => {
+        link.isBright = false;
+        link.showLabel = false;
+      });
+    },
+    lightAroundHoveredLink(event, hoveredLink) {
+      this.normalAroundHoveredLink();
+      let elemsAround = {
+        nodes: [],
+        links: [],
+      };
+      elemsAround.links.push(hoveredLink);
+      elemsAround.nodes.push(hoveredLink.source);
+      elemsAround.nodes.push(hoveredLink.target);
 
-        elemsAround.links.forEach((link) => {
-          link.isBright = true;
-          link.showLabel = true;
-        });
-        elemsAround.nodes.forEach((node) => {
-          node.isBright = true;
-          node.showLabel = true;
-        });
-        this.elemsAroundPreHovLinkShallow = elemsAround;
-      },
-      mouseEnterLink(event, hoveredLink) {
-        if (hoveredLink.type === 'TracingTo' || hoveredLink.type === 'SubTracingTo') {
-          return;
-        }
-        this.$refs.svg.$forceUpdate();
-        let offsetX = this.$jq('#netContent').offset().left - this.$jq(window).scrollLeft();
-        let offsetY = this.$jq('#netContent').offset().top - this.$jq(window).scrollTop();
-        this.linkTextStyle = {
-          height: 25 + 'px',
-          left: event.clientX - offsetX + 8 + 'px',
-          top: event.clientY - offsetY - 25 + 'px',
-        };
-        this.isLinkTextDark = hoveredLink.isDark;
-        this.linkTextContent = hoveredLink.type;
-        this.linkTextVisible = true;
-        this.lightAroundHoveredLink(event, hoveredLink);
-      },
-      mouseLeaveLink(event, hoveredLink) {
-        if (hoveredLink.type === 'TracingTo' || hoveredLink.type === 'SubTracingTo') {
-          return;
-        }
-        this.$refs.svg.$forceUpdate();
-        this.linkTextVisible = false;
-        this.linkTextContent = '';
-        this.linkTextStyle = {
-          height: 0 + 'px',
-          left: 0 + 'px',
-          top: 0 + 'px',
-        };
-        this.isLinkTextDark = hoveredLink.isDark;
-        this.normalAroundHoveredLink();
-        this.elemsAroundPreHovLinkShallow = null;
-        this.elemsAroundPreHovLinkShallow = {
-          nodes: [],
-          links: [],
-        };
-      },
-      mouseEnterLinkAnchor(event, hoveredLink) {
-        this.$refs.svg.$forceUpdate();
-        let offsetX = this.$jq('#netContent').offset().left - this.$jq(window).scrollLeft();
-        let offsetY = this.$jq('#netContent').offset().top - this.$jq(window).scrollTop();
-        this.linkTextContent = `
+      elemsAround.links.forEach(link => {
+        link.isBright = true;
+        link.showLabel = true;
+      });
+      elemsAround.nodes.forEach(node => {
+        node.isBright = true;
+        node.showLabel = true;
+      });
+      this.elemsAroundPreHovLinkShallow = elemsAround;
+    },
+    mouseEnterLink(event, hoveredLink) {
+      if (hoveredLink.type === 'TracingTo' || hoveredLink.type === 'SubTracingTo') {
+        return;
+      }
+      this.$refs.svg.$forceUpdate();
+      let offsetX = this.$jq('#netContent').offset().left - this.$jq(window).scrollLeft();
+      let offsetY = this.$jq('#netContent').offset().top - this.$jq(window).scrollTop();
+      this.linkTextStyle = {
+        height: `${25}px`,
+        left: `${event.clientX - offsetX + 8}px`,
+        top: `${event.clientY - offsetY - 25}px`,
+      };
+      this.isLinkTextDark = hoveredLink.isDark;
+      this.linkTextContent = hoveredLink.type;
+      this.linkTextVisible = true;
+      this.lightAroundHoveredLink(event, hoveredLink);
+    },
+    mouseLeaveLink(event, hoveredLink) {
+      if (hoveredLink.type === 'TracingTo' || hoveredLink.type === 'SubTracingTo') {
+        return;
+      }
+      this.$refs.svg.$forceUpdate();
+      this.linkTextVisible = false;
+      this.linkTextContent = '';
+      this.linkTextStyle = {
+        height: `${0}px`,
+        left: `${0}px`,
+        top: `${0}px`,
+      };
+      this.isLinkTextDark = hoveredLink.isDark;
+      this.normalAroundHoveredLink();
+      this.elemsAroundPreHovLinkShallow = null;
+      this.elemsAroundPreHovLinkShallow = {
+        nodes: [],
+        links: [],
+      };
+    },
+    mouseEnterLinkAnchor(event, hoveredLink) {
+      this.$refs.svg.$forceUpdate();
+      let offsetX = this.$jq('#netContent').offset().left - this.$jq(window).scrollLeft();
+      let offsetY = this.$jq('#netContent').offset().top - this.$jq(window).scrollTop();
+      this.linkTextContent = `
           <div class="mb-5"><span class="grey">链路类型: </span>${hoveredLink.type}</div>
           <div class="mb-5"><span class="grey">调用频率: </span>${
-            hoveredLink.callPerMinute === undefined ? ' ' : hoveredLink.callPerMinute + ' 次/分钟'
+            hoveredLink.callPerMinute === undefined ? ' ' : `${hoveredLink.callPerMinute} 次/分钟`
           }</div>
           <div><span class="grey">平均响应时间: </span>${
-            hoveredLink.responseTimePerMin === undefined ? ' ' : hoveredLink.responseTimePerMin + ' ms'
+            hoveredLink.responseTimePerMin === undefined ? ' ' : `${hoveredLink.responseTimePerMin} ms`
           }</div>
         `;
-        this.linkTextVisible = true;
-        this.linkTextStyle = {
-          height: 75 + 'px',
-          left: event.clientX - offsetX + 8 + 'px',
-          top: event.clientY - offsetY - 75 + 'px',
-        };
-        this.isLinkTextDark = hoveredLink.isDark;
-        this.lightAroundHoveredLink(event, hoveredLink);
-      },
-      mouseLeaveLinkAnchor(event, hoveredLink) {
-        this.$refs.svg.$forceUpdate();
-        this.linkTextVisible = false;
-        this.linkTextContent = '';
-        this.linkTextStyle = {
-          height: 0 + 'px',
-          left: 0 + 'px',
-          top: 0 + 'px',
-        };
-        this.isLinkTextDark = hoveredLink.isDark;
-        this.normalAroundHoveredLink();
-        this.elemsAroundPreHovLinkShallow = null;
-        this.elemsAroundPreHovLinkShallow = {
-          nodes: [],
-          links: [],
-        };
-      },
-      clientPos(event) {
-        let x = event.clientX;
-        let y = event.clientY;
-        x = x || 0;
-        y = y || 0;
-        return { x, y };
-      },
-      handleClickNet(event) {
-        if (this.isAutoReloadTopo) {
-          this.$store.commit('rocketTopo/SET_IS_AUTO_RELOAD_TOPO', false);
-        }
-        this.simulation.stop();
-        if (this.isFirstTick) {
-          this.$store.commit('rocketTopo/SET_IS_FIRST_TICK', false);
-        }
-        this.dragging = false; // 防止快速拖拽释放后,无法触发dragNodeEnd
-        if (!this.isMouseDwonNet) {
-          // 阻止选中节点被拖拽
-          this.isMouseDwonNet = true;
-          return;
-        }
-        if (event.target.className.baseVal.includes('node')) {
-          return;
-        }
-        this.currentNode.fx = null;
-        this.currentNode.fy = null;
-        this.$refs.svg.$forceUpdate();
-        this.$store.commit('rocketTopo/SET_NODE', {});
-        this.$store.commit('rocketTopo/SET_VIEW_NODE', {});
-      },
-      mouseMoveNet(event) {
-        if (this.dragging !== false) {
-          if (this.nodes[this.dragging]) {
-            if (this.nodes[this.dragging].id === this.currentNode.id) {
-              return;
-            }
-            // this.simulation.alpha(0.5);
-            // this.simulation.restart();
-            let pos = this.clientPos(event);
-            // 适配缩放后的拖拽
-            let zoomK = this.$d3.zoomTransform(this.$d3.select('#zoomContainer').node()).k;
-            let zoomX = this.$d3.zoomTransform(this.$d3.select('#zoomContainer').node()).x;
-            let zoomY = this.$d3.zoomTransform(this.$d3.select('#zoomContainer').node()).y;
-            let offsetX = this.$jq('#netSvg').offset().left - this.$jq(window).scrollLeft();
-            let offsetY = this.$jq('#netSvg').offset().top - this.$jq(window).scrollTop();
-            let centerX = this.$jq('#netSvg').width() / 2;
-            let centerY = this.$jq('#netSvg').height() / 2;
-            this.nodes[this.dragging].fx =
-              centerX - (centerX + offsetX - pos.x) / zoomK - (zoomX + centerX * (zoomK - 1)) / zoomK;
-            this.nodes[this.dragging].fy =
-              centerY - (centerY + offsetY - pos.y) / zoomK - (zoomY + centerY * (zoomK - 1)) / zoomK;
-            this.nodes[this.dragging].x = this.nodes[this.dragging].fx;
-            this.nodes[this.dragging].y = this.nodes[this.dragging].fy;
+      this.linkTextVisible = true;
+      this.linkTextStyle = {
+        height: `${75}px`,
+        left: `${event.clientX - offsetX + 8}px`,
+        top: `${event.clientY - offsetY - 75}px`,
+      };
+      this.isLinkTextDark = hoveredLink.isDark;
+      this.lightAroundHoveredLink(event, hoveredLink);
+    },
+    mouseLeaveLinkAnchor(event, hoveredLink) {
+      this.$refs.svg.$forceUpdate();
+      this.linkTextVisible = false;
+      this.linkTextContent = '';
+      this.linkTextStyle = {
+        height: `${0}px`,
+        left: `${0}px`,
+        top: `${0}px`,
+      };
+      this.isLinkTextDark = hoveredLink.isDark;
+      this.normalAroundHoveredLink();
+      this.elemsAroundPreHovLinkShallow = null;
+      this.elemsAroundPreHovLinkShallow = {
+        nodes: [],
+        links: [],
+      };
+    },
+    clientPos(event) {
+      let x = event.clientX;
+      let y = event.clientY;
+      x = x || 0;
+      y = y || 0;
+      return { x, y };
+    },
+    handleClickNet(event) {
+      if (this.isAutoReloadTopo) {
+        this.$store.commit('rocketTopo/SET_IS_AUTO_RELOAD_TOPO', false);
+      }
+      this.simulation.stop();
+      if (this.isFirstTick) {
+        this.$store.commit('rocketTopo/SET_IS_FIRST_TICK', false);
+      }
+      this.dragging = false; // 防止快速拖拽释放后,无法触发dragNodeEnd
+      if (!this.isMouseDwonNet) {
+        // 阻止选中节点被拖拽
+        this.isMouseDwonNet = true;
+        return;
+      }
+      if (event.target.className.baseVal.includes('node')) {
+        return;
+      }
+      this.currentNode.fx = null;
+      this.currentNode.fy = null;
+      this.$refs.svg.$forceUpdate();
+      this.$store.commit('rocketTopo/SET_NODE', {});
+      this.$store.commit('rocketTopo/SET_VIEW_NODE', {});
+    },
+    mouseMoveNet(event) {
+      if (this.dragging !== false) {
+        if (this.nodes[this.dragging]) {
+          if (this.nodes[this.dragging].id === this.currentNode.id) {
+            return;
           }
+          // this.simulation.alpha(0.5);
+          // this.simulation.restart();
+          let pos = this.clientPos(event);
+          // 适配缩放后的拖拽
+          let zoomK = this.$d3.zoomTransform(this.$d3.select('#zoomContainer').node()).k;
+          let zoomX = this.$d3.zoomTransform(this.$d3.select('#zoomContainer').node()).x;
+          let zoomY = this.$d3.zoomTransform(this.$d3.select('#zoomContainer').node()).y;
+          let offsetX = this.$jq('#netSvg').offset().left - this.$jq(window).scrollLeft();
+          let offsetY = this.$jq('#netSvg').offset().top - this.$jq(window).scrollTop();
+          let centerX = this.$jq('#netSvg').width() / 2;
+          let centerY = this.$jq('#netSvg').height() / 2;
+          this.nodes[this.dragging].fx =
+            centerX - (centerX + offsetX - pos.x) / zoomK - (zoomX + centerX * (zoomK - 1)) / zoomK;
+          this.nodes[this.dragging].fy =
+            centerY - (centerY + offsetY - pos.y) / zoomK - (zoomY + centerY * (zoomK - 1)) / zoomK;
+          this.nodes[this.dragging].x = this.nodes[this.dragging].fx;
+          this.nodes[this.dragging].y = this.nodes[this.dragging].fy;
         }
-      },
-      dragNodeStart(event, nodeKey, node) {
-        // 鼠标右键点击节点
-        if (event.button === 2) {
-          return;
-        }
+      }
+    },
+    dragNodeStart(event, nodeKey, node) {
+      // 鼠标右键点击节点
+      if (event.button === 2) {
+        return;
+      }
 
-        this.isMouseDwonNet = false;
+      this.isMouseDwonNet = false;
 
-        // 区分拖拽 单击节点
-        this.nodeSingleClicked = true;
-        this.clickNodeTimer = setTimeout(() => {
-          this.nodeSingleClicked = false;
+      // 区分拖拽 单击节点
+      this.nodeSingleClicked = true;
+      this.clickNodeTimer = setTimeout(() => {
+        this.nodeSingleClicked = false;
 
-          this.dragging = nodeKey;
-          this.setMouseOffset(event, this.nodes[nodeKey]);
-        }, 200);
+        this.dragging = nodeKey;
+        this.setMouseOffset(event, this.nodes[nodeKey]);
+      }, 200);
+    },
+    dragNodeEnd(event, nodeKey, node) {
+      // 鼠标右键点击节点
+      if (event.button === 2) {
+        this.$emit('node-right-click', event, node);
+        return;
+      }
+      if (this.nodeSingleClicked) {
+        clearTimeout(this.clickNodeTimer);
+        this.nodeClick(event, node);
+        return;
+      }
 
-        // 拖拽 双击被选中节点无效
-        if (node && this.currentNode && node.id === this.currentNode.id) {
-          return;
+      // 拖拽 双击被选中节点无效
+      if (node && this.currentNode && node.id === this.currentNode.id) {
+        return;
+      }
+      this.nodes[this.dragging].fx = null;
+      this.nodes[this.dragging].fy = null;
+      this.dragging = false;
+      // this.simulation.alpha(0.1);
+      // this.simulation.restart();
+      this.setMouseOffset();
+    },
+    // -- Render helpers
+    setViewportNodes(nodesTmp) {
+      if (this.elemIdsRTCAll.nodeIds.length > 0) {
+        // 上下游视口
+        this.nodes.forEach(node => {
+          if (this.elemIdsRTCAll.nodeIds.includes(node.id)) {
+            nodesTmp.push(node);
+          }
+        });
+      } else {
+        // 单跳视口
+        this.links.forEach(link => {
+          if (link.sid === curNode.id) {
+            nodesTmp.push(link.target);
+          }
+          if (link.tid === curNode.id) {
+            nodesTmp.push(link.source);
+          }
+        });
+      }
+    },
+    setTopoViewport(curNode, preNode, event = null) {
+      if (curNode && curNode.id === undefined) {
+        return;
+      }
+      this.$refs.svg.$forceUpdate();
+      let centerX = this.$jq('#netSvg').width() / 2;
+      let centerY = this.$jq('#netSvg').height() / 2;
+      let offsetX = this.$jq('#netSvg').offset().left - this.$jq(window).scrollLeft();
+      let offsetY = this.$jq('#netSvg').offset().top - this.$jq(window).scrollTop();
+      let zoomK = this.$d3.zoomTransform(this.$d3.select('#zoomContainer').node()).k;
+      let zoomX = this.$d3.zoomTransform(this.$d3.select('#zoomContainer').node()).x;
+      let zoomY = this.$d3.zoomTransform(this.$d3.select('#zoomContainer').node()).y;
+      this.simulation.stop();
+      this.zoomController.translateTo(
+        this.$d3
+          .select('.net-svg')
+          .transition()
+          .duration(500),
+        this.currentNode.x,
+        this.currentNode.y
+      );
+      setTimeout(() => {
+        if (preNode && preNode.id !== undefined) {
+          preNode.fx = null;
+          preNode.fy = null;
+          this.$refs.svg.$forceUpdate();
         }
-      },
-      dragNodeEnd(event, nodeKey, node) {
-        // 鼠标右键点击节点
-        if (event.button === 2) {
-          this.$emit('node-right-click', event, node);
-          return;
-        }
-        if (this.nodeSingleClicked) {
-          clearTimeout(this.clickNodeTimer);
-          this.nodeClick(event, node);
-          return;
-        }
-
-        // 拖拽 双击被选中节点无效
-        if (node && this.currentNode && node.id === this.currentNode.id) {
-          return;
-        }
-        this.nodes[this.dragging].fx = null;
-        this.nodes[this.dragging].fy = null;
-        this.dragging = false;
-        // this.simulation.alpha(0.1);
-        // this.simulation.restart();
-        this.setMouseOffset();
-      },
-      // -- Render helpers
-      setTopoViewport(curNode, preNode, event = null) {
-        if (curNode && curNode.id === undefined) {
-          return;
-        }
+        curNode.fx = curNode.x;
+        curNode.fy = curNode.y;
         this.$refs.svg.$forceUpdate();
-        let centerX = this.$jq('#netSvg').width() / 2;
-        let centerY = this.$jq('#netSvg').height() / 2;
-        let offsetX = this.$jq('#netSvg').offset().left - this.$jq(window).scrollLeft();
-        let offsetY = this.$jq('#netSvg').offset().top - this.$jq(window).scrollTop();
-        let zoomK = this.$d3.zoomTransform(this.$d3.select('#zoomContainer').node()).k;
-        let zoomX = this.$d3.zoomTransform(this.$d3.select('#zoomContainer').node()).x;
-        let zoomY = this.$d3.zoomTransform(this.$d3.select('#zoomContainer').node()).y;
-
-        // 控制topo时要终止仿真
-        this.simulation.stop();
-        // 选中节点回到视口中心
-        this.zoomController.translateTo(
+        let nodesTmp = [];
+        nodesTmp.push(curNode);
+        this.setViewportNodes(nodesTmp);
+        let newZoomK = this.getScaleFixOnCurNode(nodesTmp, 0.9, true);
+        this.zoomController.scaleTo(
           this.$d3
             .select('.net-svg')
             .transition()
             .duration(500),
-          this.currentNode.x,
-          this.currentNode.y,
+          newZoomK
         );
-
-        // 固定当前节点坐标，并放大拓扑
-        setTimeout(() => {
-          if (preNode && preNode.id !== undefined) {
-            preNode.fx = null;
-            preNode.fy = null;
-            this.$refs.svg.$forceUpdate();
-          }
-          curNode.fx = curNode.x;
-          curNode.fy = curNode.y;
-          this.$refs.svg.$forceUpdate();
-
-          let nodesTmp = [];
-          nodesTmp.push(curNode);
-          if (this.elemIdsRTCAll.nodeIds.length > 0) {
-            // 上下游视口
-            this.nodes.forEach((node) => {
-              if (this.elemIdsRTCAll.nodeIds.includes(node.id)) {
-                nodesTmp.push(node);
-              }
-            });
-          } else {
-            // 单跳视口
-            this.links.forEach((link) => {
-              if (link.sid === curNode.id) {
-                nodesTmp.push(link.target);
-              }
-              if (link.tid === curNode.id) {
-                nodesTmp.push(link.source);
-              }
-            });
-          }
-          let newZoomK = this.getScaleFixOnCurNode(nodesTmp, 0.9, true);
-
-          this.zoomController.scaleTo(
-            this.$d3
-              .select('.net-svg')
-              .transition()
-              .duration(500),
-            newZoomK,
-          );
-        }, 501);
-      },
-      nodeDblClick(event, node) {
-        this.$emit('node-dblclick', event, node);
-      },
-      nodeClick(event, node) {
-        this.$emit('node-click', event, node);
-      },
-      linkClick(event, link) {
-        this.$emit('link-click', event, link);
-      },
-      setMouseOffset(event, node) {
-        let x = 0;
-        let y = 0;
-        if (event && node) {
-          let pos = this.clientPos(event);
-          x = pos.x ? pos.x - node.x : node.x;
-          y = pos.y ? pos.y - node.y : node.y;
-        }
-        this.mouseOfst = { x, y };
-      },
-      screenShot(name, bgColor, toSVG, svgAllCss) {
-        let exportFunc;
-        let args = [];
-        exportFunc = this.$refs.svg.svgScreenShot;
-        args = [toSVG, bgColor, svgAllCss];
-        if (toSVG) name = name || 'export.svg';
-
-        exportFunc((err, url) => {
-          if (!err) {
-            if (!toSVG) saveImage.save(url, name);
-            else saveImage.download(url, name);
-          }
-          this.$emit('screen-shot', err);
-        }, ...args);
-      },
+      }, 501);
     },
-  };
+    nodeDblClick(event, node) {
+      this.$emit('node-dblclick', event, node);
+    },
+    nodeClick(event, node) {
+      this.$emit('node-click', event, node);
+    },
+    linkClick(event, link) {
+      this.$emit('link-click', event, link);
+    },
+    setMouseOffset(event, node) {
+      let x = 0;
+      let y = 0;
+      if (event && node) {
+        let pos = this.clientPos(event);
+        x = pos.x ? pos.x - node.x : node.x;
+        y = pos.y ? pos.y - node.y : node.y;
+      }
+      this.mouseOfst = { x, y };
+    },
+    screenShot(name, bgColor, toSVG, svgAllCss) {
+      let exportFunc;
+      let args = [];
+      let nameTmp = name;
+      exportFunc = this.$refs.svg.svgScreenShot;
+      args = [toSVG, bgColor, svgAllCss];
+      if (toSVG) {
+        nameTmp = nameTmp || 'export.svg';
+      }
+
+      exportFunc((err, url) => {
+        if (!err) {
+          if (toSVG) {
+            saveImage.download(url, nameTmp);
+          } else {
+            saveImage.save(url, nameTmp);
+          }
+        }
+        this.$emit('screen-shot', err);
+      }, ...args);
+    },
+  },
+  render(createElement) {
+    let ref = 'svg';
+    let props = {};
+    let renderer = 'svg-renderer';
+    let bindProps = [
+      'size',
+      'nodes',
+      'links',
+      'selected',
+      'linksSelected',
+      'strLinks',
+      'linkWidth',
+      'nodeLabels',
+      'linkLabels',
+      'fontSize',
+      'labelOffset',
+      'offset',
+      'padding',
+      'nodeSize',
+      'noNodes',
+      'linkTextStyle',
+      'isLinkTextDark',
+      'linkTextVisible',
+      'linkTextContent',
+    ];
+
+    for (let prop of bindProps) {
+      props[prop] = this[prop];
+    }
+    props.nodeSym = this.nodeSvg;
+
+    return createElement(
+      'div',
+      {
+        attrs: { class: 'net' },
+        on: {
+          mousemove: this.mouseMoveNet,
+          click: this.handleClickNet,
+        },
+      },
+      [
+        createElement(renderer, {
+          props,
+          ref,
+          on: { action: this.methodCall },
+        }),
+      ]
+    );
+  },
+};
 </script>
 
 <style lang="scss">
-  // @import 'lib/scss/vars.scss';
-  .net {
+// @import 'lib/scss/vars.scss';
+.net {
     width: 100%;
     height: 100%;
     margin: 0;
 
     .net-content {
-      width: 100%;
-      height: 100%;
-      position: relative;
+        width: 100%;
+        height: 100%;
+        position: relative;
 
-      .linkText {
-        position: absolute;
-        z-index: 999;
-        // background-color: rgba(75, 75, 75, 0.596);
-        // background-color: #242424;
-        background-color: #252a2f;
-        border-radius: 2px;
-        color: white;
-        padding: 2px;
-        text-align: left;
-        opacity: 0.8;
+        .linkText {
+            position: absolute;
+            z-index: 999;
+            // background-color: rgba(75, 75, 75, 0.596);
+            // background-color: #242424;
+            background-color: #252a2f;
+            border-radius: 2px;
+            color: white;
+            padding: 2px;
+            text-align: left;
+            opacity: 0.8;
+            pointer-events: none !important;
 
-        pointer-events: none !important;
-
-        &.dark-linkText {
-          opacity: 0.1;
+            &.dark-linkText {
+                opacity: 0.1;
+            }
         }
-      }
 
-      .arrows .dark-arrow {
-        opacity: 0.8;
-      }
+        .arrows .dark-arrow {
+            opacity: 0.8;
+        }
 
-      .arrows .bright-arrow {
-        fill: rgba(255, 255, 0, 1) !important;
-      }
-
-      .net-svg {
-        .node {
-          // stroke: rgba(18, 120, 98, 0.7);
-          // stroke-width: 3px;
-          transition: translate 0.5s ease;
-
-          &.node-svg {
-            pointer-events: none;
-          }
-
-          &.node-agent {
-            opacity: 0;
-          }
-
-          &.dark-node {
-            opacity: 0.1;
-          }
-
-          &.bright-node {
+        .arrows .bright-arrow {
             fill: rgba(255, 255, 0, 1) !important;
-          }
-
-          &.selected {
-            stroke: #caa455;
-          }
-
-          &.pinned {
-            stroke: rgba(255, 255, 0, 1) !important;
-          }
         }
 
-        .warn-icon-in-main-topo {
-          width: 18px;
-          height: 18px;
-          overflow: hidden;
-          fill: currentColor;
-          color: #efeff1;
-          pointer-events: none;
-          &.dark-warn-icon {
-            opacity: 0.1;
-          }
-          &.bright-warn-icon {
-            color: rgba(255, 255, 0, 1) !important; // 如何改变颜色？
-          }
+        .net-svg {
+            .node {
+                // stroke: rgba(18, 120, 98, 0.7);
+                // stroke-width: 3px;
+                stroke-linecap: round;
+                transition: translate 0.5s ease;
+
+                &.node-svg {
+                    pointer-events: none;
+                }
+
+                &.node-agent {
+                    opacity: 0;
+                }
+
+                &.dark-node {
+                    opacity: 0.1;
+                }
+
+                &.bright-node {
+                    fill: rgba(255, 255, 0, 1) !important;
+                }
+
+                &.selected {
+                    stroke: #caa455;
+                }
+
+                &.pinned {
+                    stroke: rgba(255, 255, 0, 1) !important;
+                }
+            }
+
+            .warn-icon-in-main-topo {
+                width: 18px;
+                height: 18px;
+                overflow: hidden;
+                fill: currentColor;
+                color: #efeff1;
+                pointer-events: none;
+
+                &.dark-warn-icon {
+                    opacity: 0.1;
+                }
+
+                &.bright-warn-icon {
+                    color: rgba(255, 255, 0, 1) !important; // 如何改变颜色？
+                }
+            }
+
+            .link {
+                stroke: rgba(18, 120, 98, 0.3);
+
+                &.dark-link {
+                    opacity: 0.1;
+                }
+
+                &.bright-link {
+                    stroke: rgba(255, 255, 0, 1) !important;
+                }
+
+                &.selected {
+                    stroke: rgba(202, 164, 85, 0.6);
+                }
+                // animation: topo-dash .8s linear infinite !important;
+            }
+
+            @keyframes topo-dash {
+                from {
+                    stroke-dashoffset: 12;
+                }
+
+                to {
+                    stroke-dashoffset: 0;
+                }
+            }
+
+            .link-indicator {
+                pointer-events: none;
+                fill: #ccc;
+
+                &.dark-link-indicator {
+                    opacity: 0.1;
+                }
+
+                // &.bright-link-indicator {
+                //   fill: rgba(255, 255, 0, 1) !important;
+                // }
+            }
+
+            .link-anchor {
+                &.dark-link-anchor {
+                    opacity: 0.1;
+                }
+
+                &.bright-link-anchor {
+                    fill: rgba(255, 255, 0, 1) !important;
+                }
+            }
+
+            .link-anchor-static {
+                pointer-events: none;
+            }
+
+            .curve {
+                fill: none;
+            }
+
+            .node-label {
+                pointer-events: none;
+                fill: #ccc;
+
+                &.dark-node-label {
+                    opacity: 0.1;
+                }
+
+                // &.bright-node-label {
+                //   fill: yellow;
+                // }
+            }
+
+            .link-label {
+                fill: #ccc;
+                transform: translate(0, -1.5em);
+                text-anchor: middle;
+            }
         }
-
-        .link {
-          stroke: rgba(18, 120, 98, 0.3);
-
-          &.dark-link {
-            opacity: 0.1;
-          }
-
-          &.bright-link {
-            stroke: rgba(255, 255, 0, 1) !important;
-          }
-
-          &.selected {
-            stroke: rgba(202, 164, 85, 0.6);
-          }
-          // animation: topo-dash 0.8s linear infinite !important;
-        }
-        @keyframes topo-dash {
-          from {
-            stroke-dashoffset: 12;
-          }
-          to {
-            stroke-dashoffset: 0;
-          }
-        }
-
-        .link-indicator {
-          pointer-events: none;
-          fill: #ccc;
-          &.dark-link-indicator {
-            opacity: 0.1;
-          }
-
-          // &.bright-link-indicator {
-          //   fill: rgba(255, 255, 0, 1) !important;
-          // }
-        }
-
-        .link-anchor {
-          &.dark-link-anchor {
-            opacity: 0.1;
-          }
-
-          &.bright-link-anchor {
-            fill: rgba(255, 255, 0, 1) !important;
-          }
-        }
-
-        .link-anchor-static {
-          pointer-events: none;
-        }
-
-        .node {
-          stroke-linecap: round;
-        }
-        // .link {
-        //   stroke-linecap: round;
-        // }
-
-        .curve {
-          fill: none;
-        }
-
-        .node-label {
-          pointer-events: none;
-          fill: #ccc;
-
-          &.dark-node-label {
-            opacity: 0.1;
-          }
-
-          // &.bright-node-label {
-          //   fill: yellow;
-          // }
-        }
-
-        .link-label {
-          fill: #ccc;
-          transform: translate(0, -1.5em);
-          text-anchor: middle;
-        }
-      }
     }
-  }
+}
 </style>

@@ -22,6 +22,7 @@ const m = {
   alarm: '告警',
   auto: '自动',
   reload: '刷新',
+  helpCenter: '帮助中心',
   usermode: '用户模式',
   editmode: '编辑模式',
   currentService: '当前服务',

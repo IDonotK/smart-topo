@@ -2,6 +2,7 @@ module.exports = {
   devServer: {
     proxy: {
       '/v1/*': {
+        // target: `${process.env.SW_PROXY_TARGET || 'http://172.31.90.104:31500'}`,
         target: `${process.env.SW_PROXY_TARGET || 'http://127.0.0.1:8084'}`,
         changeOrigin: true,
       },
@@ -17,5 +18,15 @@ module.exports = {
       .options({
         symbolId: '[name]',
       });
+
+    const mdRule = config.module.rule('md');
+    mdRule.uses.clear();
+    mdRule
+      .test(/\.md$/)
+      .use('text-loader')
+      .loader('text-loader')
+      .options({
+        raw: true
+      })
   },
 };

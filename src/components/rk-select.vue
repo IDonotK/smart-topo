@@ -14,24 +14,23 @@ See the License for the specific language governing permissions and
 limitations under the License. -->
 <template>
   <div
-    class="rk-bar-select cp flex-h"
     v-clickout="
       () => {
         visible = false;
         search = '';
       }
     "
-    :class="{ active: visible }"
+    :class="['rk-bar-select', 'cp', 'flex-h', visible ? 'active' : '']"
   >
     <div class="rk-bar-i flex-h" @click="visible = !visible">
       <div class="mr-15 rk-bar-i-text">
         <div v-if="Array.isArray(current)">
-          <span class="selected" v-for="item in current" :key="item.key">
+          <span v-for="item in current" :key="item.key" class="selected">
             <span>{{ item.label }}</span>
-            <span class="remove-icon" v-if="current.length !== 1" @click="removeSelected(item)">×</span>
+            <span v-if="current.length !== 1" class="remove-icon" @click="removeSelected(item)">×</span>
           </span>
         </div>
-        <div class="ell" v-else v-tooltip:right.ellipsis="current.label || ''">
+        <div v-else v-tooltip:right.ellipsis="current.label || ''" class="ell">
           {{ current.label }}
         </div>
       </div>
@@ -39,20 +38,19 @@ limitations under the License. -->
         <use xlink:href="#arrow-down"></use>
       </svg>
     </div>
-    <div class="rk-sel" v-show="visible">
+    <div v-show="visible" class="rk-sel">
       <div>
-        <input type="text" class="rk-sel-search" v-model="search" />
-        <svg class="icon sm close" @click="search = ''" v-if="search">
+        <input v-model="search" type="text" class="rk-sel-search" />
+        <svg v-if="search" class="icon sm close" @click="search = ''">
           <use xlink:href="#clear"></use>
         </svg>
       </div>
       <div class="rk-opt-wrapper scroll_hide">
         <div
-          class="rk-opt ell"
-          @click="handleSelect(i)"
-          :class="{ 'select-disabled': selectedOpt.includes(i.key) }"
           v-for="i in filterData"
           :key="i.key"
+          :class="{ 'rk-opt': true, ell: true, 'select-disabled': selectedOpt.includes(i.key) }"
+          @click="handleSelect(i)"
         >
           {{ i.label }}
         </div>
@@ -62,47 +60,47 @@ limitations under the License. -->
 </template>
 
 <script lang="ts">
-  import { Vue, Component, Prop } from 'vue-property-decorator';
-  const Multiple = 'multiple';
-  @Component
-  export default class RkSelect extends Vue {
-    @Prop() private mode: any;
-    @Prop() private data!: any;
-    @Prop() private current!: any;
-    private search: string = '';
-    private visible: boolean = false;
+import { Vue, Component, Prop } from 'vue-property-decorator';
+const Multiple = 'multiple';
+@Component
+export default class RkSelect extends Vue {
+  @Prop() private mode: any;
+  @Prop() private data!: any;
+  @Prop() private current!: any;
+  private search = '';
+  private visible = false;
 
-    get filterData() {
-      return this.data.filter((i: any) => i.label.toUpperCase().indexOf(this.search.toUpperCase()) !== -1);
+  get filterData() {
+    return this.data.filter((i: any) => i.label.toUpperCase().indexOf(this.search.toUpperCase()) !== -1);
+  }
+
+  get selectedOpt() {
+    return this.mode === Multiple ? this.current.map((item: any) => item.key) : [this.current.key];
+  }
+
+  public handleOpen() {
+    this.visible = true;
+  }
+
+  public handleSelect(i: any) {
+    const selected = this.mode === Multiple ? this.current.map((item: any) => item.key) : [this.current.key];
+    if (selected.includes(i.key)) {
+      return;
     }
+    this.$emit('onChoose', i);
+    this.visible = false;
+  }
 
-    get selectedOpt() {
-      return this.mode === Multiple ? this.current.map((item: any) => item.key) : [this.current.key];
-    }
-
-    public handleOpen() {
-      this.visible = true;
-    }
-
-    public handleSelect(i: any) {
-      const selected = this.mode === Multiple ? this.current.map((item: any) => item.key) : [this.current.key];
-      if (selected.includes(i.key)) {
-        return;
-      }
-      this.$emit('onChoose', i);
-      this.visible = false;
-    }
-
-    private removeSelected(item: any) {
-      if (this.mode === Multiple) {
-        this.$emit('onChoose', item);
-      }
+  private removeSelected(item: any) {
+    if (this.mode === Multiple) {
+      this.$emit('onChoose', item);
     }
   }
+}
 </script>
 
 <style lang="scss" scoped>
-  .rk-bar-select {
+.rk-bar-select {
     position: relative;
     height: 30px;
     justify-content: space-between;
@@ -110,38 +108,45 @@ limitations under the License. -->
     background: #fff;
     border-radius: 3px;
     color: #000;
+
     .sm {
-      line-height: 12px;
+        line-height: 12px;
     }
+
     .icon {
-      flex-shrink: 0;
+        flex-shrink: 0;
     }
+
     .selected {
-      display: inline-block;
-      padding: 5px;
-      border-radius: 3px;
-      margin: 3px;
-      overflow: hidden;
-      color: rgba(0, 0, 0, 0.65);
-      background-color: #fafafa;
-      border: 1px solid #e8e8e8;
+        display: inline-block;
+        padding: 5px;
+        border-radius: 3px;
+        margin: 3px;
+        overflow: hidden;
+        color: rgba(0, 0, 0, 0.65);
+        background-color: #fafafa;
+        border: 1px solid #e8e8e8;
     }
+
     .remove-icon {
-      display: inline-block;
-      margin-left: 5px;
-      cursor: pointer;
+        display: inline-block;
+        margin-left: 5px;
+        cursor: pointer;
     }
-  }
-  .rk-bar-i-text {
+}
+
+.rk-bar-i-text {
     width: 100%;
-  }
-  .rk-bar-i {
+}
+
+.rk-bar-i {
     height: 100%;
     width: 100%;
     padding: 5px 10px;
     overflow: auto;
-  }
-  .rk-sel {
+}
+
+.rk-sel {
     position: absolute;
     top: 100%;
     left: 0;
@@ -152,27 +157,33 @@ limitations under the License. -->
     border-radius: 0 0 3px 3px;
     border-right-width: 1px !important;
     z-index: 10;
+
     .close {
-      position: absolute;
-      right: 10px;
-      top: 12px;
-      opacity: 0.6;
-      &:hover {
-        opacity: 1;
-      }
+        position: absolute;
+        right: 10px;
+        top: 12px;
+        opacity: 0.6;
+
+        &:hover {
+            opacity: 1;
+        }
     }
-  }
-  .rk-opt {
+}
+
+.rk-opt {
     padding: 7px 15px;
+
     &.select-disabled {
-      color: rgba(0, 0, 0, 0.25);
-      cursor: not-allowed;
+        color: rgba(0, 0, 0, 0.25);
+        cursor: not-allowed;
     }
+
     &:hover {
-      background-color: #f5f5f5;
+        background-color: #f5f5f5;
     }
-  }
-  .rk-sel-search {
+}
+
+.rk-sel-search {
     width: calc(100% - 4px);
     border: 0;
     border-bottom: 1px solid #ddd;
@@ -180,10 +191,11 @@ limitations under the License. -->
     padding: 7px 25px 7px 10px;
     margin: 2px;
     border-radius: 3px;
-  }
-  .rk-opt-wrapper {
+}
+
+.rk-opt-wrapper {
     overflow: auto;
     max-height: 200px;
     padding-bottom: 2px;
-  }
+}
 </style>

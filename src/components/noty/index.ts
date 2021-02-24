@@ -30,15 +30,12 @@ const VueNoty = {
   options: {},
 
   setOptions(opts: any) {
-    this.options = Object.assign({}, defaults, opts);
+    this.options = { ...defaults, ...opts };
     return this;
   },
 
   show(text: any, type = 'alert', opts = {}) {
-    const params: any = Object.assign({}, this.options, opts, {
-      type,
-      text,
-    });
+    const params: any = { ...this.options, ...opts, type, text };
 
     return new Noty(params).show();
   },

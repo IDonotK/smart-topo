@@ -14,8 +14,8 @@ See the License for the specific language governing permissions and
 limitations under the License. -->
 <template>
   <svg
-    class="icon"
     :class="{
+      icon: true,
       sm: size === 'sm',
       lg: size === 'lg',
       offset: offset,
@@ -27,37 +27,41 @@ limitations under the License. -->
 </template>
 
 <script lang="ts">
-  import { Vue, Component, Prop } from 'vue-property-decorator';
-  import '../assets/icons/index';
+import { Vue, Component, Prop } from 'vue-property-decorator';
+import '../assets/icons/index';
 
-  @Component
-  export default class RkIcon extends Vue {
-    @Prop({ default: '' }) private icon!: string;
-    @Prop({ default: '' }) private size!: string;
-    @Prop({ default: false }) private loading!: boolean;
-    @Prop({ default: false }) private offset!: boolean;
-  }
+@Component
+export default class RkIcon extends Vue {
+  @Prop({ default: '' }) private icon!: string;
+  @Prop({ default: '' }) private size!: string;
+  @Prop({ default: false }) private loading!: boolean;
+  @Prop({ default: false }) private offset!: boolean;
+}
 </script>
 
 <style lang="scss">
-  .icon {
+.icon {
     width: 16px;
     height: 16px;
     vertical-align: middle;
     fill: currentColor;
+
     &.sm {
-      width: 13px;
-      height: 13px;
+        width: 13px;
+        height: 13px;
     }
+
     &.lg {
-      width: 18px;
-      height: 18px;
+        width: 18px;
+        height: 18px;
     }
+
     &.offset {
-      margin-top: -2px;
+        margin-top: -2px;
     }
+
     &.loading {
-      animation: loading 1.5s linear infinite;
+        animation: loading 1.5s linear infinite;
     }
-  }
+}
 </style>

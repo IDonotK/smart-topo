@@ -33,6 +33,7 @@ export default {
       if (binding.expression) {
         binding.value(e);
       }
+      return true;
     }
     el.__vueClickOutside__ = documentHandler;
     document.addEventListener('click', documentHandler);

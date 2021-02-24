@@ -14,10 +14,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-export const genID = (length: number) => {
-  return Number(
+export const genID = (length: number) =>
+  Number(
     Math.random()
       .toString()
-      .substr(3, length) + Date.now(),
+      .substr(3, length) + Date.now()
   ).toString(36);
-};

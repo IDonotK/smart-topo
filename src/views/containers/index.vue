@@ -6,21 +6,21 @@
 </template>
 
 <script lang="ts">
-  import { Component, Vue } from 'vue-property-decorator';
-  import RkHeader from '@/components/rk-header.vue';
-  import RkFooter from '@/components/rk-footer.vue';
+import { Component, Vue } from 'vue-property-decorator';
+import RkHeader from '@/components/rk-header.vue';
+import RkFooter from '@/components/rk-footer.vue';
 
-  @Component({
-    components: {
-      RkHeader,
-      RkFooter,
-    },
-  })
-  export default class RouterIndex extends Vue {
-    private isRouterAlive: boolean = true;
-    public reloadFooter(timeArray: Date[]): void {
-      const footer: any = this.$refs.footer;
-      footer.time = timeArray;
-    }
+@Component({
+  components: {
+    RkHeader,
+    RkFooter,
+  },
+})
+export default class RouterIndex extends Vue {
+  private isRouterAlive = true;
+  public reloadFooter(timeArray: Date[]): void {
+    const footer: any = this.$refs.footer;
+    footer.time = timeArray;
   }
+}
 </script>
