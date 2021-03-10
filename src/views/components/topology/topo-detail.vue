@@ -70,6 +70,9 @@ export default {
   },
 
   computed: {
+    topoMode() {
+      return this.$store.state.rocketTopo.topoMode;
+    },
     topoDetailData() {
       return this.$store.state.rocketTopo.topoDetailData;
     },
@@ -102,27 +105,27 @@ export default {
       this.navList = [
         {
           id: 'Application',
-          name: 'Applications',
+          name: 'Application',
         },
         {
           id: 'MiddleWare',
-          name: 'MiddleWares',
+          name: 'MiddleWare',
         },
         {
           id: 'Process',
-          name: 'Processes',
+          name: 'Process',
         },
         {
           id: 'Workload',
-          name: 'Workloads',
+          name: 'Workload',
         },
         {
           id: 'Pod',
-          name: 'Pods',
+          name: 'Pod',
         },
         {
           id: 'Node',
-          name: 'Nodes',
+          name: 'Node',
         }
       ];
     },
@@ -309,7 +312,7 @@ export default {
             break;
           case 'MiddleWare':
             middlewareNum++;
-            nodePosOption = { nType: 'MiddleWare', nNum: middlewareNum, cNum: curTypeNum, nObj: itemTmp, startX: middlewareStartX, factorY: 0.5, nSize: 28, deltaw, deltah };
+            nodePosOption = { nType: 'MiddleWare', nNum: middlewareNum, cNum: curTypeNum, nObj: itemTmp, startX: middlewareStartX, factorY: 1.5, nSize: 28, deltaw, deltah };
             break;
           case 'Process':
             processNum++;
@@ -612,9 +615,9 @@ export default {
       }
       this.tip.html(tipData =>
         `
-          <div class="mb-5"><span class="grey">链路类型: </span>${tipData.type}</div>
-          <div class="mb-5"><span class="grey">调用频率: </span>${tipData.callPerMinute === undefined ? ' ' : `${tipData.callPerMinute  } 次/分钟`}</div>
-          <div><span class="grey">平均响应时间: </span>${tipData.responseTimePerMin  === undefined ? ' ' : `${tipData.responseTimePerMin  } ms`}</div>
+          <div class="mb-5"><span class="grey">${this.$t('topoDetail_link_type')}</span>${tipData.type}</div>
+          <div class="mb-5"><span class="grey">${this.$t('topoDetail_link_callPerMinute')}</span>${tipData.callPerMinute === undefined ? ' ' : `${tipData.callPerMinute  } ${this.$t('topoDetail_link_callPerMinute_unit')}`}</div>
+          <div><span class="grey">${this.$t('topoDetail_link_responseTimePerMin')}</span>${tipData.responseTimePerMin  === undefined ? ' ' : `${tipData.responseTimePerMin  } ${this.$t('topoDetail_link_responseTimePerMin_unit')}`}</div>
         `
       ).show(data, element[index]);
     },
@@ -706,6 +709,9 @@ export default {
       }
     },
     handleNodeDblclicked(nodeTmp) {
+      if (this.topoMode === 'specific') {
+        return;
+      }
       this.$d3.event.stopPropagation();
       this.$d3.event.preventDefault();
       this.$emit('toggleNodeDetail', false);
@@ -725,6 +731,7 @@ export default {
       this.$d3.event.preventDefault();
       this.$emit('toggleNodeDetail', false);
       this.$store.commit('rocketTopo/SET_NODE_CROSS_LAYER', {});
+      this.$store.commit('rocketTopo/SET_VIEW_NODE', d);
       if (this.nodeSingleClickTimer !== null) {
         clearTimeout(this.nodeSingleClickTimer);
         this.nodeSingleClickTimer = null;
@@ -749,7 +756,7 @@ export default {
       this.$d3.event.preventDefault();
       // 处理点边重叠的情况
       this.$jq('.topo-line').addClass('tl-static');
-      this.tip.html((tipData) => `<div>${tipData.name}</div>`).show(data, element[index]);
+      this.tip.html((tipData) => `<div>${tipData.shortName}</div>`).show(data, element[index]);
     },
     handleSvgClicked(d, i) {
       this.$d3.event.stopPropagation();
@@ -775,6 +782,10 @@ export default {
 .d3-tip {
     pointer-events: none !important;
     z-index: 9999;
+    max-width: 500px;
+    white-space: normal;
+    word-wrap: break-word;
+    word-break: break-all;
 }
 
 .topo-detail {
@@ -833,7 +844,7 @@ export default {
                 .topo-line {
                     // stroke-linecap: round;
                     fill: none;
-                    animation: topo-dash 0.8s linear infinite !important;
+                    // animation: topo-dash 0.8s linear infinite !important;
 
                     &.topo-line-light {
                         stroke: yellow !important;
@@ -864,6 +875,11 @@ export default {
 
                 .topo-tool {
                     display: none;
+
+                    g:nth-child(2),
+                    g:nth-child(3) {
+                        display: none;
+                    }
                 }
 
                 .topo-tool-i {

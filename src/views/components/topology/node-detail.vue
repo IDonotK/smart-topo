@@ -4,7 +4,7 @@
       <span class="tvslc-icon" @click="closeNodeDetail"></span>
     </div>
     <div class="tvsl-small-topo">
-      <RkEcharts ref="smallTopo" :option="smallTopoOption" />
+      <RkEcharts ref="smallTopo" :option="smallTopoOption" :clickEvent="handleClickTopo" />
     </div>
     <div class="tvsl-node-info">
       <div
@@ -22,7 +22,21 @@
         :key="'small' + key"
         :class="{ 'info-item': true, small: smallDetailItems.includes(key) }"
       >
-        <span class="item-title" :title="key">{{ key }} :</span>
+        <span class="item-title" :title="key"
+          >{{ key }}
+          <el-tooltip
+            v-if="key === 'eventLevel'"
+            class="item"
+            effect="light"
+            :content="$t('nodeDetail_eventLevel_help')"
+            placement="top"
+          >
+            <svg class="icon sm vm help-icon">
+              <use xlink:href="#HELP"></use>
+            </svg>
+          </el-tooltip>
+          :
+        </span>
         <span class="item-content" :title="value">{{ value }}</span>
       </div>
       <div class="clear"></div>
@@ -77,6 +91,7 @@ export default {
         '#c4ebad',
         '#96dee8',
       ],
+      tooltipStyle: '',
     }
   },
 
@@ -86,20 +101,55 @@ export default {
     },
   },
 
-  watch: {
-
-  },
-
   mounted() {
+    this.tooltipStyle = `
+      background-color: transparent;
+      width: 500px;
+      white-space: normal;
+      word-wrap: break-word;
+      word-break: break-all;
+    `;
     this.setSmallTopoOption();
   },
 
   methods: {
+    handleClickTopo(clickedObj) {
+      if (clickedObj && clickedObj.data && clickedObj.data.id) {
+        this.$store.commit('rocketTopo/SET_VIEW_NODE', clickedObj.data);
+      }
+    },
+    setSeries(nodes, links, eventNodes, categories) {
+      let series = [{
+        type: 'graph',
+        coordinateSystem: 'cartesian2d',
+        roam: true,
+        focusNodeAdjacency: false,
+        categories,
+        edgeSymbol: ['', 'arrow'],
+        emphasis: {
+          label: {
+            show: false,
+          },
+        },
+        nodes,
+        links,
+      },
+      {
+        type: 'graph',
+        coordinateSystem: 'cartesian2d',
+        roam: true,
+        focusNodeAdjacency: false,
+        categories,
+        nodes: eventNodes,
+      }];
+      return series;
+    },
     setOption(nodes, links, eventNodes, categories) {
+      let seriesOption = this.setSeries(nodes, links, eventNodes, categories);
       this.smallTopoOption = {
         title: {
           show: true,
-          text: 'single hop nodes :',
+          text: this.$t('nodeDetail_singleHopNodes_title'),
           left: '-5',
           top: '0',
           textStyle: {
@@ -120,24 +170,18 @@ export default {
           max: 50,
           min: -50,
         },
-        series: [{
-          type: 'graph',
-          coordinateSystem: 'cartesian2d',
-          roam: true,
-          focusNodeAdjacency: false,
-          categories,
-          edgeSymbol: ['', 'arrow'],
-          nodes,
-          links,
+        tooltip: {
+          show: true,
+          trigger: 'item',
+          showContent: true,
+          transitionDuration: 0,
+          triggerOn: 'mousemove',
+          textStyle: {
+            overflow: 'breakAll',
+          },
+          extraCssText: `${this.tooltipStyle}text-align: left;`,
         },
-        {
-          type: 'graph',
-          coordinateSystem: 'cartesian2d',
-          roam: true,
-          focusNodeAdjacency: false,
-          categories,
-          nodes: eventNodes,
-        }]
+        series: seriesOption,
       };
     },
     setTopoEventNodes(nodes, eventNodes) {
@@ -152,9 +196,6 @@ export default {
           }
           nodeObj.symbol = `image://${  eventIcon}`;
           nodeObj.name = '';
-          if (nodeObj.id === this.curNodeCrossLayer.id) {
-            nodeObj.label.show = false;
-          }
           if (nodeObj.category === 0) {
             nodeObj.symbolOffset = [16, -20];
             nodeObj.symbolSize = 20;
@@ -162,6 +203,9 @@ export default {
             nodeObj.symbolOffset = [12, -14];
             nodeObj.symbolSize = 14;
           }
+          nodeObj.tooltip = {
+            formatter: (dataArr) => '',
+          };
           eventNodes.push(nodeObj);
         }
       });
@@ -180,6 +224,9 @@ export default {
              params.data.type
           ,
         };
+        link.tooltip = {
+          formatter: (dataArr) => '',
+        }
       });
     },
     handleTopoNodesSpecially(nodes) {
@@ -214,19 +261,18 @@ export default {
           default: break;
         }
         node.symbol = nodeSymbol;
-        node.label = {
-          show: false,
-          position: parseFloat(node.value[0]) === 0.00 ? 'insideTop' : (node.value[0] > 0 ? 'insideRight' : 'insideLeft'),
-          color: nodeColor,
-          offset: [0, -20],
-          borderColor: 'transparent',
-          borderWith: 0,
-          textBorderColor: 'transparent',
-          textBorderWith: 0,
+        node.tooltip = {
+          formatter: (dataArr) => {
+            if (dataArr && dataArr.data && dataArr.data.shortName) {
+              return dataArr.data.shortName;
+            }
+            return '';
+          },
+          position: (point) => [point[0] + 5, point[1] + 5],
         };
-        if (node.id === this.curNodeCrossLayer.id) {
-          node.label.show = false;
-          node.label.offset = [0, -22];
+        if (parseFloat(node.value[0]) > 0) {
+          node.tooltip.position = (point) => [point[0] - 505, point[1] + 5];
+          node.tooltip.extraCssText = `${this.tooltipStyle}text-align: right;`;
         }
       });
     },
@@ -247,6 +293,7 @@ export default {
       nodes.push({
         id: this.curNodeCrossLayer.id,
         name: this.curNodeCrossLayer.name,
+        shortName: this.curNodeCrossLayer.shortName,
         type: this.curNodeCrossLayer.type,
         state: this.curNodeCrossLayer.state,
         eventCount: this.curNodeCrossLayer.eventCount,
@@ -268,6 +315,7 @@ export default {
           nodes.push({
             id: link.target.id,
             name: link.target.name,
+            shortName: link.target.shortName,
             type: link.target.type,
             state: link.target.state,
             eventCount: link.target.eventCount,
@@ -279,6 +327,7 @@ export default {
           nodes.push({
             id: link.source.id,
             name: link.source.name,
+            shortName: link.source.shortName,
             type: link.source.type,
             state: link.source.state,
             eventCount: link.source.eventCount,
@@ -290,7 +339,7 @@ export default {
       });
     },
     setSmallTopoOption() {
-      let categories = [ { name: 'Current Node' }, { name: 'Single Hop Nodes' }];
+      let categories = [ { name: 'Current Node' }, { name: 'Single Hop Node' }];
       let nodes = [];
       let links = [];
       this.setSmallTopoData(nodes, links);
@@ -364,6 +413,15 @@ export default {
                 margin-right: 5px;
                 text-align: left;
                 white-space: nowrap;
+
+                .help-icon {
+                    width: 15px;
+                    height: 15px;
+
+                    &:hover {
+                        cursor: pointer;
+                    }
+                }
             }
 
             .item-content {

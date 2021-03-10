@@ -8,42 +8,60 @@
       <!-- 拓扑标题 -->
       <div v-show="topoViewData.nodes.length > 0" class="topo-info">
         <div class="mti-item topo-mode">
-          <span class="title">拓扑探索模式：</span>
-          <span v-show="topoMode === 'global'" class="content">全部节点</span>
-          <span v-show="topoMode === 'specific'" class="content">目标节点({{ exploreNode.id }})</span>
+          <span class="title">{{ $t('topoSideInformation_topoInfo_mode') }}</span>
+          <span v-show="topoMode === 'global'" class="content">{{
+            $t('topoSideInformation_topoInfo_mode_global')
+          }}</span>
+          <span v-show="topoMode === 'specific'" class="content"
+            >{{ $t('topoSideInformation_topoInfo_mode_specific') }}({{ exploreNode.id }})</span
+          >
         </div>
         <div class="mti-item show-node-type">
-          <span class="title">显示的节点类型：</span>
+          <span class="title">{{ $t('topoSideInformation_topoInfo_node_type') }}</span>
           <ul class="content">
             <li v-for="(showNodeType, index) in showNodeTypes" :key="'type' + index">{{ showNodeType }}</li>
           </ul>
         </div>
         <div class="mti-item node-state-type">
-          <span class="title">显示的节点状态：</span>
+          <span class="title">{{ $t('topoSideInformation_topoInfo_node_state') }}</span>
           <span class="content">{{ showStateTypes.join(', ') }}</span>
         </div>
         <div v-show="currentNode.id !== undefined" class="mti-item current-node">
-          <span class="title">选中节点的名称：</span>
+          <span class="title">{{ $t('topoSideInformation_topoInfo_node_selected') }}</span>
           <span class="content">{{ currentNode.name }}</span>
         </div>
         <div v-show="currentNode.id !== undefined" class="mti-item relative-node-type">
-          <span class="title">关联节点类型：</span>
+          <span class="title">{{ $t('topoSideInformation_topoInfo_node_relation') }}</span>
           <span class="content">{{ showRelativeTypes.join(', ') }}</span>
         </div>
         <!-- 查看节点详情 -->
         <div v-show="viewNode.id !== undefined" class="view-node-info">
-          <div class="info-title">当前查看的节点信息:</div>
+          <div class="info-title">{{ $t('topoSideInformation_nodeInfo_node_checked') }}</div>
           <div
             v-for="(item, index) in nodeDetailItems"
             v-show="viewNode.hasOwnProperty(item)"
             :key="'field' + index"
             class="info-item"
           >
-            <span class="item-title">{{ item }} :</span>
+            <span class="item-title"
+              >{{ item }}
+              <el-tooltip
+                v-if="item === 'eventLevel'"
+                class="item-btn"
+                effect="light"
+                :content="$t('nodeDetail_eventLevel_help')"
+                placement="top"
+              >
+                <svg class="icon sm vm help-icon">
+                  <use xlink:href="#HELP"></use>
+                </svg>
+              </el-tooltip>
+              :</span
+            >
             <span v-if="item === 'id'" class="item-content">
               <span :title="viewNode[item]">{{ viewNode[item] }}</span>
               <!-- 复制按钮 -->
-              <span class="item-btn" title="复制" @click.prevent.stop="copyNodeId(viewNode[item])">
+              <span class="item-btn" :title="$t('copy')" @click.prevent.stop="copyNodeId(viewNode[item])">
                 <svg class="icon sm vm copy-btn-icon">
                   <use xlink:href="#COPY_GRAY"></use>
                 </svg>
@@ -53,10 +71,15 @@
               <li>{{ viewNode[item] && viewNode[item].slice(0, viewNode[item].indexOf(' ')) }}</li>
               <li>{{ viewNode[item] && viewNode[item].slice(viewNode[item].indexOf(' ')) }}</li>
             </ul>
-            <span v-else class="item-content item-content-ellipsis">
+            <span v-else class="item-content">
               <span :title="viewNode[item]">{{ viewNode[item] }}</span>
               <!-- 查看事件按钮 -->
-              <span v-if="item === 'eventCount'" class="item-btn" title="查看事件" @click.prevent.stop="showEvents">
+              <span
+                v-if="item === 'eventCount'"
+                class="item-btn"
+                :title="$t('topoSideInformation_nodeInfo_check_event')"
+                @click.prevent.stop="showEvents"
+              >
                 <svg class="icon sm vm event-btn-icon">
                   <use xlink:href="#DETAIL_PAGE_GRAY"></use>
                 </svg>
@@ -67,7 +90,13 @@
       </div>
     </overlay-scrollbars>
     <!-- 查看事件列表 -->
-    <el-drawer class="events-drawer" title="事件列表" :visible.sync="isShowEvents" direction="rtl" size="720px">
+    <el-drawer
+      class="events-drawer"
+      :title="$t('topoSideInformation_nodeInfo_event_list')"
+      :visible.sync="isShowEvents"
+      direction="rtl"
+      size="880px"
+    >
       <node-events v-if="isShowEvents" :viewNodeId="viewNode.id" />
     </el-drawer>
     <!-- 加载过程样式 -->
@@ -78,7 +107,7 @@
     </div>
     <!-- 加载结果为空样式 -->
     <div v-show="topoViewData.nodes.length === 0 && !isLoadingTopo" class="topo-info-empty">
-      暂无数据！
+      {{ $t('noData') }}
     </div>
   </div>
 </template>
@@ -242,6 +271,15 @@ export default {
                     overflow: hidden;
                     text-overflow: ellipsis;
                     white-space: nowrap;
+
+                    .help-icon {
+                        width: 15px;
+                        height: 15px;
+
+                        &:hover {
+                            cursor: pointer;
+                        }
+                    }
                 }
 
                 .item-content {

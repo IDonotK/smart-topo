@@ -40,16 +40,21 @@
           @link-click="linkClick"
         />
         <!-- 鼠标右键探索弹框 -->
-        <el-dialog class="explore-dialog" :title="'确定探索该节点？'" :visible.sync="isShowExplore" width="30%">
+        <el-dialog
+          class="explore-dialog"
+          :title="$t('topoView_explore_node_title')"
+          :visible.sync="isShowExplore"
+          width="30%"
+        >
           <div class="modes-wrapper">
             <div class="mw-item">
-              <span class="item-title">节点ID：</span>
+              <span class="item-title">{{ $t('topoView_explore_node_id') }}</span>
               <span class="item-content">{{ nodeToExplore.id }}</span>
             </div>
           </div>
           <template v-slot:footer class="dialog-footer">
-            <el-button @click="isShowExplore = false">取 消</el-button>
-            <el-button type="primary" @click="handleConfirmExplore">确 定</el-button>
+            <el-button @click="isShowExplore = false">{{ $t('cancel') }}</el-button>
+            <el-button type="primary" @click="handleConfirmExplore">{{ $t('confirm') }}</el-button>
           </template>
         </el-dialog>
         <!-- 加载过程样式 -->
@@ -60,11 +65,11 @@
         </div>
         <!-- 加载结果为空样式 -->
         <div v-show="topoViewData.nodes.length === 0 && !isLoadingTopo" class="main-topo-empty">
-          暂无数据！
+          {{ $t('noData') }}
         </div>
         <!-- 搜索无匹配结果样式 -->
         <div v-show="!isMatch && !isLoadingTopo && topoViewData.nodes.length > 0" class="main-topo-not-match">
-          无匹配节点！
+          {{ $t('topoView_search_no_data') }}
         </div>
       </div>
     </div>
@@ -89,15 +94,6 @@ export default {
     TopoTime
   },
   props: {
-    topoData: {
-      type: Object,
-      default() {
-        return {
-          nodes: [],
-          links: [],
-        };
-      },
-    },
     topoViewData: {
       type: Object,
       default() {
@@ -141,6 +137,9 @@ export default {
   },
 
   computed: {
+    topoMode() {
+      return this.$store.state.rocketTopo.topoMode;
+    },
     durationRow() {
       return this.$store.state.rocketbot.durationRow;
     },
@@ -245,9 +244,6 @@ export default {
     toggleNodeDetail(state) {
       this.showNodeDetail = state;
     },
-    changeTopoViewData(newTopoViewData) {
-      this.$emit('changeTopoViewData', newTopoViewData);
-    },
     setCurNodeStably(curNode) {
       let lastX = curNode.x;
       let lastY = curNode.y;
@@ -275,12 +271,13 @@ export default {
       this.netData = this.topoViewData;
     },
     nodeRightClick(event, node) {
-      if (node.type === 'Application') {
-        this.isShowExplore = true;
-        this.nodeToExplore = node;
-      }
+      this.isShowExplore = true;
+      this.nodeToExplore = node;
     },
     nodeDblClick(event, node) {
+      if (this.topoMode === 'specific') {
+        return;
+      }
       if (node && this.currentNode && node.id === this.currentNode.id) {
         return;
       }

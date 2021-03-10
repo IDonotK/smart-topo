@@ -22,8 +22,6 @@ export interface State {
   showRelativeTypes: any[];
   topoScaleFix: number;
   isFirstTick: boolean;
-  isTopoNodesUpdated: boolean;
-  isTopoLinksUpdated: boolean;
   topoMode: string;
   exploreNode: any;
   topoData: any;
@@ -48,8 +46,6 @@ const initState: State = {
   showRelativeTypes: [],
   topoScaleFix: -1,
   isFirstTick: true,
-  isTopoNodesUpdated: false,
-  isTopoLinksUpdated: false,
   topoMode: 'global',
   exploreNode: {},
   topoData: {
@@ -104,12 +100,6 @@ const mutations = {
   },
   [types.SET_TOPO_SCALE_FIX](state: State, data: any) {
     state.topoScaleFix = data;
-  },
-  [types.SET_IS_TOPO_NODES_UPDATED](state: State, data: any) {
-    state.isTopoNodesUpdated = data;
-  },
-  [types.SET_IS_TOPO_LINKS_UPDATED](state: State, data: any) {
-    state.isTopoLinksUpdated = data;
   },
   [types.SET_IS_FIRST_TICK](state: State, data: any) {
     state.isFirstTick = data;

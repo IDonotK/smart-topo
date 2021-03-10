@@ -7,7 +7,6 @@ import './svg/NODE.svg';
 import './svg/POD.svg';
 import './svg/PROCESS.svg';
 import './svg/WORKLOAD.svg';
-
 import './svg/APPLICATION_BRIGHT.svg';
 import './svg/MIDDLEWARE_BRIGHT.svg';
 import './svg/MIDDLEWARE_MQ-BRIGHT.svg';
@@ -17,17 +16,19 @@ import './svg/NODE_BRIGHT.svg';
 import './svg/POD_BRIGHT.svg';
 import './svg/PROCESS_BRIGHT.svg';
 import './svg/WORKLOAD_BRIGHT.svg';
-
 import './svg/COPY.svg';
 import './svg/COPY_GRAY.svg';
 import './svg/DETAIL_EYE_GRAY.svg';
 import './svg/DETAIL_PAGE_GRAY.svg';
-
 import './svg/PLAY_START.svg';
 import './svg/PLAY_STOP.svg';
-
 import './svg/ENLARGE.svg';
 import './svg/NARROW.svg';
 import './svg/EXPLORE.svg';
 import './svg/SEARCH.svg';
 import './svg/RESTORE.svg';
+import './svg/HELP.svg';
+import './svg/BACK.svg';
+import './svg/ERASE.svg';
+import './svg/PLUS.svg';
+import './svg/MINUS.svg';

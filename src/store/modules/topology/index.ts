@@ -7,7 +7,7 @@ import { formatTopoData, utc2Peking } from '@/utils/topo';
 
 import { getEvents } from './get-events.js';
 import { generateGesData } from './ges-data';
-import { getA1Up, getA1Down, getA1Cl, getA2Up, getA2Down, getA2Cl } from './relative-data';
+import { getA1Up, getA1Down, getA1Cl, getTypes, getA1Both, getA2Up, getA2Down, getA2Cl } from './relative-data';
 let timeIndex = 0;
 
 export interface Duration {
@@ -28,8 +28,6 @@ export interface State {
   showRelativeTypes: any[];
   topoScaleFix: number;
   isFirstTick: boolean;
-  isTopoNodesUpdated: boolean;
-  isTopoLinksUpdated: boolean;
   topoMode: string;
   exploreNode: any;
   topoData: any;
@@ -54,8 +52,6 @@ const initState: State = {
   showRelativeTypes: [],
   topoScaleFix: -1,
   isFirstTick: true,
-  isTopoNodesUpdated: false,
-  isTopoLinksUpdated: false,
   topoMode: 'global',
   exploreNode: {},
   topoData: {
@@ -111,12 +107,6 @@ const mutations = {
   [types.SET_TOPO_SCALE_FIX](state: State, data: any) {
     state.topoScaleFix = data;
   },
-  [types.SET_IS_TOPO_NODES_UPDATED](state: State, data: any) {
-    state.isTopoNodesUpdated = data;
-  },
-  [types.SET_IS_TOPO_LINKS_UPDATED](state: State, data: any) {
-    state.isTopoLinksUpdated = data;
-  },
   [types.SET_IS_FIRST_TICK](state: State, data: any) {
     state.isFirstTick = data;
   },
@@ -163,7 +153,7 @@ const mutations = {
 const actions: ActionTree<State, any> = {
   GET_SCENE_CONFIG(context: { commit: Commit; state: State }, params: any) {
     context.commit(types.SET_SCENE_CONFIG, {});
-    return Promise.resolve().then((res) => {
+    return Promise.resolve().then(res => {
       // @ts-ignore
       res = {
         data: {
@@ -183,16 +173,16 @@ const actions: ActionTree<State, any> = {
     });
   },
   GET_EVENTS_DATA(context: { commit: Commit; state: State }, params: any) {
-    return Promise.resolve().then((res) => {
-        const eventsDataRes = getEvents();
-        if (eventsDataRes && eventsDataRes.data && eventsDataRes.data.events) {
-          eventsDataRes.data.events.forEach(item => {
-            item.expansion = false;
-            item.createTime = utc2Peking(item.createTime);
-            item.updateTime = utc2Peking(item.updateTime);
-          })
-        }
-        return eventsDataRes.data;
+    return Promise.resolve().then(res => {
+      const eventsDataRes = getEvents();
+      if (eventsDataRes && eventsDataRes.data && eventsDataRes.data.events) {
+        eventsDataRes.data.events.forEach(item => {
+          item.expansion = false;
+          item.createTime = utc2Peking(item.createTime);
+          item.updateTime = utc2Peking(item.updateTime);
+        });
+      }
+      return eventsDataRes.data;
     });
   },
   GET_RELYON_DATA(context: { commit: Commit; state: State }, params: any) {
@@ -208,12 +198,14 @@ const actions: ActionTree<State, any> = {
         nodes: [],
         links: [],
       };
-      if (params.direction == 'in') {
+      if (params.direction === 'in') {
         relativeData = formatTopoData(getA1Up(), true);
         // relativeData = formatTopoData(getA2Up(), true);
-      } else {
+      } else if (params.direction === 'out') {
         relativeData = formatTopoData(getA1Down(), true);
         // relativeData = formatTopoData(getA2Down(), true);
+      } else {
+        relativeData = formatTopoData(getA1Both(), true);
       }
       return relativeData;
     });
@@ -230,7 +222,8 @@ const actions: ActionTree<State, any> = {
     }
     return Promise.resolve().then(() => {
       context.state.isLoadingTopo = false;
-      let topoData = formatTopoData(generateGesData(), true);
+      // let topoData = formatTopoData(generateGesData(), true);
+      let topoData = formatTopoData(getTypes(), true);
       context.commit(types.SET_TOPO_DATA, {
         nodes: topoData.nodes,
         links: topoData.links,

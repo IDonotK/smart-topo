@@ -1,11 +1,10 @@
 <template>
   <div class="rk-topo">
-    <TopoView :topoData="topoData" :topoViewData="topoViewData" :isMatch="isMatch" @restoreFilters="restoreFilters" />
+    <TopoView :topoViewData="topoViewData" :isMatch="isMatch" @restoreFilters="restoreFilters" />
     <TopoSideNavigation :topoViewData="topoViewData" />
     <TopoSideInformation :topoViewData="topoViewData" />
     <TopoToolSet
       ref="topotoolset"
-      :topoData="topoData"
       :topoViewData="topoViewData"
       @onSearchResult="onSearchResult"
       @changeTopoViewData="changeTopoViewData"
@@ -51,16 +50,9 @@ export default {
 
   watch: {
     topoViewData(newVal) {
-      // if (newVal.nodes.length <= 2) {
-      //   this.$store.commit('rocketTopo/SET_TOPO_SCALE_FIX', 2);
-      // } else {
-      //   this.$store.commit('rocketTopo/SET_TOPO_SCALE_FIX', 1);
-      // }
       this.$store.commit('rocketTopo/SET_IS_FIRST_TICK', true);
     },
     topoData(newVal) {
-      this.$store.commit('rocketTopo/SET_IS_TOPO_NODES_UPDATED', true);
-      this.$store.commit('rocketTopo/SET_IS_TOPO_LINKS_UPDATED', true);
       this.topoViewData = newVal;
     },
   },

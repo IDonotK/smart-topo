@@ -9,7 +9,7 @@
 
 1. 页面分头部、左侧栏、中间拓扑图、右侧栏，其中拓扑图上方提供时间轴、工具栏
 2. 头部显示项目logo，提供导航、刷新、轮询、查看帮助文档功能
-3. 左侧栏分层：Applications、MiddleWares、Processes、Workloads、Pods、Nodes
+3. 左侧栏分层：Application、MiddleWare、Process、Workload、Pod、Node
 4. 左侧栏每层统计节点信息：节点总数、异常数量
 5. 拓扑图默认展示全部节点、全部边，大小自适应视口
    ![img_01](img/img_01.png)

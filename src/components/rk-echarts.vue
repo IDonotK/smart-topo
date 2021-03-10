@@ -42,12 +42,12 @@ export default class RkEcharts extends Vue {
     const el: any = this.$el;
     this.myChart = echarts.init(el, '');
     this.myChart.setOption(this.option);
-    // this.myChart.on('click', (params: any) => {
-    //   if (!this.clickEvent) {
-    //     return;
-    //   }
-    //   this.clickEvent(params);
-    // });
+    this.myChart.on('click', (params: any) => {
+      if (!this.clickEvent) {
+        return;
+      }
+      this.clickEvent(params);
+    });
   }
 }
 </script>

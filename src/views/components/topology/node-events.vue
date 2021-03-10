@@ -3,27 +3,37 @@
     <!-- 查询 -->
     <div class="form-wrapper">
       <vxe-form size="small" :data="formData" @submit="handleSubmit" @reset="handleReset">
-        <vxe-form-item span="6" title-align="right" title="ID" field="id">
+        <vxe-form-item span="6" title-align="right" :title="$t('nodeEvents_eventData_id')" field="id">
           <template v-slot>
-            <vxe-input v-model="formData.id" placeholder="请输入id"></vxe-input>
+            <vxe-input v-model="formData.id" :placeholder="$t('nodeEvents_searchOption_id_tip')"></vxe-input>
           </template>
         </vxe-form-item>
-        <vxe-form-item span="6" title-align="right" title="名称" field="name">
+        <vxe-form-item span="6" title-align="right" :title="$t('nodeEvents_eventData_name')" field="name">
           <template v-slot>
-            <vxe-input v-model="formData.name" placeholder="请输入名称"></vxe-input>
+            <vxe-input v-model="formData.name" :placeholder="$t('nodeEvents_searchOption_name_tip')"></vxe-input>
           </template>
         </vxe-form-item>
-        <vxe-form-item span="6" title-align="right" title="等级" field="severity">
+        <vxe-form-item span="6" title-align="right" :title="$t('nodeEvents_eventData_severity')" field="severity">
           <template v-slot>
-            <vxe-select v-model="formData.severity" placeholder="请选择等级" clearable>
+            <vxe-select v-model="formData.severity" :placeholder="$t('nodeEvents_searchOption_severity_tip')" clearable>
               <vxe-option value="Critical" label="Critical"></vxe-option>
               <vxe-option value="Warning" label="Warning"></vxe-option>
             </vxe-select>
           </template>
         </vxe-form-item>
-        <vxe-form-item span="6" title-align="right" title="来源" field="severity" class="source-options">
+        <vxe-form-item
+          span="6"
+          title-align="right"
+          :title="$t('nodeEvents_eventData_source')"
+          field="source"
+          class="source-options"
+        >
           <template v-slot>
-            <vxe-select v-model="formData.eventSource" placeholder="请选择来源" clearable>
+            <vxe-select
+              v-model="formData.eventSource"
+              :placeholder="$t('nodeEvents_searchOption_source_tip')"
+              clearable
+            >
               <vxe-option
                 v-for="(item, index) in eventSources"
                 :key="'event-source' + index"
@@ -33,31 +43,43 @@
             </vxe-select>
           </template>
         </vxe-form-item>
-        <vxe-form-item span="24" title-align="right" title="创建时间" field="createTime" :visible="showTimeFilter">
+        <vxe-form-item
+          span="24"
+          title-align="right"
+          :title="$t('nodeEvents_eventData_createTime')"
+          field="createTime"
+          :visible="showTimeFilter"
+        >
           <template v-slot>
             <el-date-picker
               v-model="formData.createTimeRange"
               size="mini"
               type="datetimerange"
               :picker-options="datePickerOptions"
-              range-separator="至"
-              start-placeholder="开始时间"
-              end-placeholder="结束时间"
+              :range-separator="$t('nodeEvents_searchOption_timeSeparator')"
+              :start-placeholder="$t('nodeEvents_searchOption_startTime')"
+              :end-placeholder="$t('nodeEvents_searchOption_endTime')"
               align="right"
             >
             </el-date-picker>
           </template>
         </vxe-form-item>
-        <vxe-form-item span="24" title-align="right" title="更新时间" field="updateTime" :visible="showTimeFilter">
+        <vxe-form-item
+          span="24"
+          title-align="right"
+          :title="$t('nodeEvents_eventData_updateTime')"
+          field="updateTime"
+          :visible="showTimeFilter"
+        >
           <template v-slot>
             <el-date-picker
               v-model="formData.updateTimeRange"
               size="mini"
               type="datetimerange"
               :picker-options="datePickerOptions"
-              range-separator="至"
-              start-placeholder="开始时间"
-              end-placeholder="结束时间"
+              :range-separator="$t('nodeEvents_searchOption_timeSeparator')"
+              :start-placeholder="$t('nodeEvents_searchOption_startTime')"
+              :end-placeholder="$t('nodeEvents_searchOption_endTime')"
               align="right"
             >
             </el-date-picker>
@@ -73,8 +95,8 @@
               >
                 <use xlink:href="#arrow-down"></use>
               </svg>
-              <vxe-button type="submit" status="primary">查询</vxe-button>
-              <vxe-button type="reset">重置</vxe-button>
+              <vxe-button type="submit" status="primary">{{ $t('search') }}</vxe-button>
+              <vxe-button type="reset">{{ $t('reset') }}</vxe-button>
             </div>
           </template>
         </vxe-form-item>
@@ -105,19 +127,31 @@
         storage: true,
       }"
     >
-      <vxe-table-column type="seq" title="序号" fixed="left" width="60"></vxe-table-column>
-      <vxe-table-column field="id" title="ID" :visible="false"></vxe-table-column>
-      <vxe-table-column field="name" title="名称" sortable></vxe-table-column>
-      <vxe-table-column field="severity" title="等级"></vxe-table-column>
-      <vxe-table-column field="status" title="状态" :visible="false"></vxe-table-column>
-      <vxe-table-column field="eventSource" title="来源" :visible="false"></vxe-table-column>
-      <vxe-table-column field="eventDetails" title="描述"></vxe-table-column>
-      <vxe-table-column field="timeStamp" title="时间戳" :visible="false"></vxe-table-column>
-      <vxe-table-column field="createTime" title="创建时间" sortable :visible="false"></vxe-table-column>
-      <vxe-table-column field="updateTime" title="更新时间" sortable :visible="false"></vxe-table-column>
-      <vxe-table-column title="操作" width="100" show-overflow>
+      <vxe-table-column type="seq" :title="$t('nodeEvents_eventData_seq')" fixed="left"></vxe-table-column>
+      <vxe-table-column field="id" :title="$t('nodeEvents_eventData_id')"></vxe-table-column>
+      <vxe-table-column field="name" :title="$t('nodeEvents_eventData_name')" sortable></vxe-table-column>
+      <vxe-table-column field="severity" :title="$t('nodeEvents_eventData_severity')"></vxe-table-column>
+      <vxe-table-column field="status" :title="$t('nodeEvents_eventData_status')"></vxe-table-column>
+      <vxe-table-column field="eventSource" :title="$t('nodeEvents_eventData_source')"></vxe-table-column>
+      <vxe-table-column field="eventDetails" :title="$t('nodeEvents_eventData_description')"></vxe-table-column>
+      <vxe-table-column field="timeStamp" :title="$t('nodeEvents_eventData_timeStamp')"></vxe-table-column>
+      <vxe-table-column
+        field="createTime"
+        :title="$t('nodeEvents_eventData_createTime')"
+        sortable
+        width="100"
+      ></vxe-table-column>
+      <vxe-table-column
+        field="updateTime"
+        :title="$t('nodeEvents_eventData_updateTime')"
+        sortable
+        width="100"
+      ></vxe-table-column>
+      <vxe-table-column title="操作" show-overflow width="90">
         <template v-slot="{ row }">
-          <span class="operate-item" @click="openEventDetail(row)">查看详情</span>
+          <span class="operate-item" @click="openEventDetail(row)">{{
+            $t('nodeEvents_eventTable_operation_checkDetails')
+          }}</span>
         </template>
       </vxe-table-column>
     </vxe-table>
@@ -126,7 +160,7 @@
     <div class="event-detail-wrapper">
       <vxe-modal
         v-model="showEventDetails"
-        title="事件详情"
+        :title="$t('nodeEvents_eventData_details')"
         width="600"
         height="400"
         :mask="true"
@@ -206,15 +240,15 @@ export default {
       showEventDetails: false,
       eventDetailData: [],
       eventDataModel: [
-        { label: 'ID', field: 'id' },
-        { label: '名称', field: 'name' },
-        { label: '等级', field: 'severity' },
-        { label: '状态', field: 'status' },
-        { label: '来源', field: 'eventSource' },
-        { label: '描述', field: 'eventDetails' },
-        { label: '时间戳', field: 'timeStamp' },
-        { label: '创建时间', field: 'createTime' },
-        { label: '更新时间', field: 'updateTime' },
+        { label: this.$t('nodeEvents_eventData_id'), field: 'id' },
+        { label: this.$t('nodeEvents_eventData_name'), field: 'name' },
+        { label: this.$t('nodeEvents_eventData_severity'), field: 'severity' },
+        { label: this.$t('nodeEvents_eventData_status'), field: 'status' },
+        { label: this.$t('nodeEvents_eventData_source'), field: 'eventSource' },
+        { label: this.$t('nodeEvents_eventData_description'), field: 'eventDetails' },
+        { label: this.$t('nodeEvents_eventData_timeStamp'), field: 'timeStamp' },
+        { label: this.$t('nodeEvents_eventData_createTime'), field: 'createTime' },
+        { label: this.$t('nodeEvents_eventData_updateTime'), field: 'updateTime' },
       ],
     }
   },
@@ -251,7 +285,7 @@ export default {
       this.datePickerOptions = {
         shortcuts: [
           {
-            text: '最近10分钟',
+            text: this.$t('rkDate_quickOption_recentTenMinutes'),
             onClick(picker) {
               const end = new Date();
               const start = new Date();
@@ -260,7 +294,7 @@ export default {
             }
           },
           {
-            text: '最近30分钟',
+            text: this.$t('rkDate_quickOption_recentThirtyMinutes'),
             onClick(picker) {
               const end = new Date();
               const start = new Date();
@@ -269,7 +303,7 @@ export default {
             }
           },
           {
-            text: '最近1小时',
+            text: this.$t('rkDate_quickOption_recentOneHour'),
             onClick(picker) {
               const end = new Date();
               const start = new Date();
@@ -278,7 +312,7 @@ export default {
             }
           },
           {
-            text: '最近6小时',
+            text: this.$t('rkDate_quickOption_recentSixHour'),
             onClick(picker) {
               const end = new Date();
               const start = new Date();
@@ -335,10 +369,10 @@ export default {
         event_name: this.formData.name,
         event_severity: this.formData.severity,
         event_source: this.formData.eventSource,
-        event_create_time_start: this.formData.createTimeRange.length > 0 ? dateFormat('YYYY-mm-dd HH:MM:SS', this.formData.createTimeRange[0]) : '',
-        event_create_time_end: this.formData.createTimeRange.length > 0 ? dateFormat('YYYY-mm-dd HH:MM:SS', this.formData.createTimeRange[1]) : '',
-        event_update_time_start: this.formData.updateTimeRange.length > 0 ? dateFormat('YYYY-mm-dd HH:MM:SS', this.formData.updateTimeRange[0]) : '',
-        event_update_time_end: this.formData.updateTimeRange.length > 0 ? dateFormat('YYYY-mm-dd HH:MM:SS', this.formData.updateTimeRange[1]) : '',
+        event_create_time_start: this.formData.createTimeRange && this.formData.createTimeRange.length > 0 ? dateFormat('YYYY-mm-dd HH:MM:SS', this.formData.createTimeRange[0]) : '',
+        event_create_time_end: this.formData.createTimeRange && this.formData.createTimeRange.length > 0 ? dateFormat('YYYY-mm-dd HH:MM:SS', this.formData.createTimeRange[1]) : '',
+        event_update_time_start: this.formData.updateTimeRange && this.formData.updateTimeRange.length > 0 ? dateFormat('YYYY-mm-dd HH:MM:SS', this.formData.updateTimeRange[0]) : '',
+        event_update_time_end: this.formData.updateTimeRange && this.formData.updateTimeRange.length > 0 ? dateFormat('YYYY-mm-dd HH:MM:SS', this.formData.updateTimeRange[1]) : '',
       };
       return this.$store.dispatch('rocketTopo/GET_EVENTS_DATA', params);
     },

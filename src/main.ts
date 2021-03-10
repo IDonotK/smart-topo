@@ -37,6 +37,7 @@ import {
   Radio,
   Input,
   Checkbox,
+  CheckboxGroup,
   Message,
   Form,
   FormItem,
@@ -54,6 +55,7 @@ Vue.use(Dialog);
 Vue.use(Radio);
 Vue.use(Input);
 Vue.use(Checkbox);
+Vue.use(CheckboxGroup);
 Vue.use(Form);
 Vue.use(FormItem);
 Vue.use(Drawer);

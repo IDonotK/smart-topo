@@ -52,8 +52,8 @@
           <rk-calendar v-model="dates[0]"></rk-calendar>
         </template>
         <div class="datepicker__tips">
-          <span v-show="timeRangeMax" class="rk-time-tips">{{ $t('timeMaxTips') }}</span>
-          <span v-show="timeRangeMin" class="rk-time-tips">{{ $t('timeMinTips') }}</span>
+          <span v-show="timeRangeMax" class="rk-time-tips">{{ $t('rrkDate_timeRange_max') }}</span>
+          <span v-show="timeRangeMin" class="rk-time-tips">{{ $t('rrkDate_timeRange_min') }}</span>
         </div>
         <div v-if="showButtons" class="datepicker__buttons">
           <button class="datepicker__button-cancel" @click.prevent.stop="cancel">
@@ -125,19 +125,19 @@ export default {
     local() {
       return {
         dow: 1,
-        hourTip: this.$t('hourTip'),
-        minuteTip: this.$t('minuteTip'),
-        secondTip: this.$t('secondTip'),
-        yearSuffix: this.$t('yearSuffix'),
-        monthsHead: this.$t('monthsHead').split('_'),
-        months: this.$t('months').split('_'),
-        weeks: this.$t('weeks').split('_'),
+        hourTip: this.$t('rkDate_pickOption_hour'),
+        minuteTip: this.$t('rkDate_pickOption_minute'),
+        secondTip: this.$t('rkDate_pickOption_second'),
+        yearSuffix: this.$t('rkDate_year_suffix'),
+        monthsHead: this.$t('rkDate_months_head').split('_'),
+        months: this.$t('rkDate_months').split('_'),
+        weeks: this.$t('rkDate_weeks').split('_'),
         cancelTip: this.$t('cancel'),
         submitTip: this.$t('confirm'),
-        oneMinuteCutTip: this.$t('oneMinuteCutTip'),
-        tenMinutesCutTip: this.$t('tenMinutesCutTip'),
-        thirtyMinutesCutTip: this.$t('thirtyMinutesCutTip'),
-        oneHourCutTip: this.$t('oneHourCutTip'),
+        oneMinuteCutTip: this.$t('rkDate_quickOption_recentOneMinute'),
+        tenMinutesCutTip: this.$t('rkDate_quickOption_recentTenMinutes'),
+        thirtyMinutesCutTip: this.$t('rkDate_quickOption_recentThirtyMinutes'),
+        oneHourCutTip: this.$t('rkDate_quickOption_recentOneHour'),
       };
     },
     range() {

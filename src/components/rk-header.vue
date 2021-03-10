@@ -4,32 +4,32 @@
       <svg class="icon hcs-logo">
         <use xlink:href="#huawei"></use>
       </svg>
-      <span class="grey hcs-title">HCS全息排查</span>
+      <span class="grey hcs-title">{{ $t('rkHeader_product_title') }}</span>
       <router-link class="nav-link mr-20" to="/topology">
         <svg class="icon sm vm">
           <use xlink:href="#issues"></use>
         </svg>
-        <span class="vm hide-xs ml-5">{{ this.$t('topology') }}</span>
+        <span class="vm hide-xs ml-5">{{ $t('rkHeader_navigation_topology') }}</span>
       </router-link>
     </div>
     <div class="flex-h">
       <a :class="['rk-btn', 'mr-5', 'sm', isAutoReloadTopo ? 'blue' : 'ghost']" @click="handleAuto">
-        <span class="vm">{{ this.$t('auto') }}</span>
+        <span class="vm">{{ $t('auto') }}</span>
       </a>
       <div class="auto-time">
-        <span class="rk-auto-select">
-          <input v-model="autoTime" type="number" min="10" @change="changeAutoTime" @focus="focusAutoTime" />
+        <span class="rk-auto-select" :title="$t('rkHeader_autoTime_tip')">
+          <input v-model="autoTime" type="number" min="10" max="3600" @change="changeAutoTime" @focus="focusAutoTime" />
         </span>
-        {{ this.$t('second') }}
+        {{ $t('second') }}
       </div>
       <a :class="['rk-btn', 'sm', 'ghost', 'mr-5', isAutoReloadTopo ? 'reload-static' : '']" @click="handleReload">
         <svg :class="['icon', 'mr-5', 'vm', isAutoReloadTopo ? 'loading' : '']">
           <use xlink:href="#retry"></use>
         </svg>
-        <span class="vm">{{ this.$t('reload') }}</span>
+        <span class="vm">{{ $t('reload') }}</span>
       </a>
       <router-link tag="a" class="rk-btn sm ghost" target="_blank" to="/help-center">
-        <span class="vm">{{ this.$t('helpCenter') }}</span>
+        <span class="vm">{{ $t('rkHeader_navigation_helpCenter') }}</span>
       </router-link>
     </div>
   </header>
@@ -91,6 +91,9 @@ export default class Header extends Vue {
     this.SET_IS_AUTO_RELOAD_TOPO(false);
     if (this.autoTime < 10) {
       this.autoTime = 10;
+    }
+    if (this.autoTime > 3600) {
+      this.autoTime = 3600;
     }
   }
 
@@ -161,7 +164,7 @@ export default class Header extends Vue {
 
         .rk-auto-select {
             input {
-                width: 38px;
+                width: 52px;
                 border-style: unset;
                 border-radius: 3px;
                 outline: 0;

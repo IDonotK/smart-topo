@@ -84,11 +84,11 @@ export default {
     };
   },
   computed: {
+    topoMode() {
+      return this.$store.state.rocketTopo.topoMode;
+    },
     isAutoReloadTopo() {
       return this.$store.state.rocketTopo.isAutoReloadTopo;
-    },
-    isTopoNodesUpdated() {
-      return this.$store.state.rocketTopo.isTopoNodesUpdated;
     },
     isTopoLinksUpdated() {
       return this.$store.state.rocketTopo.isTopoLinksUpdated;
@@ -202,7 +202,7 @@ export default {
       scaleFix = scaleFix <= 0 ? 1 : scaleFix;
       return scaleFix;
     },
-    getScaleFixOnCurNode(nodes, fix, isOnNodeSize) {
+    getScaleFixOnCurNode(curNode, nodes, fix, isOnNodeSize) {
       if (nodes.length === 0) {
         return 1;
       }
@@ -211,8 +211,8 @@ export default {
       }
       let centerX = this.$jq('#netSvg').width() / 2;
       let centerY = this.$jq('#netSvg').height() / 2;
-      let curNodeX = this.currentNode.x;
-      let curNodeY = this.currentNode.y;
+      let curNodeX = curNode.x;
+      let curNodeY = curNode.y;
 
       let toCnxMax = Math.abs(nodes[0].x - curNodeX);
       let toCnyMax = Math.abs(nodes[0].y - curNodeY);
@@ -238,7 +238,6 @@ export default {
       scaleFix = scaleFix <= 0 ? 1 : scaleFix;
       return scaleFix;
     },
-    fixTopoScaleOnBound() {},
     fixTopoScaleOnCoord(nodes) {
       let scaleFix = 1;
       if (nodes.length <= this.nodeNumSmall) {
@@ -298,16 +297,11 @@ export default {
         if (node.type) {
           this.setNodeIcon(node);
         }
-        if (this.isTopoNodesUpdated) {
-          this.$set(node, 'showLabel', false);
-          this.$set(node, 'isDark', false);
-          this.$set(node, 'isBright', false);
-          this.$set(node, 'isRelatedToCurNode', false);
-          this.$set(node, '_color', 'rgba(33, 126, 242, 0.373)');
-        }
-        if (this.isTopoNodesUpdated && index === nodes.length - 1) {
-          this.$store.commit('rocketTopo/SET_IS_TOPO_NODES_UPDATED', false);
-        }
+        this.$set(node, 'showLabel', false);
+        this.$set(node, 'isDark', false);
+        this.$set(node, 'isBright', false);
+        this.$set(node, 'isRelatedToCurNode', false);
+        this.$set(node, '_color', 'rgba(33, 126, 242, 0.373)');
         return node;
       });
     },
@@ -319,16 +313,11 @@ export default {
         if (!link.id) {
           this.$set(link, 'id', `link-${index}`);
         }
-        if (this.isTopoLinksUpdated) {
-          this.$set(link, 'showLabel', false);
-          this.$set(link, 'isDark', false);
-          this.$set(link, 'isBright', false);
-          this.$set(link, 'isRelatedToCurNode', false);
-          this.$set(link, '_color', 'rgba(33, 126, 242, 0.373)');
-        }
-        if (this.isTopoLinksUpdated && index === links.length - 1) {
-          this.$store.commit('rocketTopo/SET_IS_TOPO_LINKS_UPDATED', false);
-        }
+        this.$set(link, 'showLabel', false);
+        this.$set(link, 'isDark', false);
+        this.$set(link, 'isBright', false);
+        this.$set(link, 'isRelatedToCurNode', false);
+        this.$set(link, '_color', 'rgba(33, 126, 242, 0.373)');
         return link;
       });
     },
@@ -683,13 +672,17 @@ export default {
       let offsetX = this.$jq('#netContent').offset().left - this.$jq(window).scrollLeft();
       let offsetY = this.$jq('#netContent').offset().top - this.$jq(window).scrollTop();
       this.linkTextContent = `
-          <div class="mb-5"><span class="grey">链路类型: </span>${hoveredLink.type}</div>
-          <div class="mb-5"><span class="grey">调用频率: </span>${
-            hoveredLink.callPerMinute === undefined ? ' ' : `${hoveredLink.callPerMinute} 次/分钟`
-          }</div>
-          <div><span class="grey">平均响应时间: </span>${
-            hoveredLink.responseTimePerMin === undefined ? ' ' : `${hoveredLink.responseTimePerMin} ms`
-          }</div>
+          <div class="mb-5"><span class="grey">${this.$t('topoDetail_link_type')}</span>${hoveredLink.type}</div>
+          <div class="mb-5"><span class="grey">${this.$t('topoDetail_link_callPerMinute')}</span>${
+        hoveredLink.callPerMinute === undefined
+          ? ' '
+          : `${hoveredLink.callPerMinute} ${this.$t('topoDetail_link_callPerMinute_unit')}`
+      }</div>
+          <div><span class="grey">${this.$t('topoDetail_link_responseTimePerMin')}</span>${
+        hoveredLink.responseTimePerMin === undefined
+          ? ' '
+          : `${hoveredLink.responseTimePerMin} ${this.$t('topoDetail_link_responseTimePerMin_unit')}`
+      }</div>
         `;
       this.linkTextVisible = true;
       this.linkTextStyle = {
@@ -736,16 +729,7 @@ export default {
       if (!this.isMouseDwonNet) {
         // 阻止选中节点被拖拽
         this.isMouseDwonNet = true;
-        return;
       }
-      if (event.target.className.baseVal.includes('node')) {
-        return;
-      }
-      this.currentNode.fx = null;
-      this.currentNode.fy = null;
-      this.$refs.svg.$forceUpdate();
-      this.$store.commit('rocketTopo/SET_NODE', {});
-      this.$store.commit('rocketTopo/SET_VIEW_NODE', {});
     },
     mouseMoveNet(event) {
       if (this.dragging !== false) {
@@ -814,8 +798,8 @@ export default {
       this.setMouseOffset();
     },
     // -- Render helpers
-    setViewportNodes(nodesTmp) {
-      if (this.elemIdsRTCAll.nodeIds.length > 0) {
+    setViewportNodes(curNode, nodesTmp, isFixed) {
+      if (this.elemIdsRTCAll.nodeIds.length > 0 && isFixed) {
         // 上下游视口
         this.nodes.forEach(node => {
           if (this.elemIdsRTCAll.nodeIds.includes(node.id)) {
@@ -834,7 +818,7 @@ export default {
         });
       }
     },
-    setTopoViewport(curNode, preNode, event = null) {
+    setTopoViewport(curNode, preNode, isFixed) {
       if (curNode && curNode.id === undefined) {
         return;
       }
@@ -852,8 +836,8 @@ export default {
           .select('.net-svg')
           .transition()
           .duration(500),
-        this.currentNode.x,
-        this.currentNode.y
+        curNode.x,
+        curNode.y
       );
       setTimeout(() => {
         if (preNode && preNode.id !== undefined) {
@@ -861,13 +845,15 @@ export default {
           preNode.fy = null;
           this.$refs.svg.$forceUpdate();
         }
-        curNode.fx = curNode.x;
-        curNode.fy = curNode.y;
-        this.$refs.svg.$forceUpdate();
+        if (isFixed) {
+          curNode.fx = curNode.x;
+          curNode.fy = curNode.y;
+          this.$refs.svg.$forceUpdate();
+        }
         let nodesTmp = [];
         nodesTmp.push(curNode);
-        this.setViewportNodes(nodesTmp);
-        let newZoomK = this.getScaleFixOnCurNode(nodesTmp, 0.9, true);
+        this.setViewportNodes(curNode, nodesTmp, isFixed);
+        let newZoomK = this.getScaleFixOnCurNode(curNode, nodesTmp, 0.9, true);
         this.zoomController.scaleTo(
           this.$d3
             .select('.net-svg')

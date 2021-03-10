@@ -123,6 +123,37 @@
                 :xlink:href="'#' + node.warningEventIcon"
               ></use>
             </svg>
+
+            <!-- upstream icon -->
+            <svg
+              v-if="node.type === 'MiddleWare' && node.eventCount > 0"
+              :key="'upstream' + key"
+              :x="node.x - 0.5 * 0.6 * getNodeSize(node)"
+              :y="node.y - 1.8 * 0.6 * getNodeSize(node)"
+              :width="0.6 * getNodeSize(node)"
+              :height="0.6 * getNodeSize(node)"
+              :class="foldClass(node, [node.isDark ? 'dark-fold-icon' : '', node.isBright ? 'bright-fold-icon' : ''])"
+              aria-hidden="true"
+            >
+              <use
+                xlink:href="#PLUS"
+              ></use>
+            </svg>
+            <!-- downstream icon -->
+            <svg
+              v-if="node.type === 'MiddleWare' && node.eventCount > 0"
+              :key="'downstream' + key"
+              :x="node.x - 0.5 * 0.6 * getNodeSize(node)"
+              :y="node.y + 0.5 * getNodeSize(node)"
+              :width="0.6 * getNodeSize(node)"
+              :height="0.6 * getNodeSize(node)"
+              :class="foldClass(node, [node.isDark ? 'dark-fold-icon' : '', node.isBright ? 'bright-fold-icon' : ''])"
+              aria-hidden="true"
+            >
+              <use
+                xlink:href="#PLUS"
+              ></use>
+            </svg>
           </template>
         </g>
 
@@ -226,6 +257,9 @@ export default {
   },
 
   computed: {
+    topoMode() {
+      return this.$store.state.rocketTopo.topoMode;
+    },
     topoScaleFix() {
       return this.$store.state.rocketTopo.topoScaleFix;
     },
@@ -369,6 +403,11 @@ export default {
         style.stroke = link._color;
       }
       return style;
+    },
+    foldClass(node, classes = []) {
+      let cssClass = ['fold-icon-in-main-topo'];
+      classes.forEach(c => cssClass.push(c));
+      return cssClass;
     },
     warnClass(node, classes = []) {
       let cssClass = ['warn-icon-in-main-topo'];

@@ -2,27 +2,46 @@
   <div class="topo-tool-set">
     <!-- 拓扑探索 -->
     <div class="explore-topo-wrapper">
-      <svg class="icon topo-icon" @click="handleClickExploreBtn">
-        <use xlink:href="#EXPLORE"></use>
-        <title>探索拓扑</title>
+      <svg v-show="topoMode === 'specific'" class="icon topo-icon back" @click="handleClickExploreBtnBack">
+        <use xlink:href="#BACK"></use>
+        <title>{{ $t('topoToolSet_explore_node_back') }}</title>
       </svg>
+      <svg class="icon topo-icon explore" @click="handleClickExploreBtn">
+        <use xlink:href="#EXPLORE"></use>
+        <title>{{ $t('topoToolSet_explore_node_title') }}</title>
+      </svg>
+      <!-- 返回探索全部节点 -->
+      <el-dialog
+        class="explore-dialog back"
+        :title="$t('topoToolSet_explore_node_back_tip')"
+        :visible.sync="isShowExploreBack"
+        width="30%"
+      >
+        <template v-slot:footer class="dialog-footer">
+          <el-button @click="isShowExploreBack = false">{{ $t('cancel') }}</el-button>
+          <el-button type="primary" @click="handleConfirmExploreBack">{{ $t('confirm') }}</el-button>
+        </template>
+      </el-dialog>
+      <!-- 探索目标节点 -->
       <el-dialog
         class="explore-dialog"
-        title="探索拓扑"
+        :title="$t('topoToolSet_explore_node_title')"
         :visible.sync="isShowExplore"
         width="30%"
         @close="onCloseExploreDialog"
       >
         <div class="modes-wrapper">
           <div class="mw-item">
-            <el-radio v-model="exploreMode" label="specific" class="specific-radio">目标节点</el-radio>
+            <el-radio v-model="exploreMode" label="specific" class="specific-radio">{{
+              $t('topoToolSet_explore_mode_specific')
+            }}</el-radio>
             <el-form ref="specificForm" :model="specificForm" status-icon :rules="specificRules">
               <el-form-item prop="specificId">
                 <el-autocomplete
                   ref="mwAutocomplete"
                   v-model="specificForm.specificId"
                   popper-class="mw-autocomplete"
-                  placeholder="请输入应用节点ID"
+                  :placeholder="$t('topoToolSet_explore_search_placeholder')"
                   value-key="id"
                   :select-when-unmatched="true"
                   :disabled="exploreMode === 'global'"
@@ -36,13 +55,23 @@
               </el-form-item>
             </el-form>
           </div>
+          <div class="mw-item explore-types">
+            <el-radio v-model="exploreMode" label="types">目标类型</el-radio>
+            <el-checkbox-group v-model="exploreTypes">
+              <el-checkbox label="Application"></el-checkbox>
+              <el-checkbox label="MiddleWare"></el-checkbox>
+              <el-checkbox label="Process"></el-checkbox>
+              <el-checkbox label="Pod"></el-checkbox>
+              <el-checkbox label="Node"></el-checkbox>
+            </el-checkbox-group>
+          </div>
           <div class="mw-item">
-            <el-radio v-model="exploreMode" label="global">全部节点</el-radio>
+            <el-radio v-model="exploreMode" label="global">{{ $t('topoToolSet_explore_mode_global') }}</el-radio>
           </div>
         </div>
         <template v-slot:footer class="dialog-footer">
-          <el-button @click="isShowExplore = false">取 消</el-button>
-          <el-button type="primary" @click="handleConfirmExplore">确 定</el-button>
+          <el-button @click="isShowExplore = false">{{ $t('cancel') }}</el-button>
+          <el-button type="primary" @click="handleConfirmExplore">{{ $t('confirm') }}</el-button>
         </template>
       </el-dialog>
     </div>
@@ -52,7 +81,7 @@
         ref="swAutocomplete"
         v-model="inputId"
         popper-class="sw-autocomplete"
-        placeholder="请输入节点ID"
+        :placeholder="$t('topoToolSet_search_placeholder')"
         value-key="id"
         :clearable="true"
         :select-when-unmatched="true"
@@ -70,36 +99,31 @@
           <span :title="item.id">{{ item.id }}</span>
         </template>
       </el-autocomplete>
+      <svg v-show="topoMode === 'global'" class="topo-icon erase" aria-hidden="true" @click="handleEraseTopo">
+        <use xlink:href="#ERASE"></use>
+        <title>{{ $t('topoToolSet_topoCtrl_erase') }}</title>
+      </svg>
     </div>
     <!-- 缩放控制 -->
     <div class="size-controller">
       <svg class="topo-icon larger" aria-hidden="true" @click="handleEnlargeTopo">
         <use xlink:href="#ENLARGE"></use>
-        <title>放大拓扑</title>
+        <title>{{ $t('topoToolSet_topoCtrl_enlarge') }}</title>
       </svg>
       <svg class="topo-icon smaller" aria-hidden="true" @click="handleNarrowTopo">
         <use xlink:href="#NARROW"></use>
-        <title>缩小拓扑</title>
+        <title>{{ $t('topoToolSet_topoCtrl_narrow') }}</title>
       </svg>
       <svg
         class="topo-icon restore"
         aria-hidden="true"
         @click.stop.prevent="handleRestoreTopo"
-        @dblclick.stop.prevent="handleRestoreTopoToOrigin"
       >
         <use xlink:href="#RESTORE"></use>
-        <title>还原拓扑</title>
+        <title>{{ $t('topoToolSet_topoCtrl_restore') }}</title>
       </svg>
     </div>
-    <!-- 更多按钮 -->
-    <!-- <div class="more-tool-btn">
-      <svg class="topo-icon more" aria-hidden="true" @click="handleToggleMoreTool">
-        <use xlink:href="#icon-gengduo"></use>
-      </svg>
-    </div> -->
-    <!-- 工具集合 -->
-    <!-- <div class="more-tool-wrapper" v-show="moreToolState"></div> -->
-    <!-- 工具栏 -->
+    <!-- 过滤器 -->
     <div ref="toolFilters" class="tool-filters">
       <div class="tb-item node-types-filter">
         <div
@@ -150,15 +174,6 @@ import { dateFormat } from '@/utils/topo';
 
 export default {
   props: {
-    topoData: {
-      type: Object,
-      default() {
-        return {
-          nodes: [],
-          links: [],
-        };
-      },
-    },
     topoViewData: {
       type: Object,
       default() {
@@ -173,17 +188,18 @@ export default {
   data() {
     return {
       isShowExplore: false,
+      isShowExploreBack: false,
       exploreMode: 'specific',
       specificForm: { specificId: '' },
       specificRules: {
         specificId: [ { validator: this.validateId, trigger: 'blur' } ],
       },
+      exploreTypes: [],
       inputId: '',
       moreToolState: false,
       nodeTypesOption: {},
       stateTypesOption: {},
       relativeTypesOption: {},
-      nodeSingleClickTimer: null,
       elemIdsRTCAll: {
         nodeIds: [],
         linkIds: []
@@ -243,6 +259,9 @@ export default {
     isFirstTick() {
       return this.$store.state.rocketTopo.isFirstTick;
     },
+    topoTimeInstance() {
+      return this.$store.state.rocketTopo.topoTimeInstance;
+    },
   },
 
   watch: {
@@ -250,6 +269,7 @@ export default {
       this.$refs.specificForm.resetFields();
     },
     topoViewData(newVal) {
+      this.setFiltersState(newVal);
       this.filterTopo();
     },
     inputId(newVal) {
@@ -263,9 +283,10 @@ export default {
         this.filterTopo();
       } else {
         // 注意:这里是基于视图数据topoViewData进行查询上下游节点
-        this.getRelativeElems(this.currentNode, this.topoViewData, () => {
-          this.networkInstance.setTopoViewport(newVal, oldVal);
-          this.resetTopoDetailDataOnLine(this.topoViewData);
+        this.getRelativeElems(newVal, this.topoViewData, () => {
+          this.networkInstance.setTopoViewport(newVal, oldVal, true);
+          this.resetTopoDetailData(this.topoViewData);
+          this.setFiltersState(this.elemsRTCAll);
           this.filterTopo();
         });
       }
@@ -291,40 +312,54 @@ export default {
   },
 
   methods: {
+    setFiltersState(data) {
+      let nodeTypesSet = new Set();
+      let stateTypesSet = new Set();
+      data.nodes.forEach(node => {
+        nodeTypesSet.add(node.type);
+        stateTypesSet.add(node.state);
+      });
+      this.nodeTypesOption.data.forEach(option => {
+        option.checked = !!nodeTypesSet.has(option.id);
+      });
+      this.stateTypesOption.data.forEach(option => {
+        option.checked = !!stateTypesSet.has(option.id);
+      });
+    },
     initFilterTypesOption() {
       this.nodeTypesOption = {
-        title: '显示节点类型',
+        title: this.$t('topoSideInformation_topoInfo_node_type'),
         data: [
-          {key: 0, label: 'Application', checked: true},
-          {key: 1, label: 'MiddleWare', checked: true},
-          {key: 2, label: 'Process', checked: true},
-          {key: 3, label: 'Workload', checked: true},
-          {key: 4, label: 'Pod', checked: true},
-          {key: 5, label: 'Node', checked: true},
+          {id: 'Application', label: 'Application', checked: true},
+          {id: 'MiddleWare', label: 'MiddleWare', checked: true},
+          {id: 'Process', label: 'Process', checked: true},
+          {id: 'Workload', label: 'Workload', checked: true},
+          {id: 'Pod', label: 'Pod', checked: true},
+          {id: 'Node', label: 'Node', checked: true},
         ],
       };
       this.stateTypesOption = {
-        title: '节点状态类型',
+        title: this.$t('topoSideInformation_topoInfo_node_state'),
         data: [
-          {key: 0, label: 'Normal', checked: true},
-          {key: 1, label: 'Abnormal', checked: true},
+          {id: 'Normal', label: this.$t('topoSideNavigation_nodesCount_normal'), checked: true},
+          {id: 'Abnormal', label: this.$t('topoSideNavigation_nodesCount_abnormal'), checked: true},
         ],
       };
       this.relativeTypesOption = {
-        title: '关联节点类型',
+        title: this.$t('topoSideInformation_topoInfo_node_relation'),
         data: [
-          {key: 0, label: '上游节点', checked: true},
-          {key: 1, label: '下游节点', checked: true},
+          {id: 'Upstream', label: this.$t('topoSideInformation_topoInfo_node_relation_up'), checked: true},
+          {id: 'Downstream', label: this.$t('topoSideInformation_topoInfo_node_relation_down'), checked: true},
         ],
       };
     },
     validateId(rule, value, callback) {
       if (value === '') {
-        callback(new Error('应用节点ID不能为空'));
+        callback(new Error(this.$t('topoToolSet_explore_search_check_null')));
       } else {
-        let result = this.topoData.nodes.find(node => String(node.id) === value && node.type === 'Application');
+        let result = this.topoViewData.nodes.find(node => String(node.id) === value);
         if (result === undefined) {
-          callback(new Error('应用节点ID不存在'));
+          callback(new Error(this.$t('topoToolSet_explore_search_check_exist')));
         } else {
           callback();
         }
@@ -408,7 +443,7 @@ export default {
       };
       return this.$store.dispatch('rocketTopo/GET_RELYON_DATA', params);
     },
-    async resetTopoDetailDataOnLine(topoViewData) {
+    async resetTopoDetailData(topoViewData) {
       let curNode = this.currentNode;
       let crossLayerData = await this.queryCrosslayerNodes(curNode);
       let elemsIdsCL = {
@@ -437,8 +472,6 @@ export default {
           linksTmp.add(link);
         }
       });
-
-      nodesTmp.add(curNode);
       this.searchStreamOnSingleHop(curNode, this.elemsRTCAll, nodesTmp, linksTmp);
       this.$store.commit('rocketTopo/SET_TOPO_DETAIL_DATA', {
         nodes: Array.from(nodesTmp),
@@ -457,11 +490,11 @@ export default {
     setAboutElemsRTC(curNode, topoViewData, {elemIdsRTCUpTmp, elemIdsRTCDownTmp}) {
       // 匹配提取topoViewData里的节点对象
       topoViewData.nodes.forEach(node => {
-        if (elemIdsRTCUpTmp.nodeIds.includes(node.id)) {
+        if (elemIdsRTCUpTmp.nodeIds.includes(node.id) && node.id !== curNode.id) {
           this.elemIdsRTCUp.nodeIds.push(node.id); // 提取元素id
           this.elemsRTCUp.nodes.push(node); // 提取元素对象
         }
-        if (elemIdsRTCDownTmp.nodeIds.includes(node.id)) {
+        if (elemIdsRTCDownTmp.nodeIds.includes(node.id) && node.id !== curNode.id) {
           this.elemIdsRTCDown.nodeIds.push(node.id);
           this.elemsRTCDown.nodes.push(node);
         }
@@ -480,7 +513,7 @@ export default {
       });
 
       this.elemIdsRTCAll = {
-        nodeIds: [...this.elemIdsRTCUp.nodeIds, ...this.elemIdsRTCDown.nodeIds],
+        nodeIds: [curNode.id, ...this.elemIdsRTCUp.nodeIds, ...this.elemIdsRTCDown.nodeIds],
         linkIds: [...this.elemIdsRTCUp.linkIds, ...this.elemIdsRTCDown.linkIds]
       };
       this.$store.commit('rocketTopo/SET_ELEM_IDS_RTC_ALL', this.elemIdsRTCAll);
@@ -531,104 +564,16 @@ export default {
         cb();
       }
     },
-    setAboutExploredLinksRTC(topoData, { elemIdsRTCUpTmp, elemIdsRTCDownTmp, upStreamData, downStreamData }) {
-      topoData.links.forEach(link => {
-        if (elemIdsRTCUpTmp.linkIds.includes(link.id)) {
-          this.elemIdsRTCUp.linkIds.push(link.id);
-          if (this.sceneConfig.agentMode === 'customised') { // 需刷新边：label、call_per_minute 次/min、response_time_per_minute 次/min
-            let linkCopy = JSON.parse(JSON.stringify(link));
-            let linkTmp = upStreamData.links.find(slink => slink.id === link.id);
-            if (linkTmp) {
-              linkCopy.type = linkTmp.label;
-              linkCopy.label = linkTmp.label;
-              linkCopy.callPerMinute = linkTmp.callPerMinute;
-              linkCopy.responseTimePerMin = linkTmp.responseTimePerMin;
-            }
-            this.elemsRTCUp.links.push(linkCopy);
-          } else {
-            this.elemsRTCUp.links.push(link);
-          }
-        }
-        if (elemIdsRTCDownTmp.linkIds.includes(link.id)) {
-          this.elemIdsRTCDown.linkIds.push(link.id);
-          if (this.sceneConfig.agentMode === 'customised') {
-            let linkCopy = JSON.parse(JSON.stringify(link));
-            let linkTmp = downStreamData.links.find(slink => slink.id === link.id);
-            if (linkTmp) {
-              linkCopy.type = linkTmp.label;
-              linkCopy.label = linkTmp.label;
-              linkCopy.callPerMinute = linkTmp.callPerMinute;
-              linkCopy.responseTimePerMin = linkTmp.responseTimePerMin;
-            }
-            this.elemsRTCDown.links.push(linkCopy);
-          } else {
-            this.elemsRTCDown.links.push(link);
-          }
-        }
-      });
-    },
-    setAboutExploredElemsRTC(curNode, topoData, { elemIdsRTCUpTmp, elemIdsRTCDownTmp, upStreamData, downStreamData }) {
-      // 匹配提取topoData里的节点对象
-      topoData.nodes.forEach(node => {
-        if (elemIdsRTCUpTmp.nodeIds.includes(node.id)) {
-          this.elemIdsRTCUp.nodeIds.push(node.id); // 提取元素id
-          this.elemsRTCUp.nodes.push(node); // 提取元素对象
-        }
-        if (elemIdsRTCDownTmp.nodeIds.includes(node.id)) {
-          this.elemIdsRTCDown.nodeIds.push(node.id);
-          this.elemsRTCDown.nodes.push(node);
-        }
-      });
-      this.setAboutExploredLinksRTC(topoData, { elemIdsRTCUpTmp, elemIdsRTCDownTmp, upStreamData, downStreamData });
-      this.elemIdsRTCAll = {
-        nodeIds: [...this.elemIdsRTCUp.nodeIds, ...this.elemIdsRTCDown.nodeIds],
-        linkIds: [...this.elemIdsRTCUp.linkIds, ...this.elemIdsRTCDown.linkIds]
-      };
-      this.$store.commit('rocketTopo/SET_ELEM_IDS_RTC_ALL', this.elemIdsRTCAll);
-      this.elemsRTCAll = {
-        nodes: [curNode, ...this.elemsRTCUp.nodes, ...this.elemsRTCDown.nodes],
-        links: [...this.elemsRTCUp.links, ...this.elemsRTCDown.links]
-      };
-    },
-    async exploreRelativeElems(curNode, topoData, cb) {
-      this.restoreElemsRTC();
-      let elemIdsRTCUpTmp = { // 上游节点集合
-        nodeIds: [],
-        linkIds: []
-      };
-      let elemIdsRTCDownTmp = { // 下游节点集合
-        nodeIds: [],
-        linkIds: []
-      };
-      let upStreamData = await this.queryRelativeNodes(curNode, 'in');
-      let downStreamData = await this.queryRelativeNodes(curNode, 'out');
-      if (!upStreamData) {
-        upStreamData = {
+    async exploreRelativeElems(curNode, cb) {
+      let relativeData = await this.queryRelativeNodes(curNode, 'both');
+      if (!relativeData) {
+        relativeData = {
           nodes: [],
           links: []
         };
       }
-      if (!downStreamData) {
-        downStreamData = {
-          nodes: [],
-          links: []
-        };
-      }
-      upStreamData.nodes.forEach(node => {
-        elemIdsRTCUpTmp.nodeIds.push(node.id);
-      });
-      upStreamData.links.forEach(link => {
-        elemIdsRTCUpTmp.linkIds.push(link.id);
-      });
-      downStreamData.nodes.forEach(node => {
-        elemIdsRTCDownTmp.nodeIds.push(node.id);
-      });
-      downStreamData.links.forEach(link => {
-        elemIdsRTCDownTmp.linkIds.push(link.id);
-      });
-      this.setAboutExploredElemsRTC(curNode, topoData, { elemIdsRTCUpTmp, elemIdsRTCDownTmp, upStreamData, downStreamData });
       if (cb) {
-        cb();
+        cb(relativeData);
       }
     },
 
@@ -636,8 +581,8 @@ export default {
     queryExplore(queryString, cb) {
       let MAX_SEARCH_COUNT = 5;
       let count = 0;
-      let results = this.topoData.nodes.filter(node => {
-        if (queryString && node.id.indexOf(queryString) !== -1 && count < MAX_SEARCH_COUNT && node.type === 'Application') {
+      let results = this.topoViewData.nodes.filter(node => {
+        if (queryString && node.id.indexOf(queryString) !== -1 && count < MAX_SEARCH_COUNT) {
           count++;
           return true;
         }
@@ -654,12 +599,16 @@ export default {
       this.restoreTopoViewPort(0);
       this.restoreFilters();
       this.$store.commit('rocketTopo/SET_TOPO_MODE', 'specific');
-      this.exploreRelativeElems(targetNode, this.topoData, () => {
-        this.$emit('changeTopoViewData', this.elemsRTCAll);
-        this.$store.commit('rocketTopo/SET_VIEW_NODE', targetNode);
-        this.$store.commit('rocketTopo/SET_EXPLORE_NODE', targetNode);
-        this.setCurNodeStably(targetNode);
+      this.exploreRelativeElems(targetNode, relativeData => {
+        this.$emit('changeTopoViewData', relativeData);
+        let exploreNode = relativeData.nodes.find(node => node.id === targetNode.id);
+        this.$store.commit('rocketTopo/SET_VIEW_NODE', exploreNode);
+        this.$store.commit('rocketTopo/SET_EXPLORE_NODE', exploreNode);
+        this.setCurNodeStably(exploreNode);
       });
+    },
+    handleConfirmExploreBack() {
+      this.topoTimeInstance.loadTopoData();
     },
     handleConfirmExplore() {
       if (this.exploreMode === 'specific') {
@@ -670,39 +619,39 @@ export default {
         if (!validState) {
           return;
         }
-        // 注意:这里是基于当前topoData查询目标节点
-        let result = this.topoData.nodes.find(node => String(node.id) === this.specificForm.specificId);
+        let result = this.topoViewData.nodes.find(node => String(node.id) === this.specificForm.specificId);
         this.isShowExplore = false;
         this.$store.commit('rocketTopo/SET_VIEW_NODE', {});
         this.$store.commit('rocketTopo/SET_NODE', {});
         this.restoreTopoViewPort(0);
         this.restoreFilters();
         this.$store.commit('rocketTopo/SET_TOPO_MODE', this.exploreMode);
-        this.exploreRelativeElems(result, this.topoData, () => {
-          // 查询目标节点的上下游topo,替换topoViewData
-          this.$emit('changeTopoViewData', this.elemsRTCAll);
-          this.$store.commit('rocketTopo/SET_VIEW_NODE', result);
-          this.$store.commit('rocketTopo/SET_EXPLORE_NODE', result);
-          this.setCurNodeStably(result);
+        this.exploreRelativeElems(result, relativeData => {
+          this.$emit('changeTopoViewData', relativeData);
+          let exploreNode = relativeData.nodes.find(node => node.id === result.id);
+          this.$store.commit('rocketTopo/SET_VIEW_NODE', exploreNode);
+          this.$store.commit('rocketTopo/SET_EXPLORE_NODE', exploreNode);
+          this.setCurNodeStably(exploreNode);
         });
       } else if (this.exploreMode === 'global') {
-        this.refreshTopoView(true);
+        this.topoTimeInstance.loadTopoData();
       }
+    },
+    handleClickExploreBtnBack() {
+      this.isShowExploreBack = true;
     },
     handleClickExploreBtn() {
       this.resetIsAutoReloadTopo();
       this.exploreMode = 'specific';
       this.isShowExplore = true;
     },
-    refreshTopoView(isRefreshViewData) {
+    refreshTopoView() {
+      this.isShowExploreBack = false;
       this.isShowExplore = false;
       this.inputId = '';
       this.$emit('onSearchResult', true);
       this.restoreTopoViewPort(0);
       this.$store.commit('rocketTopo/SET_TOPO_MODE', 'global');
-      if (isRefreshViewData) {
-        this.$emit('changeTopoViewData', this.topoData);
-      }
       this.$store.commit('rocketTopo/SET_VIEW_NODE', {});
       this.$store.commit('rocketTopo/SET_NODE', {});
       this.restoreFilters();
@@ -710,18 +659,18 @@ export default {
 
     // 过滤
     filterTopoWithCurNode({nodeTypes, stateTypes, relativeTypes}, {nodeTypesSet, stateTypesSet, relativeTypesSet}, {elemIdsRTC, targetNodeIds}) {
-      if (relativeTypes.includes('上游节点')) {
+      if (relativeTypes.includes('Upstream')) {
         elemIdsRTC.nodeIds.push.apply(elemIdsRTC.nodeIds, this.elemIdsRTCUp.nodeIds);
         elemIdsRTC.linkIds.push.apply(elemIdsRTC.linkIds, this.elemIdsRTCUp.linkIds);
         if (this.elemIdsRTCUp.nodeIds.length > 0) {
-          relativeTypesSet.add('上游节点');
+          relativeTypesSet.add(this.relativeTypesOption.data.find(item => item.id === 'Upstream').label);
         }
       }
-      if (relativeTypes.includes('下游节点')) {
+      if (relativeTypes.includes('Downstream')) {
         elemIdsRTC.nodeIds.push.apply(elemIdsRTC.nodeIds, this.elemIdsRTCDown.nodeIds);
         elemIdsRTC.linkIds.push.apply(elemIdsRTC.linkIds, this.elemIdsRTCDown.linkIds);
         if (this.elemIdsRTCDown.nodeIds.length > 0) {
-          relativeTypesSet.add('下游节点');
+          relativeTypesSet.add(this.relativeTypesOption.data.find(item => item.id === 'Downstream').label);
         }
       }
       this.topoViewData.nodes.forEach(node => {
@@ -732,7 +681,7 @@ export default {
           node.showLabel = true;
           node.isRelatedToCurNode = true;
           nodeTypesSet.add(node.type);
-          stateTypesSet.add(node.state);
+          stateTypesSet.add(this.stateTypesOption.data.find(item => item.id === node.state).label);
         } else {
           node.isDark = true;
           node.showLabel = false;
@@ -759,7 +708,7 @@ export default {
           targetNodeIds.push(node.id);
           node.isDark = false;
           nodeTypesSet.add(node.type);
-          stateTypesSet.add(node.state);
+          stateTypesSet.add(this.stateTypesOption.data.find(item => item.id === node.state).label);
         } else {
           node.isDark = true;
         }
@@ -773,9 +722,9 @@ export default {
       });
     },
     filterTopo() {
-      let nodeTypes = this.nodeTypesOption.data.filter(type => type.checked).map(type => type.label);
-      let stateTypes = this.stateTypesOption.data.filter(type => type.checked).map(type => type.label);
-      let relativeTypes = this.relativeTypesOption.data.filter(type => type.checked).map(type => type.label);
+      let nodeTypes = this.nodeTypesOption.data.filter(type => type.checked).map(type => type.id);
+      let stateTypes = this.stateTypesOption.data.filter(type => type.checked).map(type => type.id);
+      let relativeTypes = this.relativeTypesOption.data.filter(type => type.checked).map(type => type.id);
       let nodeTypesSet = new Set();
       let stateTypesSet = new Set();
       let relativeTypesSet = new Set();
@@ -858,12 +807,22 @@ export default {
       } else {
         this.$emit('onSearchResult', true);
         this.$store.commit('rocketTopo/SET_VIEW_NODE', result);
-        this.setCurNodeStably(result);
+        if (this.topoMode === 'specific') {
+          this.networkInstance.setTopoViewport(result, null, false);
+        } else {
+          this.setCurNodeStably(result);
+        }
       }
     },
     handleClearInputId() {
       this.$refs.swAutocomplete.activated = true;
       this.$emit('onSearchResult', true);
+    },
+    handleEraseTopo() {
+      this.currentNode.fx = null;
+      this.currentNode.fy = null;
+      this.$store.commit('rocketTopo/SET_NODE', {});
+      this.$store.commit('rocketTopo/SET_VIEW_NODE', {});
     },
 
     // 控制
@@ -952,31 +911,6 @@ export default {
     },
     handleRestoreTopo() {
       this.resetIsAutoReloadTopo();
-      if (this.nodeSingleClickTimer !== null) {
-        clearTimeout(this.nodeSingleClickTimer);
-        this.nodeSingleClickTimer = null;
-        return;
-      }
-      this.nodeSingleClickTimer = setTimeout(() => {
-        this.nodeSingleClickTimer = null;
-        this.inputId = '';
-        this.$emit('onSearchResult', true);
-        this.currentNode.fx = null;
-        this.currentNode.fy = null;
-        this.$store.commit('rocketTopo/SET_NODE', {});
-        this.$store.commit('rocketTopo/SET_VIEW_NODE', {});
-        this.restoreTopoViewPort(500);
-      }, 300);
-    },
-    handleRestoreTopoToOrigin() {
-      this.resetIsAutoReloadTopo();
-      this.inputId = '';
-      this.$emit('onSearchResult', true);
-      this.currentNode.fx = null;
-      this.currentNode.fy = null;
-      this.$store.commit('rocketTopo/SET_NODE', {});
-      this.$store.commit('rocketTopo/SET_VIEW_NODE', {});
-      this.restoreFilters();
       this.restoreTopoViewPort(500);
     },
 
@@ -1021,6 +955,20 @@ export default {
 
         &:hover {
             cursor: pointer;
+        }
+
+        &.back {
+            margin-right: 6px;
+        }
+
+        &.explore {
+            width: 20px;
+            height: 20px;
+            margin-right: 0;
+        }
+
+        &.erase {
+            margin: 0 -3px 0 8px;
         }
 
         &.restore {
@@ -1113,10 +1061,23 @@ export default {
                             .el-input__inner {
                                 background-color: #ddd;
                                 color: #606266;
+                                padding: 0 25px 0 15px;
 
                                 &::-webkit-input-placeholder {
                                     color: #252a2f;
                                     opacity: 0.5;
+                                }
+                            }
+
+                            .el-input__suffix {
+                                right: 3px;
+                            }
+
+                            &.explore-types {
+                                align-items: flex-start;
+                                .el-checkbox-group {
+                                    display: flex;
+                                    flex-direction: column;
                                 }
                             }
                         }
@@ -1136,6 +1097,12 @@ export default {
                     .el-button--primary {
                         color: #ccc;
                     }
+                }
+            }
+
+            &.back {
+                .el-dialog__body {
+                    display: none;
                 }
             }
         }
@@ -1214,7 +1181,7 @@ export default {
 
                 .item-title {
                     color: #ddd;
-                    margin-right: 10px;
+                    margin-left: 10px;
                 }
 
                 .item-checkbox {

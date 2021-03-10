@@ -58,7 +58,7 @@ export default {
     },
     loadTopoData() {
       if (this.topoScaleFix > -1) {
-        this.toolSetInstance.refreshTopoView(false);
+        this.toolSetInstance.refreshTopoView();
       }
       let isClearTopoData = this.isClearTopoData;
       this.isClearTopoData = false;

@@ -1,10 +1,13 @@
 <template>
   <div class="topo-time-line">
     <!-- 模式器 -->
-    <div class="mode-picker">
+    <div
+      class="mode-picker"
+      :title="viewMode.mode === 'All' ? $t('topoTimeLine_viewMode_all_tip') : $t('topoTimeLine_viewMode_unit_tip')"
+    >
       <vxe-select v-model="viewMode.mode" size="mini">
-        <vxe-option value="All" label="全部区间"></vxe-option>
-        <vxe-option value="Unit" label="单位区间"></vxe-option>
+        <vxe-option value="All" :label="$t('topoTimeLine_viewMode_all')"></vxe-option>
+        <vxe-option value="Unit" :label="$t('topoTimeLine_viewMode_unit')"></vxe-option>
       </vxe-select>
     </div>
     <!-- 时间轴 -->
@@ -49,14 +52,21 @@
       </div>
     </div>
     <!-- 控制器 -->
-    <div class="control-bar">
-      <span class="play-interval">
+    <div v-show="viewMode.mode === 'Unit'" class="control-bar">
+      <span class="play-interval" :title="$t('topoTimeLine_playTime_tip', { interval: rangeMoveSpeed })">
         <span class="rk-auto-select">
-          <input v-model="rangeMoveSpeed" type="number" min="3" :disabled="!isToPlay" @change="changeRangeMoveSpeed" />
+          <input
+            v-model="rangeMoveSpeed"
+            type="number"
+            min="3"
+            max="60"
+            :disabled="!isToPlay"
+            @change="changeRangeMoveSpeed"
+          />
         </span>
         {{ this.$t('second') }}
       </span>
-      <span v-show="isToPlay" class="play-start">
+      <span v-show="isToPlay" :class="{ 'play-start': true, disabled: curPipsIndex[1] === max }">
         <svg class="play-icon" alt="" width="18" height="18" @click="togglePlayState(false)">
           <use xlink:href="#PLAY_START"></use>
         </svg>
@@ -266,6 +276,9 @@ export default {
     changeRangeMoveSpeed() {
       if (this.rangeMoveSpeed < 3) {
         this.rangeMoveSpeed = 3;
+      }
+      if (this.rangeMoveSpeed > 60) {
+        this.rangeMoveSpeed = 60;
       }
     },
 
@@ -488,7 +501,7 @@ export default {
     }
 
     .control-bar {
-        width: 80px;
+        width: 84px;
         position: relative;
         top: 3px;
         color: #ddd;
@@ -499,7 +512,7 @@ export default {
 
             .rk-auto-select {
                 input {
-                    width: 38px;
+                    width: 42px;
                     border-style: unset;
                     border-radius: 3px;
                     outline: 0;
@@ -509,6 +522,11 @@ export default {
 
         .play-icon {
             cursor: pointer;
+        }
+
+        .play-start.disabled {
+            pointer-events: none;
+            opacity: 0.2;
         }
     }
 }

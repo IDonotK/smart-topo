@@ -19,11 +19,26 @@
       </div>
       <div class="tsni-count">
         <div class="tsnic-item total">
-          <span class="item-title" title="All">All : </span>
+          <span class="item-title" :title="$t('topoSideNavigation_nodesCount_all_tip', { type: item.name })"
+            >{{ $t('topoSideNavigation_nodesCount_all') }} :
+          </span>
           <span class="item-content" :title="item.total">{{ item.total }}</span>
         </div>
-        <div class="tsnic-item">
-          <span class="item-title" title="All">Abnormal : </span>
+        <div class="tsnic-item abnormal">
+          <span class="item-title"
+            >{{ $t('topoSideNavigation_nodesCount_abnormal') }}
+            <el-tooltip
+              class="item"
+              effect="light"
+              :content="$t('topoSideNavigation_nodesCount_abnormal_tip', { type: item.name })"
+              placement="top"
+            >
+              <svg class="icon sm vm help-icon">
+                <use xlink:href="#HELP"></use>
+              </svg>
+            </el-tooltip>
+            :
+          </span>
           <span class="item-content abnormal-number" :title="item.abnormal">{{ item.abnormal }}</span>
         </div>
       </div>
@@ -50,37 +65,37 @@ export default {
       navList: [
         {
           id: 'Application',
-          name: 'Applications',
+          name: 'Application',
           abnormal: 0,
           total: 0
         },
         {
           id: 'MiddleWare',
-          name: 'MiddleWares',
+          name: 'MiddleWare',
           abnormal: 0,
           total: 0
         },
         {
           id: 'Process',
-          name: 'Processes',
+          name: 'Process',
           abnormal: 0,
           total: 0
         },
         {
           id: 'Workload',
-          name: 'Workloads',
+          name: 'Workload',
           abnormal: 0,
           total: 0
         },
         {
           id: 'Pod',
-          name: 'Pods',
+          name: 'Pod',
           abnormal: 0,
           total: 0
         },
         {
           id: 'Node',
-          name: 'Nodes',
+          name: 'Node',
           abnormal: 0,
           total: 0
         }
@@ -181,6 +196,24 @@ export default {
 
             .abnormal-number {
                 color: red;
+            }
+
+            .tsnic-item {
+                display: flex;
+                align-items: center;
+
+                .help-icon {
+                    width: 14px;
+                    height: 14px;
+                }
+
+                &.total .item-content {
+                    margin: 1px 0 0 3px;
+                }
+
+                &.abnormal .item-content {
+                    margin: 3px 0 0 3px;
+                }
             }
         }
 
