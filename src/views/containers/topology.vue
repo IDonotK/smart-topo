@@ -49,9 +49,6 @@ export default {
   },
 
   watch: {
-    topoViewData(newVal) {
-      this.$store.commit('rocketTopo/SET_IS_FIRST_TICK', true);
-    },
     topoData(newVal) {
       this.topoViewData = newVal;
     },

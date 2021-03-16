@@ -82,12 +82,6 @@ export default {
           total: 0
         },
         {
-          id: 'Workload',
-          name: 'Workload',
-          abnormal: 0,
-          total: 0
-        },
-        {
           id: 'Pod',
           name: 'Pod',
           abnormal: 0,
@@ -158,7 +152,7 @@ export default {
 
     .tsn-item {
         width: 100%;
-        height: 16.66%;
+        height: 20%;
         display: flex;
         flex-direction: column;
         justify-content: center;

@@ -18,16 +18,15 @@ export interface State {
   showNodeTypes: any[];
   showStateTypes: any[];
   showEdgeTypes: any[];
-  zoomController: any;
   showRelativeTypes: any[];
-  topoScaleFix: number;
-  isFirstTick: boolean;
   topoMode: string;
   exploreNode: any;
+  quickExploreNode: any;
   topoData: any;
   toolSetInstance: any;
   topoTimeInstance: any;
-  networkInstance: any;
+  networkInstanceMainTopo: any;
+  networkInstanceRelativeTopo: any;
   elemIdsRTCAll: any;
   topoDetailData: any;
   isAutoReloadTopo: boolean;
@@ -42,19 +41,21 @@ const initState: State = {
   showNodeTypes: [],
   showStateTypes: [],
   showEdgeTypes: [],
-  zoomController: null,
   showRelativeTypes: [],
-  topoScaleFix: -1,
-  isFirstTick: true,
   topoMode: 'global',
   exploreNode: {},
+  quickExploreNode: {
+    node: {},
+    direction: '',
+  },
   topoData: {
     nodes: [],
     links: [],
   },
   toolSetInstance: {},
   topoTimeInstance: {},
-  networkInstance: {},
+  networkInstanceMainTopo: {},
+  networkInstanceRelativeTopo: {},
   elemIdsRTCAll: {
     nodeIds: [],
     linkIds: [],
@@ -92,23 +93,17 @@ const mutations = {
   [types.SET_SHOW_EDGE_TYPES](state: State, data: any) {
     state.showEdgeTypes = data;
   },
-  [types.SET_ZOOM_CONTROLLER](state: State, data: any) {
-    state.zoomController = data;
-  },
   [types.SET_SHOW_RELATIVE_TYPES](state: State, data: any) {
     state.showRelativeTypes = data;
-  },
-  [types.SET_TOPO_SCALE_FIX](state: State, data: any) {
-    state.topoScaleFix = data;
-  },
-  [types.SET_IS_FIRST_TICK](state: State, data: any) {
-    state.isFirstTick = data;
   },
   [types.SET_TOPO_MODE](state: State, data: any) {
     state.topoMode = data;
   },
   [types.SET_EXPLORE_NODE](state: State, data: any) {
     state.exploreNode = data;
+  },
+  [types.SET_QUICK_EXPLORE_NODE](state: State, data: any) {
+    state.quickExploreNode = data;
   },
   [types.SET_TOPO_DATA](state: State, data: any) {
     state.topoData = data;
@@ -119,8 +114,11 @@ const mutations = {
   [types.SET_TOPO_TIME_INSTANCE](state: State, data: any) {
     state.topoTimeInstance = data;
   },
-  [types.SET_NETWORK_INSTANCE](state: State, data: any) {
-    state.networkInstance = data;
+  [types.SET_NETWORK_INSTANCE_MAIN_TOPO](state: State, data: any) {
+    state.networkInstanceMainTopo = data;
+  },
+  [types.SET_NETWORK_INSTANCE_RELATIVE_TOPO](state: State, data: any) {
+    state.networkInstanceRelativeTopo = data;
   },
   [types.SET_ELEM_IDS_RTC_ALL](state: State, data: any) {
     state.elemIdsRTCAll = data;

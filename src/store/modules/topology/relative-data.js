@@ -140,26 +140,6 @@ export const getA1Down = () => ({
         processNo: '3784'
       }
     ],
-    workloads: [
-      {
-        id: 'w1',
-        name: 'w1',
-        createTime: '2020-12-01T06:44:37.000+00:00',
-        updateTime: '2020-12-01T08:05:00.000+00:00',
-        label: 'Workload',
-        eventCount: 0,
-        kind: 'Deployment'
-      },
-      {
-        id: 'w2',
-        name: 'w2',
-        createTime: '2020-12-01T06:44:37.000+00:00',
-        updateTime: '2020-12-01T08:05:00.000+00:00',
-        label: 'Workload',
-        eventCount: 0,
-        kind: 'Deployment'
-      }
-    ],
     pods: [
       {
         id: 'pd1',
@@ -287,20 +267,6 @@ export const getA1Down = () => ({
         target: 'ps1'
       },
       {
-        id: 'c2',
-        name: 'c2',
-        label: 'CreateOn',
-        source: 'ps1',
-        target: 'w1'
-      },
-      {
-        id: 'c3',
-        name: 'c3',
-        label: 'CreateOn',
-        source: 'w1',
-        target: 'pd1'
-      },
-      {
         id: 'c4',
         name: 'c4',
         label: 'CreateOn',
@@ -313,20 +279,6 @@ export const getA1Down = () => ({
         label: 'CreateOn',
         source: 'a1',
         target: 'ps2'
-      },
-      {
-        id: 'c42',
-        name: 'c42',
-        label: 'CreateOn',
-        source: 'ps2',
-        target: 'w2'
-      },
-      {
-        id: 'c45',
-        name: 'c45',
-        label: 'CreateOn',
-        source: 'w2',
-        target: 'pd2'
       },
       {
         id: 'c15',
@@ -397,6 +349,20 @@ export const getA1Down = () => ({
         label: 'CreateOn',
         source: 'm1',
         target: 'ps1'
+      },
+      {
+        id: 'c69',
+        name: 'c69',
+        label: 'CreateOn',
+        source: 'ps2',
+        target: 'pd2'
+      },
+      {
+        id: 'c70',
+        name: 'c70',
+        label: 'CreateOn',
+        source: 'pd1',
+        target: 'n2'
       }
     ]
   }
@@ -493,26 +459,6 @@ export const getA1Both = () => ({
         eventCount: 0,
         hostName: 'SZA2005135573-B',
         processNo: '3784'
-      }
-    ],
-    workloads: [
-      {
-        id: 'w1',
-        name: 'w1',
-        createTime: '2020-12-01T06:44:37.000+00:00',
-        updateTime: '2020-12-01T08:05:00.000+00:00',
-        label: 'Workload',
-        eventCount: 0,
-        kind: 'Deployment'
-      },
-      {
-        id: 'w2',
-        name: 'w2',
-        createTime: '2020-12-01T06:44:37.000+00:00',
-        updateTime: '2020-12-01T08:05:00.000+00:00',
-        label: 'Workload',
-        eventCount: 0,
-        kind: 'Deployment'
       }
     ],
     pods: [
@@ -672,20 +618,6 @@ export const getA1Both = () => ({
         target: 'ps1'
       },
       {
-        id: 'c2',
-        name: 'c2',
-        label: 'CreateOn',
-        source: 'ps1',
-        target: 'w1'
-      },
-      {
-        id: 'c3',
-        name: 'c3',
-        label: 'CreateOn',
-        source: 'w1',
-        target: 'pd1'
-      },
-      {
         id: 'c4',
         name: 'c4',
         label: 'CreateOn',
@@ -698,20 +630,6 @@ export const getA1Both = () => ({
         label: 'CreateOn',
         source: 'a1',
         target: 'ps2'
-      },
-      {
-        id: 'c42',
-        name: 'c42',
-        label: 'CreateOn',
-        source: 'ps2',
-        target: 'w2'
-      },
-      {
-        id: 'c45',
-        name: 'c45',
-        label: 'CreateOn',
-        source: 'w2',
-        target: 'pd2'
       },
       {
         id: 'c15',
@@ -782,6 +700,20 @@ export const getA1Both = () => ({
         label: 'CreateOn',
         source: 'm1',
         target: 'ps1'
+      },
+      {
+        id: 'c69',
+        name: 'c69',
+        label: 'CreateOn',
+        source: 'ps2',
+        target: 'pd2'
+      },
+      {
+        id: 'c70',
+        name: 'c70',
+        label: 'CreateOn',
+        source: 'pd1',
+        target: 'n2'
       }
     ],
     eventInfos: {
@@ -801,10 +733,6 @@ export const getA1Both = () => ({
         eventCount: 8,
         eventLevel: 'Warning'
       },
-      w1: {
-        eventCount: 8,
-        eventLevel: 'Warning'
-      }
     }
   },
 });
@@ -842,26 +770,6 @@ export const getA1Cl = () => ({
         eventCount: 0,
         hostName: 'SZA2005135573-B',
         processNo: '3784',
-      },
-    ],
-    workloads: [
-      {
-        id: 'w1',
-        name: 'w1',
-        createTime: '2020-12-01T06:44:37.000+00:00',
-        updateTime: '2020-12-01T08:05:00.000+00:00',
-        label: 'Workload',
-        eventCount: 0,
-        kind: 'Deployment',
-      },
-      {
-        id: 'w2',
-        name: 'w2',
-        createTime: '2020-12-01T06:44:37.000+00:00',
-        updateTime: '2020-12-01T08:05:00.000+00:00',
-        label: 'Workload',
-        eventCount: 0,
-        kind: 'Deployment',
       },
     ],
     pods: [
@@ -950,20 +858,6 @@ export const getA1Cl = () => ({
         target: 'ps1',
       },
       {
-        id: 'c2',
-        name: 'c2',
-        label: 'CreateOn',
-        source: 'ps1',
-        target: 'w1',
-      },
-      {
-        id: 'c3',
-        name: 'c3',
-        label: 'CreateOn',
-        source: 'w1',
-        target: 'pd1',
-      },
-      {
         id: 'c4',
         name: 'c4',
         label: 'CreateOn',
@@ -976,20 +870,6 @@ export const getA1Cl = () => ({
         label: 'CreateOn',
         source: 'a1',
         target: 'ps2',
-      },
-      {
-        id: 'c42',
-        name: 'c42',
-        label: 'CreateOn',
-        source: 'ps2',
-        target: 'w2',
-      },
-      {
-        id: 'c45',
-        name: 'c45',
-        label: 'CreateOn',
-        source: 'w2',
-        target: 'pd2',
       },
       {
         id: 'c47',
@@ -1033,6 +913,20 @@ export const getA1Cl = () => ({
         source: 'ps1',
         target: 'pd1',
       },
+      {
+        id: 'c69',
+        name: 'c69',
+        label: 'CreateOn',
+        source: 'ps2',
+        target: 'pd2'
+      },
+      {
+        id: 'c70',
+        name: 'c70',
+        label: 'CreateOn',
+        source: 'pd1',
+        target: 'n2'
+      }
     ],
   },
 });
@@ -1126,26 +1020,6 @@ export const getA2Cl = () => ({
         eventCount: 0,
         hostName: 'SZA2005135573-B',
         processNo: '3784',
-      },
-    ],
-    workloads: [
-      {
-        id: 'w13',
-        name: 'w13',
-        createTime: '2020-12-01T06:44:37.000+00:00',
-        updateTime: '2020-12-01T08:05:00.000+00:00',
-        label: 'Workload',
-        eventCount: 0,
-        kind: 'Deployment',
-      },
-      {
-        id: 'w14',
-        name: 'w14',
-        createTime: '2020-12-01T06:44:37.000+00:00',
-        updateTime: '2020-12-01T08:05:00.000+00:00',
-        label: 'Workload',
-        eventCount: 0,
-        kind: 'Deployment',
       },
     ],
     pods: [
@@ -1259,20 +1133,6 @@ export const getA2Cl = () => ({
         target: 'ps18',
       },
       {
-        id: 'c50',
-        name: 'c50',
-        label: 'CreateOn',
-        source: 'a2',
-        target: 'w13',
-      },
-      {
-        id: 'c51',
-        name: 'c51',
-        label: 'CreateOn',
-        source: 'a2',
-        target: 'w14',
-      },
-      {
         id: 'c52',
         name: 'c52',
         label: 'CreateOn',
@@ -1285,41 +1145,6 @@ export const getA2Cl = () => ({
         label: 'CreateOn',
         source: 'ps18',
         target: 'pd10',
-      },
-      {
-        id: 'c54',
-        name: 'c54',
-        label: 'CreateOn',
-        source: 'w13',
-        target: 'pd11',
-      },
-      {
-        id: 'c55',
-        name: 'c55',
-        label: 'CreateOn',
-        source: 'w13',
-        target: 'pd13',
-      },
-      {
-        id: 'c56',
-        name: 'c56',
-        label: 'CreateOn',
-        source: 'w14',
-        target: 'pd9',
-      },
-      {
-        id: 'c57',
-        name: 'c57',
-        label: 'CreateOn',
-        source: 'w14',
-        target: 'pd10',
-      },
-      {
-        id: 'c58',
-        name: 'c58',
-        label: 'CreateOn',
-        source: 'w14',
-        target: 'pd12',
       },
       {
         id: 'c59',
@@ -1918,6 +1743,197 @@ export const getTypes = () => ({
       m8: {
         eventCount: 8,
         eventLevel: 'Critical'
+      },
+      m12: {
+        eventCount: 8,
+        eventLevel: 'Critical'
+      },
+    }
+  }
+});
+
+export const getM1Up = () => ({
+  data: {
+    applications: [
+      {
+        id: 'a1',
+        name: 'a1',
+        createTime: '2020-12-01T07:01:02.000+00:00',
+        updateTime: '2020-12-01T08:16:16.000+00:00',
+        label: 'Application',
+        eventCount: 1,
+      },
+      {
+        id: 'a2',
+        name: 'a2',
+        createTime: '2020-12-01T07:01:02.000+00:00',
+        updateTime: '2020-12-01T08:16:16.000+00:00',
+        label: 'Application',
+        eventCount: 0
+      },
+      {
+        id: 'a3',
+        name: 'a3',
+        createTime: '2020-12-01T07:01:02.000+00:00',
+        updateTime: '2020-12-01T08:16:16.000+00:00',
+        label: 'Application',
+        eventCount: 2
+      },
+      {
+        id: 'a4',
+        name: 'a4',
+        createTime: '2020-12-01T07:01:02.000+00:00',
+        updateTime: '2020-12-01T08:16:16.000+00:00',
+        label: 'Application',
+        eventCount: 0
+      }
+    ],
+    middleWares: [
+      {
+        id: 'm1',
+        name: 'm1',
+        createTime: '2020-12-01T07:01:02.000+00:00',
+        updateTime: '2020-12-01T08:16:16.000+00:00',
+        label: 'MiddleWare',
+        eventCount: 0,
+        middleWareType: 'Database'
+      },
+    ],
+    subTracingTos: [
+      {
+        id: 't1',
+        name: 't1',
+        source: 'a3',
+        target: 'a2',
+        label: 'SubTracingTo',
+        responseTimePerMin: 1,
+        callPerMinute: 120,
+        type: 'kafka-producer'
+      },
+      {
+        id: 't2',
+        name: 't2',
+        source: 'a2',
+        target: 'a1',
+        label: 'SubTracingTo',
+        responseTimePerMin: 2,
+        callPerMinute: 121,
+        type: 'kafka-producer'
+      },
+      {
+        id: 't3',
+        name: 't3',
+        source: 'a4',
+        target: 'a1',
+        label: 'SubTracingTo',
+        responseTimePerMin: 3,
+        callPerMinute: 122,
+        type: 'kafka-producer'
+      },
+      {
+        id: 't4',
+        name: 't4',
+        source: 'a1',
+        target: 'm1',
+        label: 'SubTracingTo',
+        responseTimePerMin: 4,
+        callPerMinute: 123,
+        type: 'kafka-producer'
+      },
+    ],
+    eventInfos: {
+      a1: {
+        eventCount: 10,
+        eventLevel: 'Critical'
+      },
+      a2: {
+        eventCount: 10,
+        eventLevel: 'Critical'
+      },
+      m1: {
+        eventCount: 8,
+        eventLevel: 'Warning'
+      },
+    }
+  }
+});
+
+export const getM1Down = () => ({
+  data: {
+    applications: [],
+    middleWares: [
+      {
+        id: 'm1',
+        name: 'm1',
+        createTime: '2020-12-01T07:01:02.000+00:00',
+        updateTime: '2020-12-01T08:16:16.000+00:00',
+        label: 'MiddleWare',
+        eventCount: 0,
+        middleWareType: 'Database'
+      },
+    ],
+    processes: [
+      {
+        id: 'ps1',
+        name: 'ps1',
+        createTime: '2020-12-01T07:06:57.000+00:00',
+        updateTime: '2020-12-01T07:07:04.000+00:00',
+        label: 'Process',
+        eventCount: 0,
+        hostName: 'SZA2005135573-B',
+        processNo: '3784'
+      },
+    ],
+    pods: [
+      {
+        id: 'pd1',
+        name: 'pd1',
+        createTime: '2020-12-01T07:06:56.000+00:00',
+        updateTime: '2020-12-01T07:06:55.000+00:00',
+        label: 'Pod',
+        eventCount: 0,
+        podIp: '127.0.0.1'
+      },
+    ],
+    nodes: [
+      {
+        id: 'n1',
+        name: 'n1',
+        createTime: '2020-09-09T05:56:46.000+00:00',
+        updateTime: '2020-11-25T09:37:32.000+00:00',
+        label: 'Node',
+        event_count: 0,
+        node_ip: '125.1.0.2'
+      },
+    ],
+    subTracingTos: [],
+    createOns: [
+      {
+        id: 'c4',
+        name: 'c4',
+        label: 'CreateOn',
+        source: 'pd1',
+        target: 'n1'
+      },
+      {
+        id: 'c64',
+        name: 'c64',
+        label: 'CreateOn',
+        source: 'ps1',
+        target: 'pd1'
+      },
+      {
+        id: 'c68',
+        name: 'c68',
+        label: 'CreateOn',
+        source: 'm1',
+        target: 'ps1'
+      },
+    ],
+    eventInfos: {
+      ps1: {
+        eventCount: 8,
+        eventLevel: 'Warning'
       },
     }
   }

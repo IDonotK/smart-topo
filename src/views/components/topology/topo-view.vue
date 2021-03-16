@@ -32,12 +32,14 @@
           v-show="topoViewData.nodes.length > 0 && isMatch && !isLoadingTopo"
           ref="net"
           :net-data="netData"
-          :options="options"
+          :options="mainTopoOptions"
           :node-sym="nodeSym"
+          :currentNode="currentNode"
           @node-right-click="nodeRightClick"
           @node-dblclick="nodeDblClick"
           @node-click="nodeClick"
           @link-click="linkClick"
+          @updown-stream-click="updownstreamClick"
         />
         <!-- 鼠标右键探索弹框 -->
         <el-dialog
@@ -72,6 +74,37 @@
           {{ $t('topoView_search_no_data') }}
         </div>
       </div>
+      <!-- 快速探索上下游拓扑 -->
+      <el-drawer
+        class="updown-stream-drawer"
+        :visible.sync="isOpenUpdownstream"
+        direction="ltr"
+        size="600px"
+        @opened="handleOpendUpdownstream"
+        @closed="handleClosedUpdownstream"
+      >
+        <template v-slot:title>
+          <div class="topo-title-wrapper">
+             <div class="topo-title-item">
+              <span class="topo-title-key">{{$t('topoView_quick_explre_topo_title_type')}}</span>
+              <span class="topo-title-value">{{quickExploreNode.direction === 'in' ? $t('topoView_quick_explre_topo_upstream') : $t('topoView_quick_explre_topo_downstream')}}</span>
+            </div>
+            <div class="topo-title-item">
+              <span class="topo-title-key">{{$t('topoView_quick_explre_topo_title_target_node')}}</span>
+              <span class="topo-title-value" :title="quickExploreNode.node && quickExploreNode.node.id">{{quickExploreNode.node && quickExploreNode.node.id}}</span>
+            </div>
+          </div>
+        </template>
+        <div id="rtwId" class="relative-topo-wrapper">
+          <d3-network
+            v-if="relativeDataQuickExplored.nodes.length > 0 && isOpenUpdownstream && isShowUpdownstream"
+            ref="net"
+            :net-data="relativeDataQuickExplored"
+            :currentNode="quickExploreNode.node"
+            :options="relativeTopoOptions"
+          />
+        </div>
+      </el-drawer>
     </div>
   </div>
 </template>
@@ -119,7 +152,8 @@ export default {
       selected: {},
       showSelection: false,
       linksSelected: {},
-      options: {},
+      mainTopoOptions: {},
+      relativeTopoOptions: {},
       settings: {
         maxLinks: 1,
         maxNodes: 36
@@ -133,10 +167,19 @@ export default {
       isShowEvents: false,
       nodeToExplore: {},
       tickTimer: null,
+      isOpenUpdownstream: false,
+      isShowUpdownstream: false,
+      relativeDataQuickExplored: {
+        nodes: [],
+        links: []
+      },
     }
   },
 
   computed: {
+    networkInstanceMainTopo() {
+      return this.$store.state.rocketTopo.networkInstanceMainTopo;
+    },
     topoMode() {
       return this.$store.state.rocketTopo.topoMode;
     },
@@ -146,14 +189,14 @@ export default {
     isLoadingTopo() {
       return this.$store.state.rocketTopo.isLoadingTopo;
     },
+    quickExploreNode() {
+      return this.$store.state.rocketTopo.quickExploreNode;
+    },
     currentNode() { // 当前选中节点
       return this.$store.state.rocketTopo.currentNode;
     },
     topoDetailData() {
       return this.$store.state.rocketTopo.topoDetailData;
-    },
-    networkInstance() {
-      return this.$store.state.rocketTopo.networkInstance;
     },
     toolSetInstance() {
       return this.$store.state.rocketTopo.toolSetInstance;
@@ -194,8 +237,8 @@ export default {
     document.oncontextmenu = function(e){
       e.preventDefault();
     };
-    this.initAboutOptions();
-    this.initSvgSizeArg();
+    this.initOptions();
+    this.initSvgSize();
   },
 
   destroyed() {
@@ -206,8 +249,8 @@ export default {
   },
 
   methods: {
-    initAboutOptions() {
-      this.options = {
+    initOptions() {
+      this.mainTopoOptions = {
         canvas: false,
         size: {
           w: 0,
@@ -224,7 +267,10 @@ export default {
         nodeLabels: true,
         linkLabels: true,
         strLinks: true,
+        idNamespace: 'MainTopo'
       };
+      this.relativeTopoOptions = JSON.parse(JSON.stringify(this.mainTopoOptions));
+      this.relativeTopoOptions.idNamespace = 'RelativeTopo';
       this.scrollOptions = {
         className: 'os-theme-light',
         resize: 'none',
@@ -235,6 +281,16 @@ export default {
           dragScrolling: true,
         }
       };
+    },
+    handleClosedUpdownstream() {
+      this.isShowUpdownstream = false;
+    },
+    handleOpendUpdownstream() {
+      this.relativeTopoOptions.size.w = this.$jq('#rtwId').width();
+      this.relativeTopoOptions.size.h = this.$jq('#rtwId').height();
+      setTimeout(() => {
+        this.isShowUpdownstream = true;
+      }, 0);
     },
     handleConfirmExplore() {
       this.isShowExplore = false;
@@ -263,9 +319,9 @@ export default {
         }
       }, 10);
     },
-    initSvgSizeArg() {
-      this.options.size.w = this.$refs.tvcr.clientWidth;
-      this.options.size.h = this.$refs.tvcr.clientHeight;
+    initSvgSize() {
+      this.mainTopoOptions.size.w = this.$refs.tvcr.clientWidth;
+      this.mainTopoOptions.size.h = this.$refs.tvcr.clientHeight;
     },
     initNetTopoData() {
       this.netData = this.topoViewData;
@@ -275,7 +331,7 @@ export default {
       this.nodeToExplore = node;
     },
     nodeDblClick(event, node) {
-      if (this.topoMode === 'specific') {
+      if (this.topoMode !== 'global') {
         return;
       }
       if (node && this.currentNode && node.id === this.currentNode.id) {
@@ -285,6 +341,34 @@ export default {
         this.$store.commit('rocketTopo/SET_VIEW_NODE', node);
         this.setCurNodeStably(node);
       }
+    },
+    async updownstreamClick(event, node, direction) {
+      this.isOpenUpdownstream = true;
+      this.$store.commit('rocketTopo/SET_QUICK_EXPLORE_NODE', {node, direction});
+      let relativeData = await this.toolSetInstance.queryRelativeNodes(node, direction);
+      if (!relativeData) {
+        relativeData = {
+          nodes: [],
+          links: []
+        };
+      }
+      let eventLevel = new Set();
+      relativeData.nodes.forEach(item => {
+        item.showLabel = true;
+        item.isRelatedToCurNode = true;
+        item.isShowStreamSwitch = false;
+        eventLevel.add(item.eventLevel);
+      });
+      let streamEventKey = direction === 'in' ? 'upstreamEventLevel' : 'downstreamEventLevel';
+      if (eventLevel.has('Critical')) {
+        node[streamEventKey] = 'Critical';
+      } else if (eventLevel.has('Warning')) {
+        node[streamEventKey] = 'Warning';
+      } else {
+        node[streamEventKey] = '';
+      }
+      this.networkInstanceMainTopo.$refs.svg.$forceUpdate();
+      this.relativeDataQuickExplored = relativeData;
     },
     nodeClick(event, node) {
       this.$store.commit('rocketTopo/SET_VIEW_NODE', node);
@@ -472,6 +556,43 @@ export default {
                 align-items: center;
                 color: #ccc;
                 font-size: 25px;
+            }
+        }
+
+        .updown-stream-drawer {
+            /deep/ :focus {
+                outline: 0;
+            }
+
+            .el-drawer {
+                background-color: #333840;
+
+                .el-drawer__header {
+                    text-align: left;
+                    color: #ddd;
+                    font-size: 16px;
+                    font-weight: 500;
+
+                    .topo-title-wrapper {
+                        .topo-title-item {
+                          display: flex;
+                          align-items: center;
+                        }
+
+                        .topo-title-value {
+                            width: 420px;
+                            white-space: nowrap;
+                            text-overflow: ellipsis;
+                            overflow: hidden;
+                            word-break: break-all;
+                        }
+                    }
+                }
+            }
+
+            .relative-topo-wrapper {
+                width: 100%;
+                height: 100%;
             }
         }
     }

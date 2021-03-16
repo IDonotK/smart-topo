@@ -17,15 +17,15 @@
         <span class="item-content" :title="value">{{ value }}</span>
       </div>
       <div
-        v-for="(value, key) in curNodeCrossLayer"
-        v-show="smallDetailItems.includes(key)"
-        :key="'small' + key"
-        :class="{ 'info-item': true, small: smallDetailItems.includes(key) }"
+        v-for="(item, index) in smallDetailItems"
+        v-show="curNodeCrossLayer.hasOwnProperty(item)"
+        :key="'small' + index"
+        :class="{ 'info-item': true, 'small': true }"
       >
-        <span class="item-title" :title="key"
-          >{{ key }}
+        <span class="item-title" :title="item"
+          >{{ item }}
           <el-tooltip
-            v-if="key === 'eventLevel'"
+            v-if="item === 'eventLevel'"
             class="item"
             effect="light"
             :content="$t('nodeDetail_eventLevel_help')"
@@ -37,7 +37,7 @@
           </el-tooltip>
           :
         </span>
-        <span class="item-content" :title="value">{{ value }}</span>
+        <span class="item-content" :title="curNodeCrossLayer[item]">{{ curNodeCrossLayer[item] }}</span>
       </div>
       <div class="clear"></div>
     </div>
@@ -75,8 +75,8 @@ export default {
         'processNo',
         'middleWareType',
         'kind',
-        'eventCount',
         'eventLevel',
+        'eventCount',
         'state'
       ],
       pallet: [
@@ -249,14 +249,11 @@ export default {
           case 'Process':
             nodeColor = this.pallet[2];
             break;
-          case 'Workload':
+          case 'Pod':
             nodeColor = this.pallet[3];
             break;
-          case 'Pod':
-            nodeColor = this.pallet[4];
-            break;
           case 'Node':
-            nodeColor = this.pallet[5];
+            nodeColor = this.pallet[4];
             break;
           default: break;
         }

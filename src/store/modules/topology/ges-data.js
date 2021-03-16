@@ -591,134 +591,6 @@ export const generateGesData = () => ({
         processNo: '3784'
       }
     ],
-    workloads: [
-      {
-        id: 'w1',
-        name: 'w1',
-        createTime: '2020-12-01T06:44:37.000+00:00',
-        updateTime: '2020-12-01T08:05:00.000+00:00',
-        label: 'Workload',
-        eventCount: 0,
-        kind: 'Deployment'
-      },
-      {
-        id: 'w2',
-        name: 'w2',
-        createTime: '2020-12-01T06:44:37.000+00:00',
-        updateTime: '2020-12-01T08:05:00.000+00:00',
-        label: 'Workload',
-        eventCount: 0,
-        kind: 'Deployment'
-      },
-      {
-        id: 'w3',
-        name: 'w3',
-        createTime: '2020-12-01T06:44:37.000+00:00',
-        updateTime: '2020-12-01T08:05:00.000+00:00',
-        label: 'Workload',
-        eventCount: 0,
-        kind: 'Deployment'
-      },
-      {
-        id: 'w4',
-        name: 'w4',
-        createTime: '2020-12-01T06:44:37.000+00:00',
-        updateTime: '2020-12-01T08:05:00.000+00:00',
-        label: 'Workload',
-        eventCount: 1,
-        kind: 'Deployment'
-      },
-      {
-        id: 'w5',
-        name: 'w5',
-        createTime: '2020-12-01T06:44:37.000+00:00',
-        updateTime: '2020-12-01T08:05:00.000+00:00',
-        label: 'Workload',
-        eventCount: 0,
-        kind: 'Deployment'
-      },
-      {
-        id: 'w6',
-        name: 'w6',
-        createTime: '2020-12-01T06:44:37.000+00:00',
-        updateTime: '2020-12-01T08:05:00.000+00:00',
-        label: 'Workload',
-        eventCount: 0,
-        kind: 'Deployment'
-      },
-      {
-        id: 'w7',
-        name: 'w7',
-        createTime: '2020-12-01T06:44:37.000+00:00',
-        updateTime: '2020-12-01T08:05:00.000+00:00',
-        label: 'Workload',
-        eventCount: 0,
-        kind: 'Deployment'
-      },
-      {
-        id: 'w8',
-        name: 'w8',
-        createTime: '2020-12-01T06:44:37.000+00:00',
-        updateTime: '2020-12-01T08:05:00.000+00:00',
-        label: 'Workload',
-        eventCount: 1,
-        kind: 'Deployment'
-      },
-      {
-        id: 'w9',
-        name: 'w9',
-        createTime: '2020-12-01T06:44:37.000+00:00',
-        updateTime: '2020-12-01T08:05:00.000+00:00',
-        label: 'Workload',
-        eventCount: 0,
-        kind: 'Deployment'
-      },
-      {
-        id: 'w10',
-        name: 'w10',
-        createTime: '2020-12-01T06:44:37.000+00:00',
-        updateTime: '2020-12-01T08:05:00.000+00:00',
-        label: 'Workload',
-        eventCount: 0,
-        kind: 'Deployment'
-      },
-      {
-        id: 'w11',
-        name: 'w11',
-        createTime: '2020-12-01T06:44:37.000+00:00',
-        updateTime: '2020-12-01T08:05:00.000+00:00',
-        label: 'Workload',
-        eventCount: 0,
-        kind: 'Deployment'
-      },
-      {
-        id: 'w12',
-        name: 'w12',
-        createTime: '2020-12-01T06:44:37.000+00:00',
-        updateTime: '2020-12-01T08:05:00.000+00:00',
-        label: 'Workload',
-        eventCount: 0,
-        kind: 'Deployment'
-      },
-      {
-        id: 'w13',
-        name: 'w13',
-        createTime: '2020-12-01T06:44:37.000+00:00',
-        updateTime: '2020-12-01T08:05:00.000+00:00',
-        label: 'Workload',
-        eventCount: 0,
-        kind: 'Deployment'
-      },
-      {
-        id: 'w14',
-        name: 'w14',
-        createTime: '2020-12-01T06:44:37.000+00:00',
-        updateTime: '2020-12-01T08:05:00.000+00:00',
-        label: 'Workload',
-        eventCount: 0,
-        kind: 'Deployment'
-      }
-    ],
     pods: [
       {
         id: 'pd1',
@@ -1080,20 +952,6 @@ export const generateGesData = () => ({
         target: 'ps1'
       },
       {
-        id: 'c2',
-        name: 'c2',
-        label: 'CreateOn',
-        source: 'ps1',
-        target: 'w1'
-      },
-      {
-        id: 'c3',
-        name: 'c3',
-        label: 'CreateOn',
-        source: 'w1',
-        target: 'pd1'
-      },
-      {
         id: 'c4',
         name: 'c4',
         label: 'CreateOn',
@@ -1157,13 +1015,6 @@ export const generateGesData = () => ({
         target: 'ps2'
       },
       {
-        id: 'c14',
-        name: 'c14',
-        label: 'CreateOn',
-        source: 'w2',
-        target: 'pd2'
-      },
-      {
         id: 'c15',
         name: 'c15',
         label: 'CreateOn',
@@ -1213,20 +1064,6 @@ export const generateGesData = () => ({
         target: 'ps3'
       },
       {
-        id: 'c18',
-        name: 'c18',
-        label: 'CreateOn',
-        source: 'ps3',
-        target: 'w3'
-      },
-      {
-        id: 'c19',
-        name: 'c19',
-        label: 'CreateOn',
-        source: 'w3',
-        target: 'pd3'
-      },
-      {
         id: 'c20',
         name: 'c20',
         label: 'CreateOn',
@@ -1234,137 +1071,11 @@ export const generateGesData = () => ({
         target: 'n3'
       },
       {
-        id: 'c21',
-        name: 'c21',
-        label: 'CreateOn',
-        source: 'w4',
-        target: 'pd4'
-      },
-      {
-        id: 'c22',
-        name: 'c22',
-        label: 'CreateOn',
-        source: 'w5',
-        target: 'pd4'
-      },
-      {
-        id: 'c23',
-        name: 'c23',
-        label: 'CreateOn',
-        source: 'w6',
-        target: 'pd4'
-      },
-      {
-        id: 'c24',
-        name: 'c24',
-        label: 'CreateOn',
-        source: 'w7',
-        target: 'pd4'
-      },
-      {
-        id: 'c25',
-        name: 'c25',
-        label: 'CreateOn',
-        source: 'w8',
-        target: 'pd4'
-      },
-      {
-        id: 'c26',
-        name: 'c26',
-        label: 'CreateOn',
-        source: 'w9',
-        target: 'pd4'
-      },
-      {
-        id: 'c27',
-        name: 'c27',
-        label: 'CreateOn',
-        source: 'w10',
-        target: 'pd4'
-      },
-      {
-        id: 'c28',
-        name: 'c28',
-        label: 'CreateOn',
-        source: 'w11',
-        target: 'pd4'
-      },
-      {
-        id: 'c29',
-        name: 'c29',
-        label: 'CreateOn',
-        source: 'ps5',
-        target: 'w12'
-      },
-      {
-        id: 'c30',
-        name: 'c30',
-        label: 'CreateOn',
-        source: 'ps6',
-        target: 'w12'
-      },
-      {
-        id: 'c31',
-        name: 'c31',
-        label: 'CreateOn',
-        source: 'ps7',
-        target: 'w12'
-      },
-      {
-        id: 'c32',
-        name: 'c32',
-        label: 'CreateOn',
-        source: 'ps8',
-        target: 'w12'
-      },
-      {
-        id: 'c33',
-        name: 'c33',
-        label: 'CreateOn',
-        source: 'ps9',
-        target: 'w12'
-      },
-      {
-        id: 'c34',
-        name: 'c34',
-        label: 'CreateOn',
-        source: 'ps10',
-        target: 'w12'
-      },
-      {
-        id: 'c35',
-        name: 'c35',
-        label: 'CreateOn',
-        source: 'ps11',
-        target: 'w12'
-      },
-      {
-        id: 'c36',
-        name: 'c36',
-        label: 'CreateOn',
-        source: 'ps12',
-        target: 'w12'
-      },
-      {
         id: 'c41',
         name: 'c41',
         label: 'CreateOn',
         source: 'a1',
         target: 'ps2'
-      },
-      {
-        id: 'c42',
-        name: 'c42',
-        label: 'CreateOn',
-        source: 'ps2',
-        target: 'w2'
-      },
-      {
-        id: 'c45',
-        name: 'c45',
-        label: 'CreateOn',
-        source: 'w2',
-        target: 'pd2'
       },
       {
         id: 'c48',
@@ -1381,20 +1092,6 @@ export const generateGesData = () => ({
         target: 'ps18'
       },
       {
-        id: 'c50',
-        name: 'c50',
-        label: 'CreateOn',
-        source: 'a2',
-        target: 'w13'
-      },
-      {
-        id: 'c51',
-        name: 'c51',
-        label: 'CreateOn',
-        source: 'a2',
-        target: 'w14'
-      },
-      {
         id: 'c52',
         name: 'c52',
         label: 'CreateOn',
@@ -1407,41 +1104,6 @@ export const generateGesData = () => ({
         label: 'CreateOn',
         source: 'ps18',
         target: 'pd10'
-      },
-      {
-        id: 'c54',
-        name: 'c54',
-        label: 'CreateOn',
-        source: 'w13',
-        target: 'pd11'
-      },
-      {
-        id: 'c55',
-        name: 'c55',
-        label: 'CreateOn',
-        source: 'w13',
-        target: 'pd13'
-      },
-      {
-        id: 'c56',
-        name: 'c56',
-        label: 'CreateOn',
-        source: 'w14',
-        target: 'pd9'
-      },
-      {
-        id: 'c57',
-        name: 'c57',
-        label: 'CreateOn',
-        source: 'w14',
-        target: 'pd10'
-      },
-      {
-        id: 'c58',
-        name: 'c58',
-        label: 'CreateOn',
-        source: 'w14',
-        target: 'pd12'
       },
       {
         id: 'c59',
@@ -1512,6 +1174,20 @@ export const generateGesData = () => ({
         label: 'CreateOn',
         source: 'm1',
         target: 'ps1'
+      },
+      {
+        id: 'c69',
+        name: 'c69',
+        label: 'CreateOn',
+        source: 'ps2',
+        target: 'pd2'
+      },
+      {
+        id: 'c70',
+        name: 'c70',
+        label: 'CreateOn',
+        source: 'pd1',
+        target: 'n2'
       }
     ],
     eventInfos: {
@@ -1531,68 +1207,14 @@ export const generateGesData = () => ({
         eventCount: 8,
         eventLevel: 'Critical'
       },
+      m12: {
+        eventCount: 8,
+        eventLevel: 'Critical'
+      },
       ps1: {
         eventCount: 8,
         eventLevel: 'Warning'
       },
-      w1: {
-        eventCount: 8,
-        eventLevel: 'Warning'
-      }
     }
   }
 });
-// export const GES_DATA = {
-//   applications: [
-//     {
-//       id: 'a1',
-//       name: 'a1aaaaaaaaaaaaaaaa',
-//       createTime: '2020-12-01T07:01:02.000+00:00',
-//       updateTime: '2020-12-01T08:16:16.000+00:00',
-//       label: 'Application',
-//       eventCount: 1,
-//     },
-//     {
-//       id: 'a2',
-//       name: 'a2',
-//       createTime: '2020-12-01T07:01:02.000+00:00',
-//       updateTime: '2020-12-01T08:16:16.000+00:00',
-//       label: 'Application',
-//       eventCount: 0,
-//     },
-//     {
-//       id: 'a3',
-//       name: 'a3',
-//       createTime: '2020-12-01T07:01:02.000+00:00',
-//       updateTime: '2020-12-01T08:16:16.000+00:00',
-//       label: 'Application',
-//       eventCount: 0,
-//     },
-//   ],
-//   middleWares: [],
-//   processes: [],
-//   workloads: [],
-//   pods: [],
-//   nodes: [],
-//   tracingTos: [
-//     {
-//       id: 't1',
-//       name: 't1',
-//       source: 'a1',
-//       target: 'a2',
-//       label: 'TracingTo',
-//       responseTimePerMin: 1,
-//       callPerMinute: 120,
-//       type: 'kafka-producer',
-//     },
-//   ],
-//   createOns: [
-//     {
-//       id: 'c1',
-//       name: 'c1',
-//       label: 'CreateOn',
-//       source: 'a1',
-//       target: 'ps1',
-//     },
-//   ],
-// };

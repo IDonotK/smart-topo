@@ -2,7 +2,6 @@
 import svgRenderer from './components/svgRenderer.vue';
 import saveImage from './lib/js/saveImage.js';
 import svgExport from './lib/js/svgExport.js';
-// import { setUniformLayout } from '@/utils/topo';
 
 export default {
   name: 'D3Network',
@@ -38,6 +37,10 @@ export default {
         links: {},
       }),
     },
+    currentNode: {
+      type: Object,
+      default: () => ({}),
+    }
   },
   data() {
     return {
@@ -68,7 +71,6 @@ export default {
       linkTextContent: '',
       nodeSingleClicked: true,
       clickNodeTimer: null,
-      isMouseDwonNet: true,
       topoTickCount: 0,
       defaultNodeSize: 20,
       defaultLinkWidth: 1,
@@ -81,6 +83,9 @@ export default {
       tip: null,
       isNodesChanged: false,
       deltaIterateNum: 50,
+      idNamespace: 'MainTopo',
+      topoScaleFix: -1,
+      zoomController: this.$d3.zoom(),
     };
   },
   computed: {
@@ -93,23 +98,11 @@ export default {
     isTopoLinksUpdated() {
       return this.$store.state.rocketTopo.isTopoLinksUpdated;
     },
-    isFirstTick() {
-      return this.$store.state.rocketTopo.isFirstTick;
-    },
-    topoScaleFix() {
-      return this.$store.state.rocketTopo.topoScaleFix;
-    },
     showNodeTypes() {
       return this.$store.state.rocketTopo.showNodeTypes;
     },
     elemIdsRTCAll() {
       return this.$store.state.rocketTopo.elemIdsRTCAll;
-    },
-    currentNode() {
-      return this.$store.state.rocketTopo.currentNode;
-    },
-    zoomController() {
-      return this.$store.state.rocketTopo.zoomController;
     },
     selected() {
       return this.selection.nodes;
@@ -119,8 +112,8 @@ export default {
     },
     center() {
       return {
-        x: this.size.w / 2 + this.size.w / 200 + this.offset.x,
-        y: this.size.h / 2 + this.size.h / 200 + this.offset.y,
+        x: this.size.w / 2 + this.offset.x,
+        y: this.size.h / 2 + this.offset.y,
       };
     },
     labelOffset() {
@@ -136,7 +129,6 @@ export default {
       this.updateOptions(this.options);
       this.buildNodes(newVal.nodes);
       this.buildLinks(newVal.links);
-      // this.reset();
       this.animate();
     },
     nodeSym() {
@@ -159,9 +151,14 @@ export default {
     this.updateNodeSvg();
   },
   mounted() {
-    this.$store.commit('rocketTopo/SET_NETWORK_INSTANCE', this);
     this.onResize();
     this.$nextTick(() => {
+      switch (this.idNamespace) {
+        case 'MainTopo': this.$store.commit('rocketTopo/SET_NETWORK_INSTANCE_MAIN_TOPO', this); break;
+        case 'RelativeTopo': this.$store.commit('rocketTopo/SET_NETWORK_INSTANCE_RELATIVE_TOPO', this); break;
+        default: this.$store.commit('rocketTopo/SET_NETWORK_INSTANCE_MAIN_TOPO', this); break;
+      }
+      this.setZoom();
       this.animate();
     });
     if (this.resizeListener) {
@@ -174,6 +171,21 @@ export default {
     }
   },
   methods: {
+    setZoom() {
+      const zoomed = () => {
+        this.$d3
+          .select(`#zoomContainer${this.idNamespace}`)
+          .attr(
+            'transform',
+            `translate(${this.$d3.event.transform.x},${this.$d3.event.transform.y}) scale(${this.$d3.event.transform.k})`
+          );
+      };
+      this.zoomController.scaleExtent([0.1, 100]).on('zoom', zoomed);
+      this.$d3
+        .select(`#netSvg${this.idNamespace}`)
+        .call(this.zoomController)
+        .on('dblclick.zoom', null);
+    },
     getScaleFixForSim(nodes, fix) {
       if (nodes.length === 0) {
         return 1;
@@ -181,8 +193,8 @@ export default {
       if (nodes.length <= 2) {
         return 2;
       }
-      let centerX = this.$jq('#netSvg').width() / 2;
-      let centerY = this.$jq('#netSvg').height() / 2;
+      let centerX = this.$jq(`#netSvg${this.idNamespace}`).width() / 2;
+      let centerY = this.$jq(`#netSvg${this.idNamespace}`).height() / 2;
       let xMin = nodes[0].x;
       let xMax = nodes[0].x;
       let yMin = nodes[0].y;
@@ -209,8 +221,8 @@ export default {
       if (nodes.length <= 1) {
         return 3 * this.topoScaleFix;
       }
-      let centerX = this.$jq('#netSvg').width() / 2;
-      let centerY = this.$jq('#netSvg').height() / 2;
+      let centerX = this.$jq(`#netSvg${this.idNamespace}`).width() / 2;
+      let centerY = this.$jq(`#netSvg${this.idNamespace}`).height() / 2;
       let curNodeX = curNode.x;
       let curNodeY = curNode.y;
 
@@ -245,7 +257,7 @@ export default {
       } else {
         scaleFix = this.getScaleFixForSim(nodes, 0.8);
       }
-      this.$store.commit('rocketTopo/SET_TOPO_SCALE_FIX', scaleFix);
+      this.topoScaleFix = scaleFix;
     },
     methodCall(action, args) {
       let method = this[action];
@@ -266,6 +278,11 @@ export default {
       }
       this.defaultNodeSize = this.nodeSize;
       this.defaultFontSize = this.fontSize;
+    },
+    setElementAttribute(elem, key, value) {
+      if (!Object.prototype.hasOwnProperty.call(elem, key)) {
+        this.$set(elem, key, value);
+      }
     },
     buildNodes(nodes) {
       this.isNodesChanged = nodes.length !== this.preNetData.nodes.length;
@@ -297,10 +314,11 @@ export default {
         if (node.type) {
           this.setNodeIcon(node);
         }
-        this.$set(node, 'showLabel', false);
-        this.$set(node, 'isDark', false);
-        this.$set(node, 'isBright', false);
-        this.$set(node, 'isRelatedToCurNode', false);
+        this.setElementAttribute(node, 'showLabel', false);
+        this.setElementAttribute(node, 'isDark', false);
+        this.setElementAttribute(node, 'isBright', false);
+        this.setElementAttribute(node, 'isRelatedToCurNode', false);
+        this.setElementAttribute(node, 'isShowStreamSwitch', true);
         this.$set(node, '_color', 'rgba(33, 126, 242, 0.373)');
         return node;
       });
@@ -313,10 +331,10 @@ export default {
         if (!link.id) {
           this.$set(link, 'id', `link-${index}`);
         }
-        this.$set(link, 'showLabel', false);
-        this.$set(link, 'isDark', false);
-        this.$set(link, 'isBright', false);
-        this.$set(link, 'isRelatedToCurNode', false);
+        this.setElementAttribute(link, 'showLabel', false);
+        this.setElementAttribute(link, 'isDark', false);
+        this.setElementAttribute(link, 'isBright', false);
+        this.setElementAttribute(link, 'isRelatedToCurNode', false);
         this.$set(link, '_color', 'rgba(33, 126, 242, 0.373)');
         return link;
       });
@@ -418,26 +436,8 @@ export default {
       }
       this.startSimulation(vSimulation, vNodes, true);
     },
-    startVSimulation(simulation, nodes, isVsim) {
-      const n = Math.ceil(Math.log(simulation.alphaMin()) / Math.log(1 - simulation.alphaDecay()));
-      this.$d3.timeout(() => {
-        for (let i = 0; i < n; i++) {
-          simulation.tick();
-          if (isVsim) {
-            if (i === n - 1) {
-              this.simulationTicked(nodes);
-            } else {
-              this.simulationTicking(nodes);
-            }
-          } else {
-            if (i === n - 1) {
-              this.fixTopoViewOnScale(nodes);
-            }
-          }
-        }
-      });
-    },
     async animate() {
+      this.topoTickCount = 0;
       if (this.isNodesChanged) {
         await this.setTopoScaleFix(this.nodes, this.links);
       }
@@ -486,14 +486,14 @@ export default {
       }
       this.zoomController.scaleTo(
         this.$d3
-          .select('.net-svg')
+          .select(`#netSvg${this.idNamespace}`)
           .transition()
           .duration(5),
         scaleFix
       );
     },
     simulationTicking(nodes) {
-      if (this.isFirstTick && nodes.length > 0) {
+      if (nodes.length > 0) {
         this.topoTickCount++;
         if (this.topoTickCount % 2 === 0) {
           this.fixTopoScaleOnCoord(nodes);
@@ -501,8 +501,7 @@ export default {
       }
     },
     simulationTicked(nodes) {
-      if (this.isFirstTick && nodes.length > 0) {
-        this.$store.commit('rocketTopo/SET_IS_FIRST_TICK', false);
+      if (nodes.length > 0) {
         this.topoTickCount = 0;
         this.fixTopoScaleOnCoord(nodes);
       }
@@ -580,12 +579,12 @@ export default {
     mouseEnterNode(event, hoveredNode) {
       // 强制更新svgRenderer组件，防止mouseEnterNode后视图样式无法更新
       this.$refs.svg.$forceUpdate();
-      this.$jq('.link-anchor').addClass('link-anchor-static');
+      this.$jq(`link-anchors${this.idNamespace} .link-anchor`).addClass('link-anchor-static');
       this.lightAroundHoveredNode(hoveredNode);
     },
     mouseLeaveNode(event, elem) {
       this.$refs.svg.$forceUpdate();
-      this.$jq('.link-anchor').removeClass('link-anchor-static');
+      this.$jq(`link-anchors${this.idNamespace} .link-anchor`).removeClass('link-anchor-static');
       this.normalAroundHoveredNode();
       this.elemsAroundPreHovNodeShallow = null;
       this.elemsAroundPreHovNodeShallow = {
@@ -635,8 +634,8 @@ export default {
         return;
       }
       this.$refs.svg.$forceUpdate();
-      let offsetX = this.$jq('#netContent').offset().left - this.$jq(window).scrollLeft();
-      let offsetY = this.$jq('#netContent').offset().top - this.$jq(window).scrollTop();
+      let offsetX = this.$jq(`#netContent${this.idNamespace}`).offset().left - this.$jq(window).scrollLeft();
+      let offsetY = this.$jq(`#netContent${this.idNamespace}`).offset().top - this.$jq(window).scrollTop();
       this.linkTextStyle = {
         height: `${25}px`,
         left: `${event.clientX - offsetX + 8}px`,
@@ -669,8 +668,8 @@ export default {
     },
     mouseEnterLinkAnchor(event, hoveredLink) {
       this.$refs.svg.$forceUpdate();
-      let offsetX = this.$jq('#netContent').offset().left - this.$jq(window).scrollLeft();
-      let offsetY = this.$jq('#netContent').offset().top - this.$jq(window).scrollTop();
+      let offsetX = this.$jq(`#netContent${this.idNamespace}`).offset().left - this.$jq(window).scrollLeft();
+      let offsetY = this.$jq(`#netContent${this.idNamespace}`).offset().top - this.$jq(window).scrollTop();
       this.linkTextContent = `
           <div class="mb-5"><span class="grey">${this.$t('topoDetail_link_type')}</span>${hoveredLink.type}</div>
           <div class="mb-5"><span class="grey">${this.$t('topoDetail_link_callPerMinute')}</span>${
@@ -718,36 +717,28 @@ export default {
       return { x, y };
     },
     handleClickNet(event) {
+      if (this.clickNodeTimer) {
+        clearTimeout(this.clickNodeTimer);
+        this.clickNodeTimer = null;
+      }
+
       if (this.isAutoReloadTopo) {
         this.$store.commit('rocketTopo/SET_IS_AUTO_RELOAD_TOPO', false);
       }
       this.simulation.stop();
-      if (this.isFirstTick) {
-        this.$store.commit('rocketTopo/SET_IS_FIRST_TICK', false);
-      }
-      this.dragging = false; // 防止快速拖拽释放后,无法触发dragNodeEnd
-      if (!this.isMouseDwonNet) {
-        // 阻止选中节点被拖拽
-        this.isMouseDwonNet = true;
-      }
+      this.dragging = false;
     },
     mouseMoveNet(event) {
       if (this.dragging !== false) {
         if (this.nodes[this.dragging]) {
-          if (this.nodes[this.dragging].id === this.currentNode.id) {
-            return;
-          }
-          // this.simulation.alpha(0.5);
-          // this.simulation.restart();
           let pos = this.clientPos(event);
-          // 适配缩放后的拖拽
-          let zoomK = this.$d3.zoomTransform(this.$d3.select('#zoomContainer').node()).k;
-          let zoomX = this.$d3.zoomTransform(this.$d3.select('#zoomContainer').node()).x;
-          let zoomY = this.$d3.zoomTransform(this.$d3.select('#zoomContainer').node()).y;
-          let offsetX = this.$jq('#netSvg').offset().left - this.$jq(window).scrollLeft();
-          let offsetY = this.$jq('#netSvg').offset().top - this.$jq(window).scrollTop();
-          let centerX = this.$jq('#netSvg').width() / 2;
-          let centerY = this.$jq('#netSvg').height() / 2;
+          let zoomK = this.$d3.zoomTransform(this.$d3.select(`#zoomContainer${this.idNamespace}`).node()).k;
+          let zoomX = this.$d3.zoomTransform(this.$d3.select(`#zoomContainer${this.idNamespace}`).node()).x;
+          let zoomY = this.$d3.zoomTransform(this.$d3.select(`#zoomContainer${this.idNamespace}`).node()).y;
+          let offsetX = this.$jq(`#netSvg${this.idNamespace}`).offset().left - this.$jq(window).scrollLeft();
+          let offsetY = this.$jq(`#netSvg${this.idNamespace}`).offset().top - this.$jq(window).scrollTop();
+          let centerX = this.$jq(`#netSvg${this.idNamespace}`).width() / 2;
+          let centerY = this.$jq(`#netSvg${this.idNamespace}`).height() / 2;
           this.nodes[this.dragging].fx =
             centerX - (centerX + offsetX - pos.x) / zoomK - (zoomX + centerX * (zoomK - 1)) / zoomK;
           this.nodes[this.dragging].fy =
@@ -763,13 +754,10 @@ export default {
         return;
       }
 
-      this.isMouseDwonNet = false;
-
       // 区分拖拽 单击节点
       this.nodeSingleClicked = true;
       this.clickNodeTimer = setTimeout(() => {
         this.nodeSingleClicked = false;
-
         this.dragging = nodeKey;
         this.setMouseOffset(event, this.nodes[nodeKey]);
       }, 200);
@@ -782,19 +770,13 @@ export default {
       }
       if (this.nodeSingleClicked) {
         clearTimeout(this.clickNodeTimer);
+        this.clickNodeTimer = null;
         this.nodeClick(event, node);
-        return;
-      }
-
-      // 拖拽 双击被选中节点无效
-      if (node && this.currentNode && node.id === this.currentNode.id) {
         return;
       }
       this.nodes[this.dragging].fx = null;
       this.nodes[this.dragging].fy = null;
       this.dragging = false;
-      // this.simulation.alpha(0.1);
-      // this.simulation.restart();
       this.setMouseOffset();
     },
     // -- Render helpers
@@ -823,17 +805,10 @@ export default {
         return;
       }
       this.$refs.svg.$forceUpdate();
-      let centerX = this.$jq('#netSvg').width() / 2;
-      let centerY = this.$jq('#netSvg').height() / 2;
-      let offsetX = this.$jq('#netSvg').offset().left - this.$jq(window).scrollLeft();
-      let offsetY = this.$jq('#netSvg').offset().top - this.$jq(window).scrollTop();
-      let zoomK = this.$d3.zoomTransform(this.$d3.select('#zoomContainer').node()).k;
-      let zoomX = this.$d3.zoomTransform(this.$d3.select('#zoomContainer').node()).x;
-      let zoomY = this.$d3.zoomTransform(this.$d3.select('#zoomContainer').node()).y;
       this.simulation.stop();
       this.zoomController.translateTo(
         this.$d3
-          .select('.net-svg')
+          .select(`#netSvg${this.idNamespace}`)
           .transition()
           .duration(500),
         curNode.x,
@@ -856,12 +831,15 @@ export default {
         let newZoomK = this.getScaleFixOnCurNode(curNode, nodesTmp, 0.9, true);
         this.zoomController.scaleTo(
           this.$d3
-            .select('.net-svg')
+            .select(`#netSvg${this.idNamespace}`)
             .transition()
             .duration(500),
           newZoomK
         );
       }, 501);
+    },
+    updownstreamClick(event, node, direction) {
+      this.$emit('updown-stream-click', event, node, direction);
     },
     nodeDblClick(event, node) {
       this.$emit('node-dblclick', event, node);
@@ -928,6 +906,8 @@ export default {
       'isLinkTextDark',
       'linkTextVisible',
       'linkTextContent',
+      'idNamespace',
+      'currentNode',
     ];
 
     for (let prop of bindProps) {
@@ -957,7 +937,6 @@ export default {
 </script>
 
 <style lang="scss">
-// @import 'lib/scss/vars.scss';
 .net {
     width: 100%;
     height: 100%;
@@ -971,8 +950,6 @@ export default {
         .linkText {
             position: absolute;
             z-index: 999;
-            // background-color: rgba(75, 75, 75, 0.596);
-            // background-color: #242424;
             background-color: #252a2f;
             border-radius: 2px;
             color: white;
@@ -996,8 +973,6 @@ export default {
 
         .net-svg {
             .node {
-                // stroke: rgba(18, 120, 98, 0.7);
-                // stroke-width: 3px;
                 stroke-linecap: round;
                 transition: translate 0.5s ease;
 
@@ -1039,7 +1014,19 @@ export default {
                 }
 
                 &.bright-warn-icon {
-                    color: rgba(255, 255, 0, 1) !important; // 如何改变颜色？
+                    color: rgba(255, 255, 0, 1) !important;
+                }
+            }
+
+            .fold-icon-in-main-topo {
+                &.dark-fold-icon {
+                    opacity: 0.1;
+                }
+
+                &.upstream-agent,
+                &.downstream-agent {
+                    opacity: 0;
+                    cursor: pointer;
                 }
             }
 
@@ -1057,7 +1044,6 @@ export default {
                 &.selected {
                     stroke: rgba(202, 164, 85, 0.6);
                 }
-                // animation: topo-dash .8s linear infinite !important;
             }
 
             @keyframes topo-dash {
@@ -1077,10 +1063,6 @@ export default {
                 &.dark-link-indicator {
                     opacity: 0.1;
                 }
-
-                // &.bright-link-indicator {
-                //   fill: rgba(255, 255, 0, 1) !important;
-                // }
             }
 
             .link-anchor {
@@ -1108,10 +1090,6 @@ export default {
                 &.dark-node-label {
                     opacity: 0.1;
                 }
-
-                // &.bright-node-label {
-                //   fill: yellow;
-                // }
             }
 
             .link-label {

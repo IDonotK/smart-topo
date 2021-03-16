@@ -34,8 +34,8 @@ export default {
     toolSetInstance() {
       return this.$store.state.rocketTopo.toolSetInstance;
     },
-    topoScaleFix() {
-      return this.$store.state.rocketTopo.topoScaleFix;
+    networkInstanceMainTopo() {
+      return this.$store.state.rocketTopo.networkInstanceMainTopo;
     },
   },
 
@@ -57,7 +57,7 @@ export default {
       this.dateTimes = [startTime, endTime];
     },
     loadTopoData() {
-      if (this.topoScaleFix > -1) {
+      if (this.networkInstanceMainTopo.topoScaleFix > -1) { // ?
         this.toolSetInstance.refreshTopoView();
       }
       let isClearTopoData = this.isClearTopoData;

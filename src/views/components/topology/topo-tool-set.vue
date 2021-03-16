@@ -2,7 +2,7 @@
   <div class="topo-tool-set">
     <!-- 拓扑探索 -->
     <div class="explore-topo-wrapper">
-      <svg v-show="topoMode === 'specific'" class="icon topo-icon back" @click="handleClickExploreBtnBack">
+      <svg v-show="topoMode !== 'global'" class="icon topo-icon back" @click="handleClickExploreBtnBack">
         <use xlink:href="#BACK"></use>
         <title>{{ $t('topoToolSet_explore_node_back') }}</title>
       </svg>
@@ -54,16 +54,6 @@
                 </el-autocomplete>
               </el-form-item>
             </el-form>
-          </div>
-          <div class="mw-item explore-types">
-            <el-radio v-model="exploreMode" label="types">目标类型</el-radio>
-            <el-checkbox-group v-model="exploreTypes">
-              <el-checkbox label="Application"></el-checkbox>
-              <el-checkbox label="MiddleWare"></el-checkbox>
-              <el-checkbox label="Process"></el-checkbox>
-              <el-checkbox label="Pod"></el-checkbox>
-              <el-checkbox label="Node"></el-checkbox>
-            </el-checkbox-group>
           </div>
           <div class="mw-item">
             <el-radio v-model="exploreMode" label="global">{{ $t('topoToolSet_explore_mode_global') }}</el-radio>
@@ -225,6 +215,7 @@ export default {
         links: []
       },
       tickTimer: null,
+      topoIdNamespace: 'MainTopo',
     }
   },
 
@@ -241,23 +232,14 @@ export default {
     topoMode() {
       return this.$store.state.rocketTopo.topoMode;
     },
-    topoScaleFix() {
-      return this.$store.state.rocketTopo.topoScaleFix;
-    },
-    zoomController() {
-      return this.$store.state.rocketTopo.zoomController;
-    },
     currentNode() {
       return this.$store.state.rocketTopo.currentNode;
     },
     topoDetailData() {
       return this.$store.state.rocketTopo.topoDetailData;
     },
-    networkInstance() {
-      return this.$store.state.rocketTopo.networkInstance;
-    },
-    isFirstTick() {
-      return this.$store.state.rocketTopo.isFirstTick;
+    networkInstanceMainTopo() {
+      return this.$store.state.rocketTopo.networkInstanceMainTopo;
     },
     topoTimeInstance() {
       return this.$store.state.rocketTopo.topoTimeInstance;
@@ -284,7 +266,7 @@ export default {
       } else {
         // 注意:这里是基于视图数据topoViewData进行查询上下游节点
         this.getRelativeElems(newVal, this.topoViewData, () => {
-          this.networkInstance.setTopoViewport(newVal, oldVal, true);
+          this.networkInstanceMainTopo.setTopoViewport(newVal, oldVal, true);
           this.resetTopoDetailData(this.topoViewData);
           this.setFiltersState(this.elemsRTCAll);
           this.filterTopo();
@@ -333,7 +315,6 @@ export default {
           {id: 'Application', label: 'Application', checked: true},
           {id: 'MiddleWare', label: 'MiddleWare', checked: true},
           {id: 'Process', label: 'Process', checked: true},
-          {id: 'Workload', label: 'Workload', checked: true},
           {id: 'Pod', label: 'Pod', checked: true},
           {id: 'Node', label: 'Node', checked: true},
         ],
@@ -370,11 +351,8 @@ export default {
       this.$refs.specificForm.resetFields();
     },
     resetIsAutoReloadTopo() {
-      if (this.networkInstance.simulation) {
-        this.networkInstance.simulation.stop();
-        if (this.isFirstTick) {
-          this.$store.commit('rocketTopo/SET_IS_FIRST_TICK', false);
-        }
+      if (this.networkInstanceMainTopo.simulation) {
+        this.networkInstanceMainTopo.simulation.stop();
       }
       if (this.isAutoReloadTopo) {
         this.$store.commit('rocketTopo/SET_IS_AUTO_RELOAD_TOPO', false);
@@ -480,7 +458,8 @@ export default {
     },
     queryRelativeNodes(curNode, direction) {
       const params = {
-        application_id: curNode.id,
+        id: curNode.id,
+        model_type: curNode.type,
         direction,
         start_time: dateFormat('YYYY-mm-dd HH:MM:SS', this.durationRow.start),
         end_time: dateFormat('YYYY-mm-dd HH:MM:SS', this.durationRow.end),
@@ -533,30 +512,30 @@ export default {
         nodeIds: [],
         linkIds: []
       };
-      let upStreamData = await this.queryRelativeNodes(curNode, 'in');
-      let downStreamData = await this.queryRelativeNodes(curNode, 'out');
-      if (!upStreamData) {
-        upStreamData = {
+      let upstreamData = await this.queryRelativeNodes(curNode, 'in');
+      let downstreamData = await this.queryRelativeNodes(curNode, 'out');
+      if (!upstreamData) {
+        upstreamData = {
           nodes: [],
           links: []
         };
       }
-      if (!downStreamData) {
-        downStreamData = {
+      if (!downstreamData) {
+        downstreamData = {
           nodes: [],
           links: []
         };
       }
-      upStreamData.nodes.forEach(node => {
+      upstreamData.nodes.forEach(node => {
         elemIdsRTCUpTmp.nodeIds.push(node.id);
       });
-      upStreamData.links.forEach(link => {
+      upstreamData.links.forEach(link => {
         elemIdsRTCUpTmp.linkIds.push(link.id);
       });
-      downStreamData.nodes.forEach(node => {
+      downstreamData.nodes.forEach(node => {
         elemIdsRTCDownTmp.nodeIds.push(node.id);
       });
-      downStreamData.links.forEach(link => {
+      downstreamData.links.forEach(link => {
         elemIdsRTCDownTmp.linkIds.push(link.id);
       });
       this.setAboutElemsRTC(curNode, topoViewData, { elemIdsRTCUpTmp, elemIdsRTCDownTmp });
@@ -807,10 +786,10 @@ export default {
       } else {
         this.$emit('onSearchResult', true);
         this.$store.commit('rocketTopo/SET_VIEW_NODE', result);
-        if (this.topoMode === 'specific') {
-          this.networkInstance.setTopoViewport(result, null, false);
-        } else {
+        if (this.topoMode === 'global') {
           this.setCurNodeStably(result);
+        } else {
+          this.networkInstanceMainTopo.setTopoViewport(result, null, false);
         }
       }
     },
@@ -828,7 +807,7 @@ export default {
     // 控制
     handleEnlargeTopo() {
       this.resetIsAutoReloadTopo();
-      let zoomTimes = this.$d3.zoomTransform(this.$d3.select('#zoomContainer').node()).k;
+      let zoomTimes = this.$d3.zoomTransform(this.$d3.select(`#zoomContainer${this.topoIdNamespace}`).node()).k;
       if (zoomTimes < 1) {
         zoomTimes = Number((Number(zoomTimes.toFixed(1)) + 0.1).toFixed(1));
       } else if (zoomTimes >= 1) {
@@ -838,11 +817,11 @@ export default {
         zoomTimes = zoomTimes - 1;
         return;
       }
-      this.zoomController.scaleTo(this.$d3.select('.net-svg').transition().duration(750), zoomTimes);
+      this.networkInstanceMainTopo.zoomController.scaleTo(this.$d3.select(`#netSvg${this.topoIdNamespace}`).transition().duration(750), zoomTimes);
     },
     handleNarrowTopo() {
       this.resetIsAutoReloadTopo();
-      let zoomTimes = this.$d3.zoomTransform(this.$d3.select('#zoomContainer').node()).k;
+      let zoomTimes = this.$d3.zoomTransform(this.$d3.select(`#zoomContainer${this.topoIdNamespace}`).node()).k;
       if (zoomTimes < 2) {
         zoomTimes = Number((Number(zoomTimes.toFixed(1)) - 0.1).toFixed(1));
       } else if (zoomTimes >= 2) {
@@ -852,7 +831,7 @@ export default {
         zoomTimes = Number((Number(zoomTimes.toFixed(1)) + 0.1).toFixed(1));
         return;
       }
-      this.zoomController.scaleTo(this.$d3.select('.net-svg').transition().duration(750), zoomTimes);
+      this.networkInstanceMainTopo.zoomController.scaleTo(this.$d3.select(`#netSvg${this.topoIdNamespace}`).transition().duration(750), zoomTimes);
     },
     setNodeTypesFilter(type) {
       this.nodeTypesOption.data.forEach(item => {
@@ -873,9 +852,9 @@ export default {
       });
     },
     restoreTopoTranslate(centerX, centerY, duration) {
-      this.zoomController.translateTo(
+      this.networkInstanceMainTopo.zoomController.translateTo(
         this.$d3
-          .select('.net-svg')
+          .select(`#netSvg${this.topoIdNamespace}`)
           .transition()
           .duration(duration),
         centerX,
@@ -883,24 +862,24 @@ export default {
       );
     },
     restoreTopoScale(duration) {
-      this.zoomController.scaleTo(
+      this.networkInstanceMainTopo.zoomController.scaleTo(
         this.$d3
-          .select('.net-svg')
+          .select(`#netSvg${this.topoIdNamespace}`)
           .transition()
           .duration(duration),
-        this.topoScaleFix,
+        this.networkInstanceMainTopo.topoScaleFix,
       );
     },
     restoreTopoViewPort(duration) {
-      let centerX = this.$jq('#netSvg').width() / 2;
-      let centerY = this.$jq('#netSvg').height() / 2;
-      let zoomK = this.$d3.zoomTransform(this.$d3.select('#zoomContainer').node()).k;
-      if (zoomK > this.topoScaleFix) {
+      let centerX = this.$jq(`#netSvg${this.topoIdNamespace}`).width() / 2;
+      let centerY = this.$jq(`#netSvg${this.topoIdNamespace}`).height() / 2;
+      let zoomK = this.$d3.zoomTransform(this.$d3.select(`#zoomContainer${this.topoIdNamespace}`).node()).k;
+      if (zoomK > this.networkInstanceMainTopo.topoScaleFix) {
         this.restoreTopoScale(duration);
         setTimeout(() => {
           this.restoreTopoTranslate(centerX, centerY, duration);
         }, duration);
-      } else if (zoomK === this.topoScaleFix) {
+      } else if (zoomK === this.networkInstanceMainTopo.topoScaleFix) {
         this.restoreTopoTranslate(centerX, centerY, duration);
       } else {
         this.restoreTopoTranslate(centerX, centerY, duration);
@@ -1071,14 +1050,6 @@ export default {
 
                             .el-input__suffix {
                                 right: 3px;
-                            }
-
-                            &.explore-types {
-                                align-items: flex-start;
-                                .el-checkbox-group {
-                                    display: flex;
-                                    flex-direction: column;
-                                }
                             }
                         }
                     }

@@ -109,9 +109,6 @@ const formatTopoData = (originResponse: any, isNeedFixField: boolean) => {
   if (originData.processes) {
     nodesTmp = [...nodesTmp, ...originData.processes];
   }
-  if (originData.workloads) {
-    nodesTmp = [...nodesTmp, ...originData.workloads];
-  }
   if (originData.pods) {
     nodesTmp = [...nodesTmp, ...originData.pods];
   }

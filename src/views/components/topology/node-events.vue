@@ -5,12 +5,24 @@
       <vxe-form size="small" :data="formData" @submit="handleSubmit" @reset="handleReset">
         <vxe-form-item span="6" title-align="right" :title="$t('nodeEvents_eventData_id')" field="id">
           <template v-slot>
-            <vxe-input v-model="formData.id" :placeholder="$t('nodeEvents_searchOption_id_tip')"></vxe-input>
+            <el-tooltip
+              effect="light"
+              :content="$t('nodeEvents_searchOption_input_limit', {start: 0, end: 200})"
+              placement="top"
+            >
+              <vxe-input v-model="formData.id" :placeholder="$t('nodeEvents_searchOption_id_tip')" maxlength="200"></vxe-input>
+            </el-tooltip>
           </template>
         </vxe-form-item>
         <vxe-form-item span="6" title-align="right" :title="$t('nodeEvents_eventData_name')" field="name">
           <template v-slot>
-            <vxe-input v-model="formData.name" :placeholder="$t('nodeEvents_searchOption_name_tip')"></vxe-input>
+            <el-tooltip
+              effect="light"
+              :content="$t('nodeEvents_searchOption_input_limit', {start: 0, end: 200})"
+              placement="top"
+            >
+              <vxe-input v-model="formData.name" :placeholder="$t('nodeEvents_searchOption_name_tip')" maxlength="200"></vxe-input>
+            </el-tooltip>
           </template>
         </vxe-form-item>
         <vxe-form-item span="6" title-align="right" :title="$t('nodeEvents_eventData_severity')" field="severity">
@@ -117,8 +129,8 @@
       resizable
       size="small"
       max-height="75%"
-      show-overflow
-      show-header-overflow
+      :show-overflow="'title'"
+      :show-header-overflow="'title'"
       highlight-hover-row
       highlight-current-row
       :loading="loading"
@@ -378,12 +390,8 @@ export default {
     },
     async getViewNodeEvents() {
       let eventsData = await this.queryNodeEvents();
-      if (eventsData && eventsData.events) {
-        this.tableData = eventsData.events;
-      }
-      if (eventsData && eventsData.total) {
-        this.tablePage.total = eventsData.total;
-      }
+      this.tableData = (eventsData && eventsData.events) ? eventsData.events : [];
+      this.tablePage.total = (eventsData && eventsData.total) ? eventsData.total : 0;
     },
   }
 }

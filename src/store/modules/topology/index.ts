@@ -7,7 +7,7 @@ import { formatTopoData, utc2Peking } from '@/utils/topo';
 
 import { getEvents } from './get-events.js';
 import { generateGesData } from './ges-data';
-import { getA1Up, getA1Down, getA1Cl, getTypes, getA1Both, getA2Up, getA2Down, getA2Cl } from './relative-data';
+import { getA1Up, getA1Down, getA1Cl, getTypes, getA1Both, getM1Up, getM1Down } from './relative-data';
 let timeIndex = 0;
 
 export interface Duration {
@@ -24,16 +24,15 @@ export interface State {
   showNodeTypes: any[];
   showStateTypes: any[];
   showEdgeTypes: any[];
-  zoomController: any;
   showRelativeTypes: any[];
-  topoScaleFix: number;
-  isFirstTick: boolean;
   topoMode: string;
   exploreNode: any;
+  quickExploreNode: any;
   topoData: any;
   toolSetInstance: any;
   topoTimeInstance: any;
-  networkInstance: any;
+  networkInstanceMainTopo: any;
+  networkInstanceRelativeTopo: any;
   elemIdsRTCAll: any;
   topoDetailData: any;
   isAutoReloadTopo: boolean;
@@ -48,19 +47,21 @@ const initState: State = {
   showNodeTypes: [],
   showStateTypes: [],
   showEdgeTypes: [],
-  zoomController: null,
   showRelativeTypes: [],
-  topoScaleFix: -1,
-  isFirstTick: true,
   topoMode: 'global',
   exploreNode: {},
+  quickExploreNode: {
+    node: {},
+    direction: '',
+  },
   topoData: {
     nodes: [],
     links: [],
   },
   toolSetInstance: {},
   topoTimeInstance: {},
-  networkInstance: {},
+  networkInstanceMainTopo: {},
+  networkInstanceRelativeTopo: {},
   elemIdsRTCAll: {
     nodeIds: [],
     linkIds: [],
@@ -98,23 +99,17 @@ const mutations = {
   [types.SET_SHOW_EDGE_TYPES](state: State, data: any) {
     state.showEdgeTypes = data;
   },
-  [types.SET_ZOOM_CONTROLLER](state: State, data: any) {
-    state.zoomController = data;
-  },
   [types.SET_SHOW_RELATIVE_TYPES](state: State, data: any) {
     state.showRelativeTypes = data;
-  },
-  [types.SET_TOPO_SCALE_FIX](state: State, data: any) {
-    state.topoScaleFix = data;
-  },
-  [types.SET_IS_FIRST_TICK](state: State, data: any) {
-    state.isFirstTick = data;
   },
   [types.SET_TOPO_MODE](state: State, data: any) {
     state.topoMode = data;
   },
   [types.SET_EXPLORE_NODE](state: State, data: any) {
     state.exploreNode = data;
+  },
+  [types.SET_QUICK_EXPLORE_NODE](state: State, data: any) {
+    state.quickExploreNode = data;
   },
   [types.SET_TOPO_DATA](state: State, data: any) {
     state.topoData = data;
@@ -125,8 +120,11 @@ const mutations = {
   [types.SET_TOPO_TIME_INSTANCE](state: State, data: any) {
     state.topoTimeInstance = data;
   },
-  [types.SET_NETWORK_INSTANCE](state: State, data: any) {
-    state.networkInstance = data;
+  [types.SET_NETWORK_INSTANCE_MAIN_TOPO](state: State, data: any) {
+    state.networkInstanceMainTopo = data;
+  },
+  [types.SET_NETWORK_INSTANCE_RELATIVE_TOPO](state: State, data: any) {
+    state.networkInstanceRelativeTopo = data;
   },
   [types.SET_ELEM_IDS_RTC_ALL](state: State, data: any) {
     state.elemIdsRTCAll = data;
@@ -199,10 +197,18 @@ const actions: ActionTree<State, any> = {
         links: [],
       };
       if (params.direction === 'in') {
-        relativeData = formatTopoData(getA1Up(), true);
+        if (params.id === 'm1') {
+          relativeData = formatTopoData(getM1Up(), true);
+        } else {
+          relativeData = formatTopoData(getA1Up(), true);
+        }
         // relativeData = formatTopoData(getA2Up(), true);
       } else if (params.direction === 'out') {
-        relativeData = formatTopoData(getA1Down(), true);
+        if (params.id === 'm1') {
+          relativeData = formatTopoData(getM1Down(), true);
+        } else {
+          relativeData = formatTopoData(getA1Down(), true);
+        }
         // relativeData = formatTopoData(getA2Down(), true);
       } else {
         relativeData = formatTopoData(getA1Both(), true);
@@ -222,8 +228,8 @@ const actions: ActionTree<State, any> = {
     }
     return Promise.resolve().then(() => {
       context.state.isLoadingTopo = false;
-      // let topoData = formatTopoData(generateGesData(), true);
-      let topoData = formatTopoData(getTypes(), true);
+      let topoData = formatTopoData(generateGesData(), true);
+      // let topoData = formatTopoData(getTypes(), true);
       context.commit(types.SET_TOPO_DATA, {
         nodes: topoData.nodes,
         links: topoData.links,

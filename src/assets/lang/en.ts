@@ -42,6 +42,10 @@ const m = {
   topoView_explore_node_title: 'Determine the node to explore?',
   topoView_explore_node_id: 'Node ID:',
   topoView_search_no_data: 'No matching node!',
+  topoView_quick_explre_topo_title_type: 'Topo Type: ',
+  topoView_quick_explre_topo_title_target_node: 'Tartget Node: ',
+  topoView_quick_explre_topo_upstream: 'Upstream Topo',
+  topoView_quick_explre_topo_downstream: 'Downstream Topo',
 
   topoDetail_link_type: 'Link type:',
   topoDetail_link_callPerMinute: 'CallPerMinute:',
@@ -113,6 +117,10 @@ const m = {
   nodeEvents_searchOption_startTime: 'Start Time',
   nodeEvents_searchOption_timeSeparator: '~',
   nodeEvents_searchOption_endTime: 'End Time',
+  nodeEvents_searchOption_input_limit: 'Please enter {start}~{end} characters',
+
+  svgRender_upstream_tip: 'View upstream nodes',
+  svgRender_downstream_tip: 'View downstream nodes',
 };
 
 export default m;

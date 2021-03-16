@@ -116,10 +116,6 @@ export default {
           name: 'Process',
         },
         {
-          id: 'Workload',
-          name: 'Workload',
-        },
-        {
           id: 'Pod',
           name: 'Pod',
         },
@@ -195,7 +191,7 @@ export default {
         sortMap.set(xVal, []);
       }
       let verticalLinks = linksOption.filter(link => link.isVertical);
-      let typesOption = ['Application', 'MiddleWare', 'Process', 'Workload', 'Pod', 'Node'];
+      let typesOption = ['Application', 'MiddleWare', 'Process', 'Pod', 'Node'];
       verticalLinks.forEach(link => {
         let sNode = nodesOption.find(node => node.id === link.sid);
         let tNode = nodesOption.find(node => node.id === link.tid);
@@ -291,8 +287,8 @@ export default {
       });
     },
     setNodesOption({ graph, deltah, deltaw }, nodesOption, { curTypeNum }, pointStartX) {
-      let { appStartX, middlewareStartX, processStartX, workloadStartX, podStartX, nodeStartX } = pointStartX;
-      let [ appNum, middlewareNum, processNum, workloadNum, podNum, nodeNum ] = [0, 0, 0, 0, 0, 0];
+      let { appStartX, middlewareStartX, processStartX, podStartX, nodeStartX } = pointStartX;
+      let [ appNum, middlewareNum, processNum, podNum, nodeNum ] = [0, 0, 0, 0, 0];
       let existingTypes = new Set();
       let nodePosOption = {};
       graph.nodes.forEach(node => {
@@ -318,17 +314,13 @@ export default {
             processNum++;
             nodePosOption = { nType: 'Process', nNum: processNum, cNum: curTypeNum, nObj: itemTmp, startX: processStartX, factorY: 2.5, nSize: 28, deltaw, deltah };
             break;
-          case 'Workload':
-            workloadNum++;
-            nodePosOption = { nType: 'Workload', nNum: workloadNum, cNum: curTypeNum, nObj: itemTmp, startX: workloadStartX, factorY: 3.5, nSize: 28, deltaw, deltah };
-            break;
           case 'Pod':
             podNum++;
-            nodePosOption = { nType: 'Pod', nNum: podNum, cNum: curTypeNum, nObj: itemTmp, startX: podStartX, factorY: 4.5, nSize: 28, deltaw, deltah };
+            nodePosOption = { nType: 'Pod', nNum: podNum, cNum: curTypeNum, nObj: itemTmp, startX: podStartX, factorY: 3.5, nSize: 28, deltaw, deltah };
             break;
           case 'Node':
             nodeNum++;
-            nodePosOption = { nType: 'Node', nNum: nodeNum, cNum: curTypeNum, nObj: itemTmp, startX: nodeStartX, factorY: 5.5, nSize: 28, deltaw, deltah };
+            nodePosOption = { nType: 'Node', nNum: nodeNum, cNum: curTypeNum, nObj: itemTmp, startX: nodeStartX, factorY: 4.5, nSize: 28, deltaw, deltah };
             break;
           default: break;
         }
@@ -341,7 +333,6 @@ export default {
       let appNum = 0;
       let middlewareNum = 0;
       let processNum = 0;
-      let workloadNum = 0;
       let podNum = 0;
       let nodeNum = 0;
       let curTypeNum = 0;
@@ -350,7 +341,6 @@ export default {
           case 'Application': appNum++; break;
           case 'MiddleWare': middlewareNum++; break;
           case 'Process': processNum++; break;
-          case 'Workload': workloadNum++; break;
           case 'Pod': podNum++; break;
           case 'Node': nodeNum++; break;
           default: break;
@@ -360,23 +350,21 @@ export default {
         case 'Application': appNum = (appNum % 2 === 0 ? appNum + 1 : appNum); curTypeNum = appNum; break;
         case 'MiddleWare': middlewareNum = (middlewareNum % 2 === 0 ? middlewareNum + 1 : middlewareNum); curTypeNum = middlewareNum; break;
         case 'Process': processNum = (processNum % 2 === 0 ? processNum + 1 : processNum); curTypeNum = processNum; break;
-        case 'Workload': workloadNum = (workloadNum % 2 === 0 ? workloadNum + 1 : workloadNum); curTypeNum = workloadNum; break;
         case 'Pod': podNum = (podNum % 2 === 0 ? podNum + 1 : podNum); curTypeNum = podNum; break;
         case 'Node': nodeNum = (nodeNum % 2 === 0 ? nodeNum + 1 : nodeNum); curTypeNum = nodeNum; break;
         default: break;
       }
-      let maxNum = Math.max(appNum, middlewareNum, processNum, workloadNum, podNum, nodeNum);
-      return { appNum, middlewareNum, processNum, workloadNum, podNum, nodeNum, curTypeNum, maxNum };
+      let maxNum = Math.max(appNum, middlewareNum, processNum, podNum, nodeNum);
+      return { appNum, middlewareNum, processNum, podNum, nodeNum, curTypeNum, maxNum };
     },
     getPointStartX(pointsNum) {
-      let { appNum, middlewareNum, processNum, workloadNum, podNum, nodeNum, curTypeNum, maxNum } = pointsNum;
+      let { appNum, middlewareNum, processNum, podNum, nodeNum, curTypeNum, maxNum } = pointsNum;
       let appStartX = 45 + (maxNum - appNum) / 2 * 50;
       let middlewareStartX = 45 + (maxNum - middlewareNum) / 2 * 50;
       let processStartX = 45 + (maxNum - processNum) / 2 * 50;
-      let workloadStartX = 45 + (maxNum - workloadNum) / 2 * 50;
       let podStartX = 45 + (maxNum - podNum) / 2 * 50;
       let nodeStartX = 45 + (maxNum - nodeNum) / 2 * 50;
-      return { appStartX, middlewareStartX, processStartX, workloadStartX, podStartX, nodeStartX };
+      return { appStartX, middlewareStartX, processStartX, podStartX, nodeStartX };
     },
     clearTopo() {
       this.$d3.select('#tdt-view-cross-layer svg').remove();
@@ -454,7 +442,7 @@ export default {
       }
       const graph = this.topoDetailData;
       this.topoHeight = this.$jq('#tdtId').height();
-      const deltah = this.topoHeight / 6;
+      const deltah = this.topoHeight / 5;
       const deltaw = 50;
 
       let pointsNum = this.countPointsNum(graph);
@@ -709,7 +697,7 @@ export default {
       }
     },
     handleNodeDblclicked(nodeTmp) {
-      if (this.topoMode === 'specific') {
+      if (this.topoMode !== 'global') {
         return;
       }
       this.$d3.event.stopPropagation();
@@ -796,7 +784,7 @@ export default {
 
     .td-item {
         width: 100%;
-        height: 16.66%;
+        height: 20%;
         cursor: pointer;
 
         &.tdi-odd {
