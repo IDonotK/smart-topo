@@ -123,60 +123,15 @@
               ></use>
             </svg>
 
-            <!-- upstream switch -->
-            <g 
-              v-if="node.isShowStreamSwitch && node.type === 'MiddleWare' && node.eventCount > 0 && topoMode === 'specific'"
-              :key="'upstream-wrapper' + key">
+            <!-- quickexplore switch -->
+            <g
+              v-if="topoMode !== 'global'
+                && ['Application','MiddleWare'].includes(node.type)
+                && node.eventCount > 0"
+              :key="'quickexplore-wrapper' + key"
+            >
               <svg
-                :key="'upstream-event' + key"
-                :x="node.x + 0.25 * getNodeSize(node) + 0.5 * getNodeSize(node)"
-                :y="node.y - 0.9 * getNodeSize(node) + 0.05 * getNodeSize(node)"
-                :width="0.4 * getNodeSize(node)"
-                :height="0.4 * getNodeSize(node)"
-                :class="warnClass(node, [node.isDark ? 'dark-warn-icon' : '', node.isBright ? 'bright-warn-icon' : ''])"
-                aria-hidden="true"
-              >
-                <use
-                  v-show="node.upstreamEventLevel === 'Critical'"
-                  xlink:href="#EVENT_CRITICAL"
-                ></use>
-                <use
-                  v-show="node.upstreamEventLevel === 'Warning'"
-                  xlink:href="#EVENT_WARNING"
-                ></use>
-              </svg>
-              <svg
-                :key="'upstream' + key"
-                :x="node.x + 0.25 * getNodeSize(node)"
-                :y="node.y - 0.9 * getNodeSize(node)"
-                :width="0.5 * getNodeSize(node)"
-                :height="0.5 * getNodeSize(node)"
-                :class="foldClass(node, [node.isDark ? 'dark-fold-icon' : '', node.isBright ? 'bright-fold-icon' : ''])"
-                aria-hidden="true"
-              >
-                <use
-                  xlink:href="#PLUS"
-                ></use>
-              </svg>
-              <circle
-                :key="'upstream-agent' + key"
-                :r="0.5 * getNodeSize(node) / 2"
-                :cx="node.x + 0.25 * getNodeSize(node) + 0.25 * getNodeSize(node)"
-                :cy="node.y - 0.9 * getNodeSize(node) + 0.25 * getNodeSize(node)"
-                :stroke-width="fontSize / 8"
-                :class="foldClass(node, ['upstream-agent'])"
-                @click.stop.prevent="emit('updownstreamClick', [$event, node, 'in'])"
-              >
-                <title>{{$t('svgRender_upstream_tip')}}</title>
-              </circle>
-            </g>
-
-            <!-- downstream switch -->
-            <g 
-              v-if="node.isShowStreamSwitch && node.type === 'MiddleWare' && node.eventCount > 0 && topoMode === 'specific'"
-              :key="'downstream-wrapper' + key">
-               <svg
-                :key="'downstream-event' + key"
+                :key="'quickexplore-event' + key"
                 :x="node.x + 0.25 * getNodeSize(node) + 0.5 * getNodeSize(node)"
                 :y="node.y + 0.4 * getNodeSize(node) + 0.05 * getNodeSize(node)"
                 :width="0.4 * getNodeSize(node)"
@@ -184,17 +139,11 @@
                 :class="warnClass(node, [node.isDark ? 'dark-warn-icon' : '', node.isBright ? 'bright-warn-icon' : ''])"
                 aria-hidden="true"
               >
-                <use
-                  v-show="node.downstreamEventLevel === 'Critical'"
-                  xlink:href="#EVENT_CRITICAL"
-                ></use>
-                <use
-                  v-show="node.downstreamEventLevel === 'Warning'"
-                  xlink:href="#EVENT_WARNING"
-                ></use>
+                <use v-show="node.downstreamEventLevel === 'Critical'" xlink:href="#EVENT_CRITICAL"></use>
+                <use v-show="node.downstreamEventLevel === 'Warning'" xlink:href="#EVENT_WARNING"></use>
               </svg>
               <svg
-                :key="'downstream' + key"
+                :key="'quickexplore' + key"
                 :x="node.x + 0.25 * getNodeSize(node)"
                 :y="node.y + 0.4 * getNodeSize(node)"
                 :width="0.5 * getNodeSize(node)"
@@ -202,20 +151,18 @@
                 :class="foldClass(node, [node.isDark ? 'dark-fold-icon' : '', node.isBright ? 'bright-fold-icon' : ''])"
                 aria-hidden="true"
               >
-                <use
-                  xlink:href="#PLUS"
-                ></use>
+                <use xlink:href="#PLUS"></use>
               </svg>
               <circle
-                :key="'downstream-agent' + key"
-                :r="0.5 * getNodeSize(node) / 2"
+                :key="'quickexplore-agent' + key"
+                :r="(0.5 * getNodeSize(node)) / 2"
                 :cx="node.x + 0.25 * getNodeSize(node) + 0.25 * getNodeSize(node)"
                 :cy="node.y + 0.4 * getNodeSize(node) + 0.25 * getNodeSize(node)"
                 :stroke-width="fontSize / 8"
-                :class="foldClass(node, ['downstream-agent'])"
-                @click.stop.prevent="emit('updownstreamClick', [$event, node, 'out'])"
-                >
-                <title>{{$t('svgRender_downstream_tip')}}</title>
+                :class="foldClass(node, ['quickexplore-agent'])"
+                @click.stop.prevent="emit('quickexploreClick', [$event, node])"
+              >
+                <title>{{ $t('svgRender_quickexplore_tip') }}</title>
               </circle>
             </g>
           </template>
@@ -241,7 +188,12 @@
         <!-- Link Indicators -->
         <g :id="'link-indicators' + idNamespace" class="indicators">
           <defs>
-            <path v-for="(link, index) in links" :id="'link' + link.id + idNamespace" :key="index" :d="linkPath(link)" />
+            <path
+              v-for="(link, index) in links"
+              :id="'link' + link.id + idNamespace"
+              :key="index"
+              :d="linkPath(link)"
+            />
           </defs>
           <text
             v-for="(link, index) in links"
@@ -287,8 +239,6 @@
   </div>
 </template>
 <script>
-import svgExport from '../lib/js/svgExport.js';
-
 export default {
   name: 'SvgRenderer',
   props: [
@@ -312,30 +262,20 @@ export default {
     'linkTextVisible',
     'linkTextContent',
     'idNamespace',
-    'currentNode'
+    'currentNode',
   ],
 
   data() {
-    return {
-      
-    };
+    return {};
   },
 
   computed: {
     topoMode() {
       return this.$store.state.rocketTopo.topoMode;
     },
-    nodeSvg() {
-      if (this.nodeSym) {
-        return svgExport.toObject(this.nodeSym);
-      }
-      return null;
-    },
   },
 
-  mounted() {
-    
-  },
+  mounted() {},
 
   methods: {
     arrowClass(classes = []) {
@@ -362,29 +302,10 @@ export default {
       return size;
     },
     svgIcon(node) {
-      return node.svgIcon || this.nodeSvg;
+      return node.svgIcon;
     },
     emit(e, args) {
       this.$emit('action', e, args);
-    },
-    svgScreenShot(cb, toSvg, background, allCss) {
-      let svg = svgExport.export(this.$refs.svg, allCss);
-      let backgroundTmp = background;
-      if (toSvg) {
-        cb(null, svgExport.save(svg));
-      } else {
-        if (!backgroundTmp) {
-          backgroundTmp = this.searchBackground();
-        }
-        let canvas = svgExport.makeCanvas(this.size.w, this.size.h, backgroundTmp);
-        svgExport.svgToImg(svg, canvas, (err, img) => {
-          if (err) {
-            cb(err);
-          } else {
-            cb(null, img);
-          }
-        });
-      }
     },
     linkClass(linkId, classes = []) {
       let cssClass = ['link'];
@@ -513,13 +434,6 @@ export default {
         }
       }
       return 'white';
-    },
-    spriteSymbol() {
-      let svg = this.nodeSym;
-      if (svg) {
-        return svgExport.toSymbol(svg);
-      }
-      return null;
     },
     linkAttrs(link) {
       let attrs = link._svgAttrs || {};

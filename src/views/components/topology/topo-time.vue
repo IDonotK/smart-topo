@@ -24,6 +24,7 @@ export default {
     return {
       dateTimes: [],
       isClearTopoData: true,
+      isExploreMode: false,
     }
   },
 
@@ -37,18 +38,36 @@ export default {
     networkInstanceMainTopo() {
       return this.$store.state.rocketTopo.networkInstanceMainTopo;
     },
+    topoMode() {
+      return this.$store.state.rocketTopo.topoMode;
+    },
   },
 
   watch: {
     durationRow(newVal) {
-      this.loadTopoData();
+      if (this.isExploreMode) {
+        this.loadExploredTopoData();
+      } else {
+        this.loadTopoData();
+      }
     }
   },
 
   mounted() {
     this.$store.commit('rocketTopo/SET_TOPO_TIME_INSTANCE', this);
-    let endTime = new Date();
-    let startTime = new Date(endTime.getTime() -  10 * 60 * 1000);
+    let endTime;
+    let startTime;
+    let exploreType = this.$route.query.exploreType;
+    if (exploreType === 'specific-deep' || exploreType === 'specific-layered') {
+      this.$store.commit('rocketTopo/SET_TOPO_MODE', exploreType);
+      this.isExploreMode = true;
+      let params = JSON.parse(localStorage.getItem('exploreParams'));
+      startTime = new Date(params.start_time);
+      endTime = new Date(params.end_time);
+    } else {
+      endTime = new Date();
+      startTime = new Date(endTime.getTime() -  10 * 60 * 1000);
+    }
     this.setDateTimes(startTime, endTime);
   },
 
@@ -56,8 +75,56 @@ export default {
     setDateTimes(startTime, endTime) {
       this.dateTimes = [startTime, endTime];
     },
+    filterDataOnTypes(types, data) {
+      let nodeIds = [];
+      data.nodes = data.nodes.filter(node => {
+        if (types.includes(node.type)) {
+          nodeIds.push(node.id);
+          return true;
+        } else {
+          return false;
+        }
+      });
+      data.links = data.links.filter(link => nodeIds.includes(link.sid) && nodeIds.includes(link.tid));
+    },
+    loadExploredTopoData() {
+      let isClearTopoData = this.isClearTopoData;
+      this.isClearTopoData = false;
+      if (isClearTopoData) {
+        this.$store.commit('rocketTopo/SET_IS_LOADING_TOPO', true);
+        this.$store.commit('rocketTopo/SET_TOPO_DATA', {
+          nodes: [],
+          links: [],
+        });
+      } else {
+        this.$store.commit('rocketTopo/SET_IS_LOADING_TOPO', false);
+      }
+      let params = JSON.parse(localStorage.getItem('exploreParams'));
+      this.toolSetInstance.exploreRelativeElems({}, (upstreamData, downstreamData, exploreNode) => {
+        if (this.topoMode === 'specific-layered') {
+          this.filterDataOnTypes(['Application','MiddleWare'], upstreamData);
+          this.filterDataOnTypes(['Application','MiddleWare'], downstreamData);
+          this.$store.commit('rocketTopo/SET_LAYERED_EXPLORE_NODE', exploreNode);
+        }
+        let relativeData = {
+          nodes: [exploreNode,
+            ...upstreamData.nodes.filter(node => node.id !== exploreNode.id),
+            ...downstreamData.nodes.filter(node => node.id !== exploreNode.id)
+          ],
+          links: [...upstreamData.links, ...downstreamData.links],
+        };
+        this.$store.commit('rocketTopo/SET_IS_LOADING_TOPO', false);
+        this.$store.commit('rocketTopo/SET_TOPO_DATA', {
+          nodes: relativeData.nodes,
+          links: relativeData.links,
+        });
+        this.toolSetInstance.handleAfterExplore(upstreamData, downstreamData, relativeData, exploreNode);
+        this.isExploreMode = false;
+        this.$router.push('/topology');
+      }, params);
+    },
     loadTopoData() {
-      if (this.networkInstanceMainTopo.topoScaleFix > -1) { // ?
+      if (this.networkInstanceMainTopo.topoScaleFix > -1) {
         this.toolSetInstance.refreshTopoView();
       }
       let isClearTopoData = this.isClearTopoData;

@@ -21,6 +21,7 @@ export interface State {
   showRelativeTypes: any[];
   topoMode: string;
   exploreNode: any;
+  layeredExploreNode: any,
   quickExploreNode: any;
   topoData: any;
   toolSetInstance: any;
@@ -44,10 +45,8 @@ const initState: State = {
   showRelativeTypes: [],
   topoMode: 'global',
   exploreNode: {},
-  quickExploreNode: {
-    node: {},
-    direction: '',
-  },
+  layeredExploreNode: {},
+  quickExploreNode: {},
   topoData: {
     nodes: [],
     links: [],
@@ -101,6 +100,9 @@ const mutations = {
   },
   [types.SET_EXPLORE_NODE](state: State, data: any) {
     state.exploreNode = data;
+  },
+  [types.SET_LAYERED_EXPLORE_NODE](state: State, data: any) {
+    state.layeredExploreNode = data;
   },
   [types.SET_QUICK_EXPLORE_NODE](state: State, data: any) {
     state.quickExploreNode = data;
@@ -188,7 +190,7 @@ const actions: ActionTree<State, any> = {
   },
   GET_RELATIVE_DATA(context: { commit: Commit; state: State }, params: any) {
     return axios
-      .get(`${window.location.origin}/v1/applications`, {
+      .get(`${window.location.origin}/v1/linked-endpoints`, {
         params,
         cancelToken: cancelToken(),
       })

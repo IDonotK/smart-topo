@@ -41,11 +41,12 @@ const m = {
   // business components
   topoView_explore_node_title: 'Determine the node to explore?',
   topoView_explore_node_id: 'Node ID:',
+  topoView_explore_node_topo: '拓扑样式：',
+  topoView_explore_node_topo_cirlce: '圆形聚类',
+  topoView_explore_node_topo_cirlce_help: '更新当前拓扑，拓扑呈圆形聚类状',
+  topoView_explore_node_topo_layered: '上下分层',
+  topoView_explore_node_topo_layered_help: '打开新页面，拓扑呈上下分层状，且只展示应用和中间件',
   topoView_search_no_data: 'No matching node!',
-  topoView_quick_explre_topo_title_type: 'Topo Type: ',
-  topoView_quick_explre_topo_title_target_node: 'Tartget Node: ',
-  topoView_quick_explre_topo_upstream: 'Upstream Topo',
-  topoView_quick_explre_topo_downstream: 'Downstream Topo',
 
   topoDetail_link_type: 'Link type:',
   topoDetail_link_callPerMinute: 'CallPerMinute:',
@@ -119,8 +120,7 @@ const m = {
   nodeEvents_searchOption_endTime: 'End Time',
   nodeEvents_searchOption_input_limit: 'Please enter {start}~{end} characters',
 
-  svgRender_upstream_tip: 'View upstream nodes',
-  svgRender_downstream_tip: 'View downstream nodes',
+  svgRender_quickexplore_tip: 'Check upstream and downstream nodeds',
 };
 
 export default m;

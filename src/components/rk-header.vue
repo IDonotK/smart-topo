@@ -67,7 +67,9 @@ export default class Header extends Vue {
   }
 
   private mounted() {
-    this.$router.push('/topology');
+    if (this.$route.path === '/') {
+      this.$router.push('/topology');
+    }
   }
 
   private handleReload() {

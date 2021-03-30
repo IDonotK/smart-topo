@@ -9,10 +9,10 @@
       <div v-show="topoViewData.nodes.length > 0" class="topo-info">
         <div class="mti-item topo-mode">
           <span class="title">{{ $t('topoSideInformation_topoInfo_mode') }}</span>
-          <span v-show="topoMode === 'global'" class="content">{{
+          <span v-if="topoMode === 'global'" class="content">{{
             $t('topoSideInformation_topoInfo_mode_global')
           }}</span>
-          <span v-show="topoMode === 'specific'" class="content"
+          <span v-else class="content"
             >{{ $t('topoSideInformation_topoInfo_mode_specific') }}({{ exploreNode.id }})</span
           >
         </div>

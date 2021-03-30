@@ -37,6 +37,10 @@ export default {
         };
       },
     },
+    foldTopoDetail: {
+      type: Boolean,
+      default: false,
+    }
   },
   data() {
     return {
@@ -82,6 +86,11 @@ export default {
   },
 
   watch: {
+    foldTopoDetail(newVal) {
+      if (!newVal) {
+        this.drawDetailTopoCrossLayer();
+      }
+    },
     topoDetailData(newVal) {
       this.drawDetailTopoCrossLayer();
     }
@@ -232,7 +241,7 @@ export default {
         } else {
           link.isVertical = false;
         }
-        if (sNode && tNode && sNode.y === tNode.y) {
+        if (sNode && tNode && Math.abs(sNode.y - tNode.y) <= 4) {
           link.isHorizontal = true;
         } else {
           link.isHorizontal = false;
@@ -421,7 +430,7 @@ export default {
     },
     setNodePositonNormalLayer({ nNum, nObj, startX, factorY, nSize, deltaw, deltah }) {
       nObj.x = startX + (nNum - 1) * deltaw;
-      nObj.y = factorY * deltah;
+      nObj.y = factorY * deltah - nSize / 2;
       nObj.fx = nObj.x;
       nObj.fy = nObj.y;
       nObj.symbolSize = nSize;
@@ -469,8 +478,7 @@ export default {
         .attr('class', 'topo-svg')
         .attr('height', this.topoHeight);
       this.tip = this.$d3tip()
-        .attr('class', 'd3-tip')
-        // .offset([-8, 0]);
+        .attr('class', 'd3-tip');
       svg.call(this.tip);
       const force = this.$d3
         .forceSimulation(nodesOption)
@@ -490,7 +498,7 @@ export default {
     setUseTool(svg) {
       let shapeOption = {
         side: 3,
-        centerRadius: 25,
+        centerRadius: 15,
         hexagonRadius: 10,
         fixAngle: Math.PI / 6,
         iconSize: 12,
@@ -509,7 +517,7 @@ export default {
         .attr('width', d => d.symbolSize)
         .attr('height', d => d.symbolSize)
         .attr('x', d => -d.symbolSize / 2)
-        .attr('y', d => -d.symbolSize / 2)
+        .attr('y', d => 0)
         .append('use')
         .attr('xlink:href', d => this.getNodeIcon(d, false));
       nodeElesTmp.append('svg')
@@ -517,13 +525,14 @@ export default {
         .attr('width', d => d.symbolSize === 28 ? 15 : 12)
         .attr('height', d => d.symbolSize === 28 ? 15 : 12)
         .attr('x', d => d.symbolSize === 28 ? 6 : 4)
-        .attr('y', d => d.symbolSize === 28 ? -25 : -18)
+        .attr('y', d => d.symbolSize === 28 ? -12 : -7)
         .append('use')
         .attr('xlink:href', d => this.getEventIcon(d));
       nodeElesTmp.append('circle')
         .attr('r', d => d.symbolSize / 2)
         .attr('x', d => d.x)
-        .attr('y', d => d.y)
+        .attr('y', d => d.y - d.symbolSize / 2)
+        .attr('cy', d => d.symbolSize / 2)
         .attr('style', 'cursor: pointer; opacity: 0;')
         .on('mouseenter', (data, index, element) => { this.handleNodeMouseenter(data, index, element); })
         .on('mouseleave', d => { this.handleNodeMouseleave(d); })
@@ -534,18 +543,18 @@ export default {
     getArrowEles(arrowEles, arrowsOption) {
       return arrowEles.data(arrowsOption, (d) => d.id)
         .enter().append('marker')
-        .attr('id', d => `arrow_detail${  d.id}`)
+        .attr('id', d => `arrow_detail${d.id}`)
         .attr('markerUnits', 'userSpaceOnUse')
-        .attr('markerWidth', 1.0 * 28 / 2)
-        .attr('markerHeight', 1.0 * 28 / 2)
+        .attr('markerWidth', d => 0.6 * (d.source.symbolSize > d.target.symbolSize ? d.source.symbolSize : d.target.symbolSize))
+        .attr('markerHeight', d => 0.6 * (d.source.symbolSize > d.target.symbolSize ? d.source.symbolSize : d.target.symbolSize))
         .attr('viewBox', '0 0 10 10')
-        .attr('refX', 20)
-        .attr('refY', 6)
+        .attr('refX', 8)
+        .attr('refY', 3)
         .attr('orient', 'auto')
         .append('path')
         .attr('class', 'topo-line-arrow')
-        .attr('d', 'M2,3 L10,6 L2,9 L5,6 L2,3')
-        .attr('fill', '#217EF25f');
+        .attr('d', 'M0,0 L8,3 L0,6 L3,3 L0,0')
+        // .attr('fill', '#217EF25f');
     },
     getLinkEles(linkEles, linksOption) {
       return linkEles.data(linksOption)
@@ -553,8 +562,7 @@ export default {
         .attr('class', 'topo-line')
         .attr('stroke-width', d => d.qpsLevel * 1.3)
         .attr('stroke-dasharray', d => d.isTracingTo ? '7 5' : 'none')
-        // @todo: 加上箭头
-        // .attr("marker-end", d => 'url(#arrow_detail' + d.id + ')')
+        .attr('marker-end', d => `url(#arrow_detail${d.id})`)
         .on('mouseover', d => { this.handleLinkMouseover(d); })
         .on('mouseout', d => { this.handleLinkMouseout(d); })
         .style('stroke', '#217EF25f');
@@ -575,6 +583,7 @@ export default {
         .children('svg:first')
         .children('use')
         .attr('href', this.getNodeIcon(data.target, false));
+      this.$jq(`#arrow_detail${data.id} path`).removeClass('topo-line-arrow-light');
 
       this.tip.direction('n');
       this.tip.hide(this);
@@ -595,6 +604,7 @@ export default {
         .children('svg:first')
         .children('use')
         .attr('href', this.getNodeIcon(data.target, true));
+      this.$jq(`#arrow_detail${data.id} path`).addClass('topo-line-arrow-light');
 
       if (data.source.type === 'Application' || data.target.type === 'Application') {
         this.tip.direction('e');
@@ -668,6 +678,7 @@ export default {
           .children('svg:first')
           .children('use')
           .attr('href', this.getNodeIcon(d.target, false));
+        this.$jq(`#arrow_detail${d.id} path`).removeClass('topo-line-arrow-light');
       }
     },
     handleLinkMouseover(d) {
@@ -694,6 +705,7 @@ export default {
           .children('svg:first')
           .children('use')
           .attr('href', this.getNodeIcon(d.target, true));
+        this.$jq(`#arrow_detail${d.id} path`).addClass('topo-line-arrow-light');
       }
     },
     handleNodeDblclicked(nodeTmp) {
@@ -760,7 +772,9 @@ export default {
       this.$emit('toggleNodeDetail', true);
     },
     resize() {
-      this.drawDetailTopoCrossLayer();
+      if (!this.foldTopoDetail) {
+        this.drawDetailTopoCrossLayer();
+      }
     },
   }
 }
@@ -853,6 +867,14 @@ export default {
                     cursor: pointer;
 
                     &.topo-line-anchor-light {
+                        fill: yellow !important;
+                    }
+                }
+
+                .topo-line-arrow {
+                    fill: #217ef25f;
+
+                    &.topo-line-arrow-light {
                         fill: yellow !important;
                     }
                 }

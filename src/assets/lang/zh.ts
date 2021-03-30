@@ -40,12 +40,13 @@ const m = {
 
   // business components
   topoView_explore_node_title: '确定探索该节点？',
-  topoView_explore_node_id: '节点ID：',
+  topoView_explore_node_id: '节点 ID：',
+  topoView_explore_node_topo: '拓扑样式：',
+  topoView_explore_node_topo_cirlce: '圆形聚类',
+  topoView_explore_node_topo_cirlce_help: '更新当前拓扑，拓扑呈圆形聚类状',
+  topoView_explore_node_topo_layered: '上下分层',
+  topoView_explore_node_topo_layered_help: '打开新页面，拓扑呈上下分层状，且只展示应用和中间件',
   topoView_search_no_data: '无匹配节点！',
-  topoView_quick_explre_topo_title_type: '拓扑类型：',
-  topoView_quick_explre_topo_title_target_node: '目标节点：',
-  topoView_quick_explre_topo_upstream: '上游拓扑',
-  topoView_quick_explre_topo_downstream: '下游拓扑',
 
   topoDetail_link_type: '链路类型：',
   topoDetail_link_callPerMinute: '调用频率：',
@@ -117,8 +118,7 @@ const m = {
   nodeEvents_searchOption_endTime: '结束时间',
   nodeEvents_searchOption_input_limit: '请输入{start}~{end}个字符',
 
-  svgRender_upstream_tip: '查看上游节点',
-  svgRender_downstream_tip: '查看下游节点',
+  svgRender_quickexplore_tip: '查看上下游节点',
 };
 
 export default m;

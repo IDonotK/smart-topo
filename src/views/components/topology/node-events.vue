@@ -7,10 +7,14 @@
           <template v-slot>
             <el-tooltip
               effect="light"
-              :content="$t('nodeEvents_searchOption_input_limit', {start: 0, end: 200})"
+              :content="$t('nodeEvents_searchOption_input_limit', { start: 0, end: 200 })"
               placement="top"
             >
-              <vxe-input v-model="formData.id" :placeholder="$t('nodeEvents_searchOption_id_tip')" maxlength="200"></vxe-input>
+              <vxe-input
+                v-model="formData.id"
+                :placeholder="$t('nodeEvents_searchOption_id_tip')"
+                maxlength="200"
+              ></vxe-input>
             </el-tooltip>
           </template>
         </vxe-form-item>
@@ -18,10 +22,14 @@
           <template v-slot>
             <el-tooltip
               effect="light"
-              :content="$t('nodeEvents_searchOption_input_limit', {start: 0, end: 200})"
+              :content="$t('nodeEvents_searchOption_input_limit', { start: 0, end: 200 })"
               placement="top"
             >
-              <vxe-input v-model="formData.name" :placeholder="$t('nodeEvents_searchOption_name_tip')" maxlength="200"></vxe-input>
+              <vxe-input
+                v-model="formData.name"
+                :placeholder="$t('nodeEvents_searchOption_name_tip')"
+                maxlength="200"
+              ></vxe-input>
             </el-tooltip>
           </template>
         </vxe-form-item>

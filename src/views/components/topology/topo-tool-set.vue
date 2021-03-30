@@ -32,7 +32,7 @@
       >
         <div class="modes-wrapper">
           <div class="mw-item">
-            <el-radio v-model="exploreMode" label="specific" class="specific-radio">{{
+            <el-radio v-model="exploreItem" label="specific" class="specific-radio">{{
               $t('topoToolSet_explore_mode_specific')
             }}</el-radio>
             <el-form ref="specificForm" :model="specificForm" status-icon :rules="specificRules">
@@ -44,7 +44,7 @@
                   :placeholder="$t('topoToolSet_explore_search_placeholder')"
                   value-key="id"
                   :select-when-unmatched="true"
-                  :disabled="exploreMode === 'global'"
+                  :disabled="exploreItem === 'global'"
                   :fetch-suggestions="queryExplore"
                   @select="handleExploreOnId"
                 >
@@ -56,7 +56,7 @@
             </el-form>
           </div>
           <div class="mw-item">
-            <el-radio v-model="exploreMode" label="global">{{ $t('topoToolSet_explore_mode_global') }}</el-radio>
+            <el-radio v-model="exploreItem" label="global">{{ $t('topoToolSet_explore_mode_global') }}</el-radio>
           </div>
         </div>
         <template v-slot:footer class="dialog-footer">
@@ -104,11 +104,7 @@
         <use xlink:href="#NARROW"></use>
         <title>{{ $t('topoToolSet_topoCtrl_narrow') }}</title>
       </svg>
-      <svg
-        class="topo-icon restore"
-        aria-hidden="true"
-        @click.stop.prevent="handleRestoreTopo"
-      >
+      <svg class="topo-icon restore" aria-hidden="true" @click.stop.prevent="handleRestoreTopo">
         <use xlink:href="#RESTORE"></use>
         <title>{{ $t('topoToolSet_topoCtrl_restore') }}</title>
       </svg>
@@ -179,7 +175,7 @@ export default {
     return {
       isShowExplore: false,
       isShowExploreBack: false,
-      exploreMode: 'specific',
+      exploreItem: 'specific',
       specificForm: { specificId: '' },
       specificRules: {
         specificId: [ { validator: this.validateId, trigger: 'blur' } ],
@@ -247,7 +243,7 @@ export default {
   },
 
   watch: {
-    exploreMode(newVal) {
+    exploreItem(newVal) {
       this.$refs.specificForm.resetFields();
     },
     topoViewData(newVal) {
@@ -264,13 +260,23 @@ export default {
       if (newVal.id === undefined) {
         this.filterTopo();
       } else {
-        // 注意:这里是基于视图数据topoViewData进行查询上下游节点
-        this.getRelativeElems(newVal, this.topoViewData, () => {
-          this.networkInstanceMainTopo.setTopoViewport(newVal, oldVal, true);
-          this.resetTopoDetailData(this.topoViewData);
-          this.setFiltersState(this.elemsRTCAll);
-          this.filterTopo();
-        });
+        if (this.topoMode === 'global') {
+          this.getRelativeElems(newVal, this.topoViewData, () => {
+            this.networkInstanceMainTopo.setTopoViewport(newVal, oldVal, true);
+            this.resetTopoDetailData(this.topoViewData, true);
+            this.setFiltersState(this.elemsRTCAll);
+            this.filterTopo();
+          });
+        } else {
+          if (this.topoMode === 'specific-layered') {
+            this.resetTopoDetailData(this.topoViewData, false);
+          } else {
+            this.networkInstanceMainTopo.setTopoViewport(newVal, oldVal, true);
+            this.resetTopoDetailData(this.topoViewData, true);
+            this.setFiltersState(this.elemsRTCAll);
+            this.filterTopo();
+          }
+        }
       }
     },
   },
@@ -419,52 +425,48 @@ export default {
         start_time: dateFormat('YYYY-mm-dd HH:MM:SS', this.durationRow.start),
         end_time: dateFormat('YYYY-mm-dd HH:MM:SS', this.durationRow.end),
       };
-      return this.$store.dispatch('rocketTopo/GET_RELYON_DATA', params);
+      let res = this.$store.dispatch('rocketTopo/GET_RELYON_DATA', params);
+      return res ? res : {nodes: [], links: []};
     },
-    async resetTopoDetailData(topoViewData) {
+    async resetTopoDetailData(topoViewData, hitMainTopo) {
       let curNode = this.currentNode;
       let crossLayerData = await this.queryCrosslayerNodes(curNode);
       let elemsIdsCL = {
         nodeIds: [],
         linkIds: []
       };
-      if (!crossLayerData) {
-        crossLayerData = {
-          nodes: [],
-          links: []
-        }
-      }
       crossLayerData.nodes.forEach(node => elemsIdsCL.nodeIds.push(node.id));
       crossLayerData.links.forEach(link => elemsIdsCL.linkIds.push(link.id));
 
-      let nodesTmp = new Set();
-      let linksTmp = new Set();
-      // 匹配提取topoViewData里的节点对象
-      topoViewData.nodes.forEach(node => {
-        if (elemsIdsCL.nodeIds.includes(node.id)) {
-          nodesTmp.add(node);
-        }
-      });
-      topoViewData.links.forEach(link => {
-        if (elemsIdsCL.linkIds.includes(link.id)) {
-          linksTmp.add(link);
-        }
-      });
+      let nodesTmp;
+      let linksTmp;
+      if (hitMainTopo) {
+        nodesTmp = new Set();
+        linksTmp = new Set();
+        // 匹配提取topoViewData里的节点对象
+        topoViewData.nodes.forEach(node => {
+          if (elemsIdsCL.nodeIds.includes(node.id)) {
+            nodesTmp.add(node);
+          }
+        });
+        topoViewData.links.forEach(link => {
+          if (elemsIdsCL.linkIds.includes(link.id)) {
+            linksTmp.add(link);
+          }
+        });
+      } else {
+        nodesTmp = new Set(crossLayerData.nodes);
+        linksTmp = new Set(crossLayerData.links);
+      }
       this.searchStreamOnSingleHop(curNode, this.elemsRTCAll, nodesTmp, linksTmp);
       this.$store.commit('rocketTopo/SET_TOPO_DETAIL_DATA', {
         nodes: Array.from(nodesTmp),
         links: Array.from(linksTmp)
       });
     },
-    queryRelativeNodes(curNode, direction) {
-      const params = {
-        id: curNode.id,
-        model_type: curNode.type,
-        direction,
-        start_time: dateFormat('YYYY-mm-dd HH:MM:SS', this.durationRow.start),
-        end_time: dateFormat('YYYY-mm-dd HH:MM:SS', this.durationRow.end),
-      };
-      return this.$store.dispatch('rocketTopo/GET_RELATIVE_DATA', params);
+    queryRelativeNodes(params) {
+      let res = this.$store.dispatch('rocketTopo/GET_RELATIVE_DATA', params);
+      return res ? res : {nodes: [], links: []};
     },
     setAboutElemsRTC(curNode, topoViewData, {elemIdsRTCUpTmp, elemIdsRTCDownTmp}) {
       // 匹配提取topoViewData里的节点对象
@@ -504,28 +506,18 @@ export default {
     },
     async getRelativeElems(curNode, topoViewData, cb) {
       this.restoreElemsRTC();
-      let elemIdsRTCUpTmp = { // 上游节点集合
-        nodeIds: [],
-        linkIds: []
+      let elemIdsRTCUpTmp = {nodeIds: [], linkIds: []};
+      let elemIdsRTCDownTmp = {nodeIds: [], linkIds: []};
+      let params = {
+        id: curNode.id,
+        model_type: curNode.type,
+        start_time: dateFormat('YYYY-mm-dd HH:MM:SS', this.durationRow.start),
+        end_time: dateFormat('YYYY-mm-dd HH:MM:SS', this.durationRow.end),
       };
-      let elemIdsRTCDownTmp = { // 下游节点集合
-        nodeIds: [],
-        linkIds: []
-      };
-      let upstreamData = await this.queryRelativeNodes(curNode, 'in');
-      let downstreamData = await this.queryRelativeNodes(curNode, 'out');
-      if (!upstreamData) {
-        upstreamData = {
-          nodes: [],
-          links: []
-        };
-      }
-      if (!downstreamData) {
-        downstreamData = {
-          nodes: [],
-          links: []
-        };
-      }
+      params.direction = 'in';
+      let upstreamData = await this.queryRelativeNodes(params);
+      params.direction = 'out';
+      let downstreamData = await this.queryRelativeNodes(params);
       upstreamData.nodes.forEach(node => {
         elemIdsRTCUpTmp.nodeIds.push(node.id);
       });
@@ -543,16 +535,22 @@ export default {
         cb();
       }
     },
-    async exploreRelativeElems(curNode, cb) {
-      let relativeData = await this.queryRelativeNodes(curNode, 'both');
-      if (!relativeData) {
-        relativeData = {
-          nodes: [],
-          links: []
-        };
-      }
+    async exploreRelativeElems(curNode, cb, priorParams = null) {
+      this.restoreElemsRTC();
+      let params = priorParams ? priorParams : {
+        id: curNode.id,
+        model_type: curNode.type,
+        start_time: dateFormat('YYYY-mm-dd HH:MM:SS', this.durationRow.start),
+        end_time: dateFormat('YYYY-mm-dd HH:MM:SS', this.durationRow.end),
+      };
+      params.direction = 'in';
+      let upstreamData = await this.queryRelativeNodes(params);
+      params.direction = 'out';
+      let downstreamData = await this.queryRelativeNodes(params);
+      let exploreNodeId = priorParams && priorParams.id ? priorParams.id : curNode.id;
+      let exploreNode = upstreamData.nodes.find(node => node.id === exploreNodeId);
       if (cb) {
-        cb(relativeData);
+        cb(upstreamData, downstreamData, exploreNode);
       }
     },
 
@@ -572,25 +570,61 @@ export default {
     handleExploreOnId() {
       this.$refs.specificForm.validateField('specificId');
     },
-    goToExploreNode(targetNode) {
+    handleBeforeExplore() {
       this.$store.commit('rocketTopo/SET_VIEW_NODE', {});
       this.$store.commit('rocketTopo/SET_NODE', {});
+      this.$store.commit('rocketTopo/SET_EXPLORE_NODE', {});
       this.restoreTopoViewPort(0);
       this.restoreFilters();
+    },
+    handleAfterExplore(upstreamData, downstreamData, relativeData, exploreNode) {
+      upstreamData.nodes.forEach(node => {
+        if (node.id !== exploreNode.id) {
+          this.elemIdsRTCUp.nodeIds.push(node.id);
+        }
+      });
+      upstreamData.links.forEach(link => {
+        this.elemIdsRTCUp.linkIds.push(link.id);
+      });
+      downstreamData.nodes.forEach(node => {
+        if (node.id !== exploreNode.id) {
+          this.elemIdsRTCDown.nodeIds.push(node.id);
+        }
+      });
+      downstreamData.links.forEach(link => {
+        this.elemIdsRTCDown.linkIds.push(link.id);
+      });
+      this.elemIdsRTCAll = {
+        nodeIds: [exploreNode.id, ...this.elemIdsRTCUp.nodeIds, ...this.elemIdsRTCDown.nodeIds],
+        linkIds: [...this.elemIdsRTCUp.linkIds, ...this.elemIdsRTCDown.linkIds]
+      };
+      this.$store.commit('rocketTopo/SET_ELEM_IDS_RTC_ALL', this.elemIdsRTCAll);
+      this.elemsRTCAll = relativeData;
+
+      this.$store.commit('rocketTopo/SET_VIEW_NODE', exploreNode);
+      this.$store.commit('rocketTopo/SET_EXPLORE_NODE', exploreNode);
+      this.setCurNodeStably(exploreNode);
+    },
+    goToExploreNode(targetNode) {
+      this.handleBeforeExplore();
       this.$store.commit('rocketTopo/SET_TOPO_MODE', 'specific');
-      this.exploreRelativeElems(targetNode, relativeData => {
+      this.exploreRelativeElems(targetNode, (upstreamData, downstreamData, exploreNode) => {
+        let relativeData = {
+          nodes: [exploreNode,
+            ...upstreamData.nodes.filter(node => node.id !== exploreNode.id),
+            ...downstreamData.nodes.filter(node => node.id !== exploreNode.id)
+          ],
+          links: [...upstreamData.links, ...downstreamData.links],
+        };
         this.$emit('changeTopoViewData', relativeData);
-        let exploreNode = relativeData.nodes.find(node => node.id === targetNode.id);
-        this.$store.commit('rocketTopo/SET_VIEW_NODE', exploreNode);
-        this.$store.commit('rocketTopo/SET_EXPLORE_NODE', exploreNode);
-        this.setCurNodeStably(exploreNode);
+        this.handleAfterExplore(upstreamData, downstreamData, relativeData, exploreNode);
       });
     },
     handleConfirmExploreBack() {
       this.topoTimeInstance.loadTopoData();
     },
     handleConfirmExplore() {
-      if (this.exploreMode === 'specific') {
+      if (this.exploreItem === 'specific') {
         let validState = false;
         this.$refs.specificForm.validate((valid) => {
           validState = valid;
@@ -600,19 +634,20 @@ export default {
         }
         let result = this.topoViewData.nodes.find(node => String(node.id) === this.specificForm.specificId);
         this.isShowExplore = false;
-        this.$store.commit('rocketTopo/SET_VIEW_NODE', {});
-        this.$store.commit('rocketTopo/SET_NODE', {});
-        this.restoreTopoViewPort(0);
-        this.restoreFilters();
-        this.$store.commit('rocketTopo/SET_TOPO_MODE', this.exploreMode);
-        this.exploreRelativeElems(result, relativeData => {
+        this.handleBeforeExplore();
+        this.$store.commit('rocketTopo/SET_TOPO_MODE', this.exploreItem);
+        this.exploreRelativeElems(result, (upstreamData, downstreamData, exploreNode) => {
+          let relativeData = {
+            nodes: [exploreNode,
+              ...upstreamData.nodes.filter(node => node.id !== exploreNode.id),
+              ...downstreamData.nodes.filter(node => node.id !== exploreNode.id)
+            ],
+            links: [...upstreamData.links, ...downstreamData.links],
+          };
           this.$emit('changeTopoViewData', relativeData);
-          let exploreNode = relativeData.nodes.find(node => node.id === result.id);
-          this.$store.commit('rocketTopo/SET_VIEW_NODE', exploreNode);
-          this.$store.commit('rocketTopo/SET_EXPLORE_NODE', exploreNode);
-          this.setCurNodeStably(exploreNode);
+          this.handleAfterExplore(upstreamData, downstreamData, relativeData, exploreNode);
         });
-      } else if (this.exploreMode === 'global') {
+      } else if (this.exploreItem === 'global') {
         this.topoTimeInstance.loadTopoData();
       }
     },
@@ -621,7 +656,7 @@ export default {
     },
     handleClickExploreBtn() {
       this.resetIsAutoReloadTopo();
-      this.exploreMode = 'specific';
+      this.exploreItem = 'specific';
       this.isShowExplore = true;
     },
     refreshTopoView() {
@@ -632,6 +667,8 @@ export default {
       this.restoreTopoViewPort(0);
       this.$store.commit('rocketTopo/SET_TOPO_MODE', 'global');
       this.$store.commit('rocketTopo/SET_VIEW_NODE', {});
+      this.$store.commit('rocketTopo/SET_QUICK_EXPLORE_NODE', {});
+      this.$store.commit('rocketTopo/SET_EXPLORE_NODE', {});
       this.$store.commit('rocketTopo/SET_NODE', {});
       this.restoreFilters();
     },
@@ -718,7 +755,9 @@ export default {
       } else {
         this.filterTopoWithCurNode({nodeTypes, stateTypes, relativeTypes}, {nodeTypesSet, stateTypesSet, relativeTypesSet}, {elemIdsRTC, targetNodeIds});
       }
-
+      if (this.networkInstanceMainTopo.$refs) {
+        this.networkInstanceMainTopo.$refs.svg.$forceUpdate();
+      }
       this.$store.commit('rocketTopo/SET_SHOW_NODE_TYPES', [...nodeTypesSet]);
       this.$store.commit('rocketTopo/SET_SHOW_STATE_TYPES', [...stateTypesSet]);
       this.$store.commit('rocketTopo/SET_SHOW_RELATIVE_TYPES', [...relativeTypesSet]);

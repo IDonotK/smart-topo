@@ -20,7 +20,7 @@
         v-for="(item, index) in smallDetailItems"
         v-show="curNodeCrossLayer.hasOwnProperty(item)"
         :key="'small' + index"
-        :class="{ 'info-item': true, 'small': true }"
+        :class="{ 'info-item': true, small: true }"
       >
         <span class="item-title" :title="item"
           >{{ item }}

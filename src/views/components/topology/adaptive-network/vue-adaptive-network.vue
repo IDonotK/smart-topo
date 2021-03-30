@@ -1,12 +1,10 @@
 <script>
-import svgRenderer from './components/svgRenderer.vue';
-import saveImage from './lib/js/saveImage.js';
-import svgExport from './lib/js/svgExport.js';
+import SvgRenderer from './components/svg-renderer.vue';
 
 export default {
-  name: 'D3Network',
+  name: 'AdaptiveNetwork',
   components: {
-    svgRenderer,
+    SvgRenderer,
   },
   props: {
     netData: {
@@ -40,7 +38,7 @@ export default {
     currentNode: {
       type: Object,
       default: () => ({}),
-    }
+    },
   },
   data() {
     return {
@@ -131,9 +129,6 @@ export default {
       this.buildLinks(newVal.links);
       this.animate();
     },
-    nodeSym() {
-      this.updateNodeSvg();
-    },
     options(newValue, oldValue) {
       this.updateOptions(newValue);
       if (oldValue.size && newValue.size) {
@@ -148,15 +143,20 @@ export default {
     this.updateOptions(this.options);
     this.buildNodes(this.netData.nodes);
     this.buildLinks(this.netData.links);
-    this.updateNodeSvg();
   },
   mounted() {
     this.onResize();
     this.$nextTick(() => {
       switch (this.idNamespace) {
-        case 'MainTopo': this.$store.commit('rocketTopo/SET_NETWORK_INSTANCE_MAIN_TOPO', this); break;
-        case 'RelativeTopo': this.$store.commit('rocketTopo/SET_NETWORK_INSTANCE_RELATIVE_TOPO', this); break;
-        default: this.$store.commit('rocketTopo/SET_NETWORK_INSTANCE_MAIN_TOPO', this); break;
+        case 'MainTopo':
+          this.$store.commit('rocketTopo/SET_NETWORK_INSTANCE_MAIN_TOPO', this);
+          break;
+        case 'RelativeTopo':
+          this.$store.commit('rocketTopo/SET_NETWORK_INSTANCE_RELATIVE_TOPO', this);
+          break;
+        default:
+          this.$store.commit('rocketTopo/SET_NETWORK_INSTANCE_MAIN_TOPO', this);
+          break;
       }
       this.setZoom();
       this.animate();
@@ -318,7 +318,6 @@ export default {
         this.setElementAttribute(node, 'isDark', false);
         this.setElementAttribute(node, 'isBright', false);
         this.setElementAttribute(node, 'isRelatedToCurNode', false);
-        this.setElementAttribute(node, 'isShowStreamSwitch', true);
         this.$set(node, '_color', 'rgba(33, 126, 242, 0.373)');
         return node;
       });
@@ -362,13 +361,6 @@ export default {
         itemTmp = cb(itemTmp);
       }
       return itemTmp;
-    },
-    updateNodeSvg() {
-      let svg = null;
-      if (this.nodeSym) {
-        svg = svgExport.svgElFromString(this.nodeSym);
-      }
-      this.nodeSvg = svg;
     },
     // -- Animation
     simulate(nodes, links) {
@@ -838,8 +830,8 @@ export default {
         );
       }, 501);
     },
-    updownstreamClick(event, node, direction) {
-      this.$emit('updown-stream-click', event, node, direction);
+    quickexploreClick(event, node) {
+      this.$emit('quickexplore-click', event, node);
     },
     nodeDblClick(event, node) {
       this.$emit('node-dblclick', event, node);
@@ -859,27 +851,6 @@ export default {
         y = pos.y ? pos.y - node.y : node.y;
       }
       this.mouseOfst = { x, y };
-    },
-    screenShot(name, bgColor, toSVG, svgAllCss) {
-      let exportFunc;
-      let args = [];
-      let nameTmp = name;
-      exportFunc = this.$refs.svg.svgScreenShot;
-      args = [toSVG, bgColor, svgAllCss];
-      if (toSVG) {
-        nameTmp = nameTmp || 'export.svg';
-      }
-
-      exportFunc((err, url) => {
-        if (!err) {
-          if (toSVG) {
-            saveImage.download(url, nameTmp);
-          } else {
-            saveImage.save(url, nameTmp);
-          }
-        }
-        this.$emit('screen-shot', err);
-      }, ...args);
     },
   },
   render(createElement) {
@@ -909,16 +880,14 @@ export default {
       'idNamespace',
       'currentNode',
     ];
-
     for (let prop of bindProps) {
       props[prop] = this[prop];
     }
     props.nodeSym = this.nodeSvg;
-
     return createElement(
       'div',
       {
-        attrs: { class: 'net' },
+        attrs: { class: 'adaptive-net' },
         on: {
           mousemove: this.mouseMoveNet,
           click: this.handleClickNet,
@@ -937,7 +906,7 @@ export default {
 </script>
 
 <style lang="scss">
-.net {
+.adaptive-net {
     width: 100%;
     height: 100%;
     margin: 0;
@@ -1023,8 +992,7 @@ export default {
                     opacity: 0.1;
                 }
 
-                &.upstream-agent,
-                &.downstream-agent {
+                &.quickexplore-agent {
                     opacity: 0;
                     cursor: pointer;
                 }

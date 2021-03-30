@@ -1,3 +1,4 @@
+/* eslint-disable max-lines-per-function */
 /* eslint-disable no-param-reassign */
 import { Commit, ActionTree, Dispatch } from 'vuex';
 import * as types from '../../mutation-types';
@@ -7,7 +8,7 @@ import { formatTopoData, utc2Peking } from '@/utils/topo';
 
 import { getEvents } from './get-events.js';
 import { generateGesData } from './ges-data';
-import { getA1Up, getA1Down, getA1Cl, getTypes, getA1Both, getM1Up, getM1Down } from './relative-data';
+import { getA1Up, getA1Down, getA1Cl, getA1Both, getM1Up, getM1Down, getM1Both, getM1Cl } from './relative-data';
 let timeIndex = 0;
 
 export interface Duration {
@@ -27,6 +28,7 @@ export interface State {
   showRelativeTypes: any[];
   topoMode: string;
   exploreNode: any;
+  layeredExploreNode: any,
   quickExploreNode: any;
   topoData: any;
   toolSetInstance: any;
@@ -50,10 +52,8 @@ const initState: State = {
   showRelativeTypes: [],
   topoMode: 'global',
   exploreNode: {},
-  quickExploreNode: {
-    node: {},
-    direction: '',
-  },
+  layeredExploreNode: {},
+  quickExploreNode: {},
   topoData: {
     nodes: [],
     links: [],
@@ -107,6 +107,9 @@ const mutations = {
   },
   [types.SET_EXPLORE_NODE](state: State, data: any) {
     state.exploreNode = data;
+  },
+  [types.SET_LAYERED_EXPLORE_NODE](state: State, data: any) {
+    state.layeredExploreNode = data;
   },
   [types.SET_QUICK_EXPLORE_NODE](state: State, data: any) {
     state.quickExploreNode = data;
@@ -185,36 +188,79 @@ const actions: ActionTree<State, any> = {
   },
   GET_RELYON_DATA(context: { commit: Commit; state: State }, params: any) {
     return Promise.resolve().then(() => {
-      let relyonData = formatTopoData(getA1Cl(), true);
-      // let relyonData = formatTopoData(getA2Cl(), true);
+      let relyonData;
+      if (params.id === 'm1') {
+        relyonData = formatTopoData(getM1Cl(), true);
+      } else {
+        relyonData = formatTopoData(getA1Cl(), true);
+      }
       return relyonData;
     });
   },
   GET_RELATIVE_DATA(context: { commit: Commit; state: State }, params: any) {
-    return Promise.resolve().then(() => {
-      let relativeData = {
-        nodes: [],
-        links: [],
-      };
-      if (params.direction === 'in') {
-        if (params.id === 'm1') {
-          relativeData = formatTopoData(getM1Up(), true);
+    return axios
+      .get(`${window.location.origin}/v1/linked-endpoints`, {
+        params,
+        cancelToken: cancelToken(),
+      })
+      .then((res: any) => {
+        let relativeData = {
+          nodes: [],
+          links: [],
+        };
+        if (params.direction === 'in') {
+          if (params.id === 'm1') {
+            relativeData = formatTopoData(getM1Up(), true);
+          } else {
+            relativeData = formatTopoData(getA1Up(), true);
+          }
+          // relativeData = formatTopoData(getA2Up(), true);
+        } else if (params.direction === 'out') {
+          if (params.id === 'm1') {
+            relativeData = formatTopoData(getM1Down(), true);
+          } else {
+            relativeData = formatTopoData(getA1Down(), true);
+          }
+          // relativeData = formatTopoData(getA2Down(), true);
         } else {
-          relativeData = formatTopoData(getA1Up(), true);
+          if (params.id === 'm1') {
+            relativeData = formatTopoData(getM1Both(), true);
+          } else {
+            relativeData = formatTopoData(getA1Both(), true);
+          }
         }
-        // relativeData = formatTopoData(getA2Up(), true);
-      } else if (params.direction === 'out') {
-        if (params.id === 'm1') {
-          relativeData = formatTopoData(getM1Down(), true);
-        } else {
-          relativeData = formatTopoData(getA1Down(), true);
-        }
-        // relativeData = formatTopoData(getA2Down(), true);
-      } else {
-        relativeData = formatTopoData(getA1Both(), true);
-      }
-      return relativeData;
-    });
+        return relativeData;
+      })
+      .catch(err => {});
+
+    // return Promise.resolve().then(() => {
+    //   let relativeData = {
+    //     nodes: [],
+    //     links: [],
+    //   };
+    //   if (params.direction === 'in') {
+    //     if (params.id === 'm1') {
+    //       relativeData = formatTopoData(getM1Up(), true);
+    //     } else {
+    //       relativeData = formatTopoData(getA1Up(), true);
+    //     }
+    //     // relativeData = formatTopoData(getA2Up(), true);
+    //   } else if (params.direction === 'out') {
+    //     if (params.id === 'm1') {
+    //       relativeData = formatTopoData(getM1Down(), true);
+    //     } else {
+    //       relativeData = formatTopoData(getA1Down(), true);
+    //     }
+    //     // relativeData = formatTopoData(getA2Down(), true);
+    //   } else {
+    //     if (params.id === 'm1') {
+    //       relativeData = formatTopoData(getM1Both(), true);
+    //     } else {
+    //       relativeData = formatTopoData(getA1Both(), true);
+    //     }
+    //   }
+    //   return relativeData;
+    // });
   },
   GET_TOPO_DATA(context: { commit: Commit; state: State }, params: any) {
     if (params.isClearTopoData) {
